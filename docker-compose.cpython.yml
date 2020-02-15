@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  clipping-cpython:
+    build:
+      context: .
+      args:
+        - PYTHON_IMAGE=${CPYTHON_IMAGE_NAME}
+        - PYTHON_IMAGE_VERSION=${CPYTHON_IMAGE_VERSION}
+    image: lycantropos/clipping-cpython:0.0.0
+    volumes:
+      - ./clipping/:/opt/clipping/clipping/
+      - ./tests/:/opt/clipping/tests/
+      - ./README.md:/opt/clipping/README.md
+      - ./requirements.txt:/opt/clipping/requirements.txt
+      - ./requirements-tests.txt:/opt/clipping/requirements-tests.txt
+      - ./setup.py:/opt/clipping/setup.py
+      - ./pytest.ini:/opt/clipping/pytest.ini
+    entrypoint: pytest
