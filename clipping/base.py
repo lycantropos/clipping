@@ -457,12 +457,7 @@ class Operation:
                                          event.from_left, EdgeType.NORMAL)
         right_event = self._event_factory(False, point, event, event.from_left,
                                           EdgeType.NORMAL)
-        if EventsQueueKey(left_event) > EventsQueueKey(event.complement):
-            # avoid a rounding error,
-            # the left event would be processed after the right event
-            event.complement.is_left_endpoint = True
-            left_event.is_left_endpoint = False
-        event.complement, event.complement.complement = right_event, left_event
+        event.complement.complement, event.complement = left_event, right_event
         self._events_queue.push(left_event)
         self._events_queue.push(right_event)
 
