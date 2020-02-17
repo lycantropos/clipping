@@ -71,7 +71,7 @@ class Event(ABC):
                  in_result: bool = False,
                  result_in_out: bool = False,
                  position: int = 0,
-                 contour_id: int = 0,
+                 contour_id: Optional[int] = None,
                  below_in_result_event: Optional['Event'] = None) -> None:
         self.is_left_endpoint = is_left_endpoint
         self.start = start
