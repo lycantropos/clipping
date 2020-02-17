@@ -246,9 +246,10 @@ class Operation:
     __repr__ = generate_repr(__init__)
 
     def compute(self) -> Multipolygon:
-        return self._try_trivial() or self._try_non_trivial()
+        result = self._try_trivial()
+        return self._try_non_trivial() if result is None else result
 
-    def _try_trivial(self) -> Multipolygon:
+    def _try_trivial(self) -> Optional[Multipolygon]:
         if not (self.left and self.right):
             # at least one of the arguments is empty
             if self.kind is OperationKind.DIFFERENCE:
@@ -269,7 +270,8 @@ class Operation:
             elif (self.kind is OperationKind.UNION
                   or self.kind is OperationKind.XOR):
                 return self.left + self.right
-        return []
+            return []
+        return None
 
     def _try_non_trivial(self) -> Multipolygon:
         return _connect_edges(self.sweep())
