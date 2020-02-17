@@ -519,7 +519,7 @@ def _collect_events(events: List[Event]) -> List[Event]:
 
 
 def _events_to_contours(events: List[Event]) -> List[Polygon]:
-    depth, hole_of = [], []
+    depth, hole_of = defaultdict(int), []
     processed = [False] * len(events)
     contours = []
     are_internal = defaultdict(bool)
@@ -528,25 +528,7 @@ def _events_to_contours(events: List[Event]) -> List[Polygon]:
         if processed[index]:
             continue
 
-        is_internal = False
         contour_id = len(contours)
-        depth.append(0)
-        hole_of.append(-1)
-        if event.below_in_result_event is not None:
-            lower_contour_id = event.below_in_result_event.contour_id
-            if not event.below_in_result_event.result_in_out:
-                holes[lower_contour_id].append(contour_id)
-                hole_of[contour_id] = lower_contour_id
-                depth[contour_id] = depth[lower_contour_id] + 1
-                is_internal = True
-            elif are_internal[lower_contour_id]:
-                lower_contour_hole_id = hole_of[lower_contour_id]
-                holes[lower_contour_hole_id].append(contour_id)
-                hole_of[contour_id] = lower_contour_hole_id
-                depth[contour_id] = depth[lower_contour_id]
-                is_internal = True
-        are_internal[contour_id] = is_internal
-
         position = index
         initial = event.start
         contour = [initial]
@@ -565,11 +547,30 @@ def _events_to_contours(events: List[Event]) -> List[Polygon]:
             processed[position] = True
             contour.append(events[position].start)
             position = _to_next_position(position, events, processed, index)
+        if len(contour) < 3:
+            continue
         position = index if position == -1 else position
         event = events[position]
         processed[position] = processed[event.position] = True
         event.complement.result_in_out = True
         event.complement.contour_id = contour_id
+
+        is_internal = False
+        hole_of.append(-1)
+        if event.below_in_result_event is not None:
+            lower_contour_id = event.below_in_result_event.contour_id
+            if not event.below_in_result_event.result_in_out:
+                holes[lower_contour_id].append(contour_id)
+                hole_of[contour_id] = lower_contour_id
+                depth[contour_id] = depth[lower_contour_id] + 1
+                is_internal = True
+            elif are_internal[lower_contour_id]:
+                lower_contour_hole_id = hole_of[lower_contour_id]
+                holes[lower_contour_hole_id].append(contour_id)
+                hole_of[contour_id] = lower_contour_hole_id
+                depth[contour_id] = depth[lower_contour_id]
+                is_internal = True
+        are_internal[contour_id] = is_internal
 
         if depth[contour_id] & 1:
             contour.reverse()
