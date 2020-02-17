@@ -249,6 +249,14 @@ class Operation:
         return self._try_trivial() or self._try_non_trivial()
 
     def _try_trivial(self) -> Multipolygon:
+        if not (self.left and self.right):
+            # at least one of the arguments is empty
+            if self.kind is OperationKind.DIFFERENCE:
+                return self.left
+            if (self.kind is OperationKind.UNION
+                    or self.kind is OperationKind.XOR):
+                return self.left or self.right
+            return []
         left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(
                 self.left)
         right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(
