@@ -462,7 +462,6 @@ class Operation:
             self.divide_segment(sorted_events[0], sorted_events[1].start)
             return 3
         else:
-            self.divide_segment(sorted_events[0], sorted_events[1].start)
             self.divide_segment(sorted_events[0]
                                 # one line segment includes the other one
                                 if (sorted_events[0]
@@ -470,6 +469,7 @@ class Operation:
                                 # no line segment includes the other one
                                 else sorted_events[1],
                                 sorted_events[2].start)
+            self.divide_segment(sorted_events[0], sorted_events[1].start)
             return 3
 
     def divide_segment(self, event: BaseEvent, point: Point) -> None:
