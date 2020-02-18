@@ -533,29 +533,22 @@ def _events_to_contours(events: List[Event]) -> List[Polygon]:
         contour_id = len(contours)
         position = index
         initial = event.start
-        contour = [initial]
+        contour_events = [event]
         while position >= index:
             event = events[position]
             if event.end == initial:
                 break
             processed[position] = True
-            if event.is_left_endpoint:
-                event.result_in_out = False
-                event.contour_id = contour_id
-            else:
-                event.complement.result_in_out = True
-                event.complement.contour_id = contour_id
             position = event.position
             processed[position] = True
-            contour.append(events[position].start)
+            contour_events.append(events[position])
             position = _to_next_position(position, events, processed, index)
-        if len(contour) < 3:
-            continue
         position = index if position == -1 else position
-        event = events[position]
-        processed[position] = processed[event.position] = True
-        event.complement.result_in_out = True
-        event.complement.contour_id = contour_id
+        last_event = events[position]
+        processed[position] = processed[last_event.position] = True
+
+        if len(contour_events) < 3:
+            continue
 
         is_internal = False
         hole_of.append(-1)
@@ -573,6 +566,18 @@ def _events_to_contours(events: List[Event]) -> List[Polygon]:
                 depth[contour_id] = depth[lower_contour_id]
                 is_internal = True
         are_internal[contour_id] = is_internal
+
+        contour = []
+        for event in contour_events:
+            contour.append(event.start)
+            if event.is_left_endpoint:
+                event.result_in_out = False
+                event.contour_id = contour_id
+            else:
+                event.complement.result_in_out = True
+                event.complement.contour_id = contour_id
+        last_event.complement.result_in_out = True
+        last_event.complement.contour_id = contour_id
 
         if depth[contour_id] & 1:
             contour.reverse()
