@@ -119,17 +119,41 @@ class BaseEvent(ABC):
         return start_x == end_x
 
     @property
+    def is_horizontal(self) -> bool:
+        _, start_y = self.start
+        _, end_y = self.end
+        return start_y == end_y
+
+    @property
     def segment(self) -> Segment:
         return self.start, self.end
 
-    def is_above(self, point: Point) -> bool:
-        return not self.is_below(point)
+    def below_than_at_x(self, other: 'BaseEvent', x: Coordinate) -> bool:
+        y_at_x, other_y_at_x = self.y_at(x), other.y_at(x)
+        if other_y_at_x != y_at_x:
+            return y_at_x < other_y_at_x
+        else:
+            _, start_y = self.start
+            _, other_start_y = other.start
+            end_x, end_y = self.end
+            other_end_x, other_end_y = other.end
+            return ((start_y, end_y, other_end_x)
+                    < (other_start_y, other_end_y, end_x))
 
-    def is_below(self, point: Point) -> bool:
-        return (self.to_orientation(self.start, point, self.end)
-                is (Orientation.COUNTERCLOCKWISE
-                    if self.is_left_endpoint
-                    else Orientation.CLOCKWISE))
+    def y_at(self, x: Coordinate) -> Coordinate:
+        if self.is_vertical or self.is_horizontal:
+            _, start_y = self.start
+            return start_y
+        else:
+            start_x, start_y = self.start
+            if x == start_x:
+                return start_y
+            end_x, end_y = self.end
+            if x == end_x:
+                return end_y
+            (_, result), = self.to_intersections(self.segment,
+                                                 ((x, start_y), (x, end_y)))
+            return result
 
 
 def _to_event_type(base: Type[Coordinate]) -> Type[BaseEvent]:
@@ -180,18 +204,56 @@ class EventsQueueKey:
             return not event.is_left_endpoint
         # same start, both events are left endpoints
         # or both are right endpoints
-        elif (event.to_orientation(event.start, other_event.end, event.end)
-              is not Orientation.COLLINEAR):
-            # the event associate to the bottom segment is processed first
-            return not event.is_above(other_event.end)
         else:
-            return event.from_left > other_event.from_left
+            other_end_orientation = event.to_orientation(event.start,
+                                                         other_event.end,
+                                                         event.end)
+            if other_end_orientation is not Orientation.COLLINEAR:
+                # the event associate to the bottom segment is processed first
+                return other_end_orientation is Orientation.COUNTERCLOCKWISE
+            else:
+                return event.from_left > other_event.from_left
+
+
+class SweepLine:
+    def __init__(self, *events: BaseEvent,
+                 current_x: Optional[Coordinate] = None) -> None:
+        self.current_x = current_x
+        self._tree = red_black.tree(*events,
+                                    key=cast(Callable[
+                                                 [BaseEvent], SweepLineKey],
+                                             partial(SweepLineKey, self)))
+
+    __repr__ = generate_repr(__init__)
+
+    @property
+    def events(self) -> List[BaseEvent]:
+        return list(self._tree)
+
+    def __contains__(self, event: BaseEvent) -> bool:
+        return event in self._tree
+
+    def move_to(self, x: Coordinate) -> None:
+        self.current_x = x
+
+    def add(self, event: BaseEvent) -> None:
+        self._tree.add(event)
+
+    def remove(self, event: BaseEvent) -> None:
+        self._tree.remove(event)
+
+    def above(self, event: BaseEvent) -> BaseEvent:
+        return self._tree.next(event)
+
+    def below(self, event: BaseEvent) -> BaseEvent:
+        return self._tree.prev(event)
 
 
 class SweepLineKey:
-    __slots__ = ('event',)
+    __slots__ = ('sweep_line', 'event')
 
-    def __init__(self, event: BaseEvent) -> None:
+    def __init__(self, sweep_line: SweepLine, event: BaseEvent) -> None:
+        self.sweep_line = sweep_line
         self.event = event
 
     __repr__ = generate_repr(__init__)
@@ -202,41 +264,85 @@ class SweepLineKey:
                 else NotImplemented)
 
     def __lt__(self, other: 'SweepLineKey') -> bool:
+        """
+        Checks if the segment (or at least the point) associated with event
+        is lower than other's.
+        """
         if not isinstance(other, SweepLineKey):
             return NotImplemented
         if self is other:
             return False
         event, other_event = self.event, other.event
+        if event is other_event:
+            return False
+        start, other_start = event.start, other_event.start
+        end, other_end = event.end, other_event.end
         start_x, start_y = event.start
         other_start_x, other_start_y = other_event.start
-        if (event.to_orientation(event.start, other_event.start, event.end)
-                is event.to_orientation(event.start, other_event.end,
-                                        event.end)
-                is Orientation.COLLINEAR):
+        end_x, end_y = event.end
+        other_end_x, other_end_y = other_event.end
+        other_start_orientation = event.to_orientation(end, start, other_start)
+        other_end_orientation = event.to_orientation(end, start, other_end)
+        if other_start_orientation is other_end_orientation:
+            if other_start_orientation is not Orientation.COLLINEAR:
+                # other segment fully lies on one side
+                return (other_start_orientation
+                        is Orientation.COUNTERCLOCKWISE)
             # segments are collinear
-            return (EventsQueueKey(event) > EventsQueueKey(other_event)
-                    if event.from_left is other_event.from_left
-                    else event.from_left)
-        # segments are not collinear
-        elif event.start == other_event.start:
-            # same left endpoint, use the right endpoint to sort
-            return event.is_below(other_event.end)
-        # different left endpoint, use the left endpoint to sort
+            elif start_x == other_start_x:
+                if start_y != other_start_y:
+                    # segments are vertical
+                    return start_y < other_start_y
+                # segments have same start
+                elif end_x != other_end_x:
+                    return end_x > other_end_x
+                elif event.from_left is not other_event.from_left:
+                    return event.from_left
+                else:
+                    return False
+            elif (end_y - start_y) * (end_x - start_x) > 0:
+                return start_x < other_start_x
+            else:
+                return start_x > other_start_x
+        elif start == other_start:
+            if event.is_vertical:
+                return False
+            else:
+                return other_end_orientation is Orientation.COUNTERCLOCKWISE
         elif start_x == other_start_x:
             return start_y < other_start_y
-        elif EventsQueueKey(event) > EventsQueueKey(other_event):
-            # has the line segment associated to `self` been inserted
-            # into sweep line after the line segment associated to `other`?
-            return other_event.is_above(event.start)
+        elif other_start == end:
+            return other_event.is_vertical
+        elif other_start_orientation is Orientation.COLLINEAR:
+            if other_event.is_vertical:
+                return True
+            else:
+                return other_end_orientation is Orientation.COUNTERCLOCKWISE
+        elif start == other_end:
+            return not event.is_vertical
+        elif start_x == other_end_x:
+            return start_y < other_end_y
+        elif other_end_orientation is Orientation.COLLINEAR:
+            if event.is_vertical:
+                return start_y < other_end_y
+            else:
+                return (other_start_orientation
+                        is Orientation.COUNTERCLOCKWISE)
+        elif event.is_vertical:
+            other_y_at_start_x = other_event.y_at(start_x)
+            if other_y_at_start_x != start_y:
+                return start_y < other_y_at_start_x
+            else:
+                return start_y > end_y
+        elif other_event.to_orientation(other_end, other_start,
+                                        start) is Orientation.COLLINEAR:
+            return (other_event.to_orientation(other_end, other_start, end)
+                    is Orientation.CLOCKWISE)
         else:
-            # the line segment associated to `other` has been inserted
-            # into sweep line after the line segment associated to `self`
-            return event.is_below(other_event.start)
+            return event.below_than_at_x(other_event,
+                                         self.sweep_line.current_x)
 
 
-SweepLine = cast(Callable[[], red_black.Tree[BaseEvent]],
-                 partial(red_black.tree,
-                         key=SweepLineKey))
 EventsQueue = cast(Callable[[], PriorityQueue[BaseEvent]],
                    partial(PriorityQueue,
                            key=EventsQueueKey))
@@ -300,15 +406,16 @@ class Operation:
             if (is_intersection and start_x > min_max_x
                     or is_difference and start_x > left_x_max):
                 break
+            sweep_line.move_to(start_x)
             result.append(event)
             if event.is_left_endpoint:
                 sweep_line.add(event)
                 try:
-                    above_event = sweep_line.next(event)
+                    above_event = sweep_line.above(event)
                 except ValueError:
                     above_event = None
                 try:
-                    below_event = sweep_line.prev(event)
+                    below_event = sweep_line.below(event)
                 except ValueError:
                     below_event = None
                 self.compute_fields(event, below_event)
@@ -319,7 +426,7 @@ class Operation:
                 if below_event is not None:
                     if self.detect_intersection(below_event, event) == 2:
                         try:
-                            below_below_event = sweep_line.prev(below_event)
+                            below_below_event = sweep_line.below(below_event)
                         except ValueError:
                             below_below_event = None
                         self.compute_fields(below_event, below_below_event)
@@ -329,11 +436,11 @@ class Operation:
                 if event not in sweep_line:
                     continue
                 try:
-                    above_event = sweep_line.next(event)
+                    above_event = sweep_line.above(event)
                 except ValueError:
                     above_event = None
                 try:
-                    below_event = sweep_line.prev(event)
+                    below_event = sweep_line.below(event)
                 except ValueError:
                     below_event = None
                 sweep_line.remove(event)
