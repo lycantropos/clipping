@@ -61,13 +61,20 @@ def non_real_base_orientator(first_ray_point: Point,
 to_rational_intersections = linear.find_intersections
 
 
-def to_irrational_intersections(base: Type[Coordinate],
-                                first_segment: Segment,
+def to_irrational_intersections(first_segment: Segment,
                                 second_segment: Segment
                                 ) -> Union[Tuple[()], Tuple[Point],
                                            Tuple[Point, Point]]:
-    result = to_rational_intersections(to_rational_segment(first_segment),
-                                       to_rational_segment(second_segment))
+    return to_rational_intersections(to_rational_segment(first_segment),
+                                     to_rational_segment(second_segment))
+
+
+def to_non_real_intersections(base: Type[Coordinate],
+                              first_segment: Segment,
+                              second_segment: Segment
+                              ) -> Union[Tuple[()], Tuple[Point],
+                                         Tuple[Point, Point]]:
+    result = to_irrational_intersections(first_segment, second_segment)
     return tuple(point_to_irrational_base(base, point) for point in result)
 
 
