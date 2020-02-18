@@ -3,7 +3,6 @@ from abc import (ABC,
 from collections import defaultdict
 from enum import (IntEnum,
                   unique)
-from fractions import Fraction
 from functools import partial
 from numbers import (Rational,
                      Real)
@@ -11,6 +10,9 @@ from reprlib import recursive_repr
 from typing import (Callable,
                     List,
                     Optional,
+                    Tuple,
+                    Type,
+                    Union,
                     cast)
 
 from dendroid import red_black
