@@ -286,8 +286,7 @@ class SweepLineKey:
         if other_start_orientation is other_end_orientation:
             if other_start_orientation is not Orientation.COLLINEAR:
                 # other segment fully lies on one side
-                return (other_start_orientation
-                        is Orientation.COUNTERCLOCKWISE)
+                return other_start_orientation is Orientation.COUNTERCLOCKWISE
             # segments are collinear
             elif start_x == other_start_x:
                 if start_y != other_start_y:
@@ -311,17 +310,11 @@ class SweepLineKey:
                 return other_end_orientation is Orientation.COUNTERCLOCKWISE
         elif start_x == other_start_x:
             return start_y < other_start_y
-        elif other_start == end:
-            return other_event.is_vertical
         elif other_start_orientation is Orientation.COLLINEAR:
             if other_event.is_vertical:
                 return True
             else:
                 return other_end_orientation is Orientation.COUNTERCLOCKWISE
-        elif start == other_end:
-            return not event.is_vertical
-        elif start_x == other_end_x:
-            return start_y < other_end_y
         elif other_end_orientation is Orientation.COLLINEAR:
             if event.is_vertical:
                 return start_y < other_end_y
