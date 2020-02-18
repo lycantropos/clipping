@@ -479,6 +479,8 @@ def _to_x_max(multipolygon: Multipolygon) -> Coordinate:
 def _compute(operation_kind: OperationKind,
              left: Multipolygon,
              right: Multipolygon) -> Multipolygon:
+    if not (left or right):
+        return []
     return Operation(left, right, operation_kind).compute()
 
 
