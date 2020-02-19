@@ -1,11 +1,9 @@
-from decimal import Decimal
 from numbers import Real
 from typing import (List,
                     Tuple,
-                    Type,
-                    TypeVar)
+                    Type)
 
-Coordinate = TypeVar('Coordinate', Real, Decimal)
+Coordinate = Real
 Base = Type[Coordinate]
 Point = Tuple[Coordinate, Coordinate]
 BoundingBox = Tuple[Coordinate, Coordinate, Coordinate, Coordinate]

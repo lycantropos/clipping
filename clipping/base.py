@@ -1,39 +1,33 @@
-from abc import (ABC,
-                 abstractmethod)
 from collections import defaultdict
+from decimal import Decimal
 from enum import (IntEnum,
                   unique)
 from fractions import Fraction
 from functools import partial
-from numbers import (Rational,
-                     Real)
+from numbers import Rational
 from reprlib import recursive_repr
 from typing import (Callable,
                     List,
                     Optional,
-                    Type,
                     cast)
 
+from bentley_ottmann import linear
+from bentley_ottmann.angular import (Orientation,
+                                     to_orientation)
 from dendroid import red_black
 from prioq.base import PriorityQueue
 from reprit.base import generate_repr
 
-from clipping.hints import (Base,
-                            Coordinate,
-                            Multipolygon,
-                            Point,
-                            Polygon,
-                            Segment)
-from clipping.utils import (Orientation,
-                            multipolygon_to_irrational_base,
-                            to_bounding_box,
-                            to_intersections,
-                            to_multipolygon_base,
-                            to_multipolygon_contours,
-                            to_non_real_orientation,
-                            to_rational_multipolygon,
-                            to_real_orientation,
-                            to_segments)
+from .hints import (Coordinate,
+                    Multipolygon,
+                    Point,
+                    Polygon,
+                    Segment)
+from .utils import (to_bounding_box,
+                    to_multipolygon_base,
+                    to_multipolygon_contours,
+                    to_rational_multipolygon,
+                    to_segments)
 
 
 class _EnumBase(IntEnum):
@@ -57,7 +51,7 @@ class OperationKind(_EnumBase):
     XOR = 3
 
 
-class Event(ABC):
+class Event:
     __slots__ = ('is_left_endpoint', 'start', 'complement', 'from_left',
                  'edge_type', 'in_out', 'other_in_out', 'in_result',
                  'result_in_out', 'position', 'contour_id',
@@ -90,15 +84,6 @@ class Event(ABC):
         self.below_in_result_event = below_in_result_event
 
     __repr__ = recursive_repr()(generate_repr(__init__))
-
-    @staticmethod
-    @abstractmethod
-    def to_orientation(first_ray_point: Point,
-                       vertex: Point,
-                       second_ray_point: Point) -> Orientation:
-        """
-        Calculates orientation of angle built from points.
-        """
 
     @property
     def end(self) -> Point:
@@ -143,17 +128,10 @@ class Event(ABC):
             end_x, end_y = self.end
             if x == end_x:
                 return end_y
-            (_, result), = to_intersections(self.segment,
-                                            ((x, start_y), (x, end_y)))
+            (_, result), = linear.find_intersections(self.segment,
+                                                     ((x, start_y),
+                                                      (x, end_y)))
             return result
-
-
-def _to_event_type(base: Type[Coordinate]) -> Type[Event]:
-    return type('Event', (Event,),
-                {Event.to_orientation.__name__: staticmethod(
-                        to_real_orientation
-                        if issubclass(base, Real)
-                        else to_non_real_orientation)})
 
 
 class EventsQueueKey:
@@ -191,9 +169,9 @@ class EventsQueueKey:
         # same start, both events are left endpoints
         # or both are right endpoints
         else:
-            other_end_orientation = event.to_orientation(event.start,
-                                                         other_event.end,
-                                                         event.end)
+            other_end_orientation = to_orientation(event.start,
+                                                   other_event.end,
+                                                   event.end)
             # the lowest segment is processed first
             if other_end_orientation is Orientation.COLLINEAR:
                 _, end_y = event.end
@@ -272,12 +250,10 @@ class SweepLineKey:
         other_start_x, other_start_y = other_event.start
         end_x, end_y = event.end
         other_end_x, other_end_y = other_event.end
-        other_start_orientation = event.to_orientation(end, start, other_start)
-        other_end_orientation = event.to_orientation(end, start, other_end)
-        start_orientation = other_event.to_orientation(other_end, other_start,
-                                                       start)
-        end_orientation = other_event.to_orientation(other_end, other_start,
-                                                     end)
+        other_start_orientation = to_orientation(end, start, other_start)
+        other_end_orientation = to_orientation(end, start, other_end)
+        start_orientation = to_orientation(other_end, other_start, start)
+        end_orientation = to_orientation(other_end, other_start, end)
         if other_start_orientation is other_end_orientation:
             if other_start_orientation is not Orientation.COLLINEAR:
                 # other segment fully lies on one side
@@ -365,15 +341,15 @@ EventsQueue = cast(Callable[[], PriorityQueue[Event]],
 
 
 class Operation:
+    __slots__ = ('left', 'right', 'kind', '_events_queue')
+
     def __init__(self,
-                 base: Base,
                  left: Multipolygon,
                  right: Multipolygon,
                  kind: OperationKind) -> None:
         self.left = left
         self.right = right
         self.kind = kind
-        self._event_type = _to_event_type(base)
         self._events_queue = EventsQueue()
 
     __repr__ = generate_repr(__init__)
@@ -447,10 +423,8 @@ class Operation:
 
     def process_segment(self, segment: Segment, from_left: bool) -> None:
         start, end = sorted(segment)
-        start_event = self._event_type(True, start, None, from_left,
-                                       EdgeType.NORMAL)
-        end_event = self._event_type(False, end, start_event, from_left,
-                                     EdgeType.NORMAL)
+        start_event = Event(True, start, None, from_left, EdgeType.NORMAL)
+        end_event = Event(False, end, start_event, from_left, EdgeType.NORMAL)
         start_event.complement = end_event
         self._events_queue.push(start_event)
         self._events_queue.push(end_event)
@@ -498,8 +472,8 @@ class Operation:
     def detect_intersection(self,
                             first_event: Event,
                             second_event: Event) -> int:
-        intersections = to_intersections(first_event.segment,
-                                         second_event.segment)
+        intersections = linear.find_intersections(first_event.segment,
+                                                  second_event.segment)
         if not intersections:
             # no intersection
             return 0
@@ -569,10 +543,10 @@ class Operation:
             return 3
 
     def divide_segment(self, event: Event, point: Point) -> None:
-        left_event = self._event_type(True, point, event.complement,
-                                      event.from_left, EdgeType.NORMAL)
-        right_event = self._event_type(False, point, event, event.from_left,
-                                       EdgeType.NORMAL)
+        left_event = Event(True, point, event.complement, event.from_left,
+                           EdgeType.NORMAL)
+        right_event = Event(False, point, event, event.from_left,
+                            EdgeType.NORMAL)
         event.complement.complement, event.complement = left_event, right_event
         self._events_queue.push(left_event)
         self._events_queue.push(right_event)
@@ -608,17 +582,12 @@ def _compute(operation_kind: OperationKind,
               or operation_kind is OperationKind.XOR):
             return left + right
         return []
-    original_base = to_multipolygon_base(left + right)
-    if not issubclass(original_base, Rational) and accurate:
+    base = to_multipolygon_base(left + right)
+    if not issubclass(base, Rational) and accurate:
         left, right = (to_rational_multipolygon(left),
                        to_rational_multipolygon(right))
         base = Fraction
-    else:
-        base = original_base
-    result = Operation(base, left, right, operation_kind).compute()
-    return (multipolygon_to_irrational_base(original_base, result)
-            if not issubclass(original_base, Real) and accurate
-            else result)
+    return Operation(base, left, right, operation_kind).compute()
 
 
 intersect = cast(Callable[[Multipolygon, Multipolygon], Multipolygon],

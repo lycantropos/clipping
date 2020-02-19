@@ -1,15 +1,13 @@
 from fractions import Fraction
 from itertools import chain
 from numbers import (Integral,
-                     Number)
+                     Number,
+                     Rational,
+                     Real)
 from typing import (Iterable,
                     List,
                     Sequence,
                     Type)
-
-from bentley_ottmann import linear
-from bentley_ottmann.angular import (Orientation,
-                                     to_orientation as to_real_orientation)
 
 from .hints import (Base,
                     BoundingBox,
@@ -43,38 +41,31 @@ def to_segments(contour: Contour) -> List[Segment]:
 def to_multipolygon_base(multipolygon: Multipolygon) -> Base:
     return max({to_contour_base(contour)
                 for contour in to_multipolygon_contours(multipolygon)},
-               key=_bases_sorting_key)
+               key=_bases_key)
 
 
 def to_contour_base(contour: Contour) -> Base:
     return max(set(map(type, _flatten(contour))),
-               key=_bases_sorting_key)
+               key=_bases_key)
 
 
 _flatten = chain.from_iterable
 
 
-def _bases_sorting_key(base: Base,
-                       types: Sequence[Type[Number]] = Integral.__mro__[:-1]
-                       ) -> int:
+def _bases_key(base: Base,
+               types: Sequence[Type[Number]] = (Integral, Rational, Real)
+               ) -> int:
     try:
         return next(index
                     for index, type_ in enumerate(types)
                     if issubclass(base, type_))
     except StopIteration:
-        raise TypeError('{type} is not recognized as a number type.'
-                        .format(type=base))
-
-
-def to_non_real_orientation(first_ray_point: Point,
-                            vertex: Point,
-                            second_ray_point: Point) -> Orientation:
-    return to_real_orientation(_to_real_point(first_ray_point),
-                               _to_real_point(vertex),
-                               _to_real_point(second_ray_point))
-
-
-to_intersections = linear.find_intersections
+        if issubclass(base, Number):
+            raise TypeError('{type} numbers are not supported.'
+                            .format(type=base))
+        else:
+            raise TypeError('{type} is not recognized as a number type.'
+                            .format(type=base))
 
 
 def to_rational_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
@@ -95,24 +86,6 @@ def to_rational_segment(segment: Segment) -> Segment:
 def to_rational_point(point: Point) -> Point:
     x, y = point
     return Fraction(x), Fraction(y)
-
-
-def multipolygon_to_irrational_base(base: Base,
-                                    multipolygon: Multipolygon
-                                    ) -> Multipolygon:
-    return [(contour_to_irrational_base(base, border),
-             [contour_to_irrational_base(base, hole)
-              for hole in holes])
-            for border, holes in multipolygon]
-
-
-def contour_to_irrational_base(base: Base, contour: Contour) -> Contour:
-    return [point_to_irrational_base(base, vertex) for vertex in contour]
-
-
-def point_to_irrational_base(base: Base, point: Point) -> Point:
-    x, y = point
-    return base(float(x)), base(float(y))
 
 
 def _to_real_point(point: Point) -> Point:
