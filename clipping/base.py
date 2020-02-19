@@ -636,19 +636,12 @@ def _connect_edges(events: List[Event]) -> List[Polygon]:
 
 
 def _collect_events(events: List[Event]) -> List[Event]:
-    result = [event
-              for event in events
-              if event.is_left_endpoint and event.in_result
-              or not event.is_left_endpoint and event.complement.in_result]
-    is_sorted = False
-    while not is_sorted:
-        is_sorted = True
-        for index in range(len(result) - 1):
-            if (EventsQueueKey(result[index])
-                    > EventsQueueKey(result[index + 1])):
-                result[index], result[index + 1] = (result[index + 1],
-                                                    result[index])
-                is_sorted = False
+    result = sorted(
+            [event
+             for event in events
+             if event.is_left_endpoint and event.in_result
+             or not event.is_left_endpoint and event.complement.in_result],
+            key=EventsQueueKey)
     for index, event in enumerate(result):
         event.position = index
         if not event.is_left_endpoint:
