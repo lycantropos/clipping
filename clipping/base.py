@@ -57,7 +57,7 @@ class OperationKind(_EnumBase):
     XOR = 3
 
 
-class BaseEvent(ABC):
+class Event(ABC):
     __slots__ = ('is_left_endpoint', 'start', 'complement', 'from_left',
                  'edge_type', 'in_out', 'other_in_out', 'in_result',
                  'result_in_out', 'position', 'contour_id',
@@ -66,7 +66,7 @@ class BaseEvent(ABC):
     def __init__(self,
                  is_left_endpoint: bool,
                  start: Point,
-                 complement: Optional['BaseEvent'],
+                 complement: Optional['Event'],
                  from_left: bool,
                  edge_type: EdgeType,
                  in_out: bool = False,
@@ -75,7 +75,7 @@ class BaseEvent(ABC):
                  result_in_out: bool = False,
                  position: int = 0,
                  contour_id: Optional[int] = None,
-                 below_in_result_event: Optional['BaseEvent'] = None) -> None:
+                 below_in_result_event: Optional['Event'] = None) -> None:
         self.is_left_endpoint = is_left_endpoint
         self.start = start
         self.complement = complement
@@ -130,7 +130,7 @@ class BaseEvent(ABC):
     def segment(self) -> Segment:
         return self.start, self.end
 
-    def below_than_at_x(self, other: 'BaseEvent', x: Coordinate) -> bool:
+    def below_than_at_x(self, other: 'Event', x: Coordinate) -> bool:
         y_at_x, other_y_at_x = self.y_at(x), other.y_at(x)
         if other_y_at_x != y_at_x:
             return y_at_x < other_y_at_x
@@ -158,13 +158,13 @@ class BaseEvent(ABC):
             return result
 
 
-def _to_event_type(base: Type[Coordinate]) -> Type[BaseEvent]:
-    return type('Event', (BaseEvent,),
-                {BaseEvent.to_orientation.__name__: staticmethod(
+def _to_event_type(base: Type[Coordinate]) -> Type[Event]:
+    return type('Event', (Event,),
+                {Event.to_orientation.__name__: staticmethod(
                         real_base_orientator
                         if issubclass(base, Real)
                         else non_real_base_orientator),
-                    BaseEvent.to_intersections.__name__: staticmethod(
+                    Event.to_intersections.__name__: staticmethod(
                             to_rational_intersections
                             if issubclass(base, Rational)
                             else to_irrational_intersections
@@ -175,7 +175,7 @@ def _to_event_type(base: Type[Coordinate]) -> Type[BaseEvent]:
 class EventsQueueKey:
     __slots__ = ('event',)
 
-    def __init__(self, event: BaseEvent) -> None:
+    def __init__(self, event: Event) -> None:
         self.event = event
 
     __repr__ = generate_repr(__init__)
@@ -218,43 +218,42 @@ class EventsQueueKey:
 
 
 class SweepLine:
-    def __init__(self, *events: BaseEvent,
+    def __init__(self, *events: Event,
                  current_x: Optional[Coordinate] = None) -> None:
         self.current_x = current_x
         self._tree = red_black.tree(*events,
-                                    key=cast(Callable[
-                                                 [BaseEvent], SweepLineKey],
+                                    key=cast(Callable[[Event], SweepLineKey],
                                              partial(SweepLineKey, self)))
 
     __repr__ = generate_repr(__init__)
 
     @property
-    def events(self) -> List[BaseEvent]:
+    def events(self) -> List[Event]:
         return list(self._tree)
 
-    def __contains__(self, event: BaseEvent) -> bool:
+    def __contains__(self, event: Event) -> bool:
         return event in self._tree
 
     def move_to(self, x: Coordinate) -> None:
         self.current_x = x
 
-    def add(self, event: BaseEvent) -> None:
+    def add(self, event: Event) -> None:
         self._tree.add(event)
 
-    def remove(self, event: BaseEvent) -> None:
+    def remove(self, event: Event) -> None:
         self._tree.remove(event)
 
-    def above(self, event: BaseEvent) -> BaseEvent:
+    def above(self, event: Event) -> Event:
         return self._tree.next(event)
 
-    def below(self, event: BaseEvent) -> BaseEvent:
+    def below(self, event: Event) -> Event:
         return self._tree.prev(event)
 
 
 class SweepLineKey:
     __slots__ = ('sweep_line', 'event')
 
-    def __init__(self, sweep_line: SweepLine, event: BaseEvent) -> None:
+    def __init__(self, sweep_line: SweepLine, event: Event) -> None:
         self.sweep_line = sweep_line
         self.event = event
 
@@ -338,7 +337,7 @@ class SweepLineKey:
                                          self.sweep_line.current_x)
 
 
-EventsQueue = cast(Callable[[], PriorityQueue[BaseEvent]],
+EventsQueue = cast(Callable[[], PriorityQueue[Event]],
                    partial(PriorityQueue,
                            key=EventsQueueKey))
 
@@ -387,7 +386,7 @@ class Operation:
     def _try_non_trivial(self) -> Multipolygon:
         return _connect_edges(self.sweep())
 
-    def sweep(self) -> List[BaseEvent]:
+    def sweep(self) -> List[Event]:
         self.fill_queue()
         result = []
         sweep_line = SweepLine()
@@ -461,7 +460,7 @@ class Operation:
         self._events_queue.push(start_event)
         self._events_queue.push(end_event)
 
-    def compute_fields(self, event: BaseEvent, below_event: Optional[BaseEvent]
+    def compute_fields(self, event: Event, below_event: Optional[Event]
                        ) -> None:
         if below_event is None:
             event.in_out = False
@@ -481,7 +480,7 @@ class Operation:
                                            else below_event)
         event.in_result = self.in_result(event)
 
-    def in_result(self, event: BaseEvent) -> bool:
+    def in_result(self, event: Event) -> bool:
         edge_type = event.edge_type
         operation_kind = self.kind
         if edge_type is EdgeType.NORMAL:
@@ -502,8 +501,8 @@ class Operation:
             return False
 
     def detect_intersection(self,
-                            first_event: BaseEvent,
-                            second_event: BaseEvent) -> int:
+                            first_event: Event,
+                            second_event: Event) -> int:
         intersections = first_event.to_intersections(first_event.segment,
                                                      second_event.segment)
         if not intersections:
@@ -574,7 +573,7 @@ class Operation:
             self.divide_segment(sorted_events[0], sorted_events[1].start)
             return 3
 
-    def divide_segment(self, event: BaseEvent, point: Point) -> None:
+    def divide_segment(self, event: Event, point: Point) -> None:
         left_event = self._event_type(True, point, event.complement,
                                       event.from_left, EdgeType.NORMAL)
         right_event = self._event_type(False, point, event, event.from_left,
@@ -606,11 +605,11 @@ symmetric_subtract = cast(Callable[[Multipolygon, Multipolygon], Multipolygon],
                           partial(_compute, OperationKind.XOR))
 
 
-def _connect_edges(events: List[BaseEvent]) -> List[Polygon]:
+def _connect_edges(events: List[Event]) -> List[Polygon]:
     return _events_to_contours(_collect_events(events))
 
 
-def _collect_events(events: List[BaseEvent]) -> List[BaseEvent]:
+def _collect_events(events: List[Event]) -> List[Event]:
     result = [event
               for event in events
               if event.is_left_endpoint and event.in_result
@@ -632,7 +631,7 @@ def _collect_events(events: List[BaseEvent]) -> List[BaseEvent]:
     return result
 
 
-def _events_to_contours(events: List[BaseEvent]) -> List[Polygon]:
+def _events_to_contours(events: List[Event]) -> List[Polygon]:
     depth, hole_of = defaultdict(int), []
     processed = [False] * len(events)
     contours = []
@@ -701,7 +700,7 @@ def _events_to_contours(events: List[BaseEvent]) -> List[Polygon]:
 
 
 def _to_next_position(position: int,
-                      events: List[BaseEvent],
+                      events: List[Event],
                       processed: List[bool],
                       original_index: int) -> int:
     result = position + 1
