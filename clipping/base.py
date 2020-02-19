@@ -210,11 +210,17 @@ class EventsQueueKey:
             other_end_orientation = event.to_orientation(event.start,
                                                          other_event.end,
                                                          event.end)
-            if other_end_orientation is not Orientation.COLLINEAR:
-                # the event associate to the bottom segment is processed first
-                return other_end_orientation is Orientation.COUNTERCLOCKWISE
+            # the lowest segment is processed first
+            if other_end_orientation is Orientation.COLLINEAR:
+                _, end_y = event.end
+                _, other_end_y = other_event.end
+                if end_y != other_end_y:
+                    return end_y < other_end_y
+                else:
+                    # segments are equal
+                    return event.from_left > other_event.from_left
             else:
-                return event.from_left > other_event.from_left
+                return other_end_orientation is Orientation.COUNTERCLOCKWISE
 
 
 class SweepLine:
