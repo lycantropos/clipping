@@ -112,8 +112,7 @@ def contour_to_irrational_base(base: Base, contour: Contour) -> Contour:
 
 def point_to_irrational_base(base: Base, point: Point) -> Point:
     x, y = point
-    return (base(x.numerator) / x.denominator,
-            base(y.numerator) / y.denominator)
+    return base(float(x)), base(float(y))
 
 
 def _to_real_point(point: Point) -> Point:
