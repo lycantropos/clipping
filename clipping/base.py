@@ -3,6 +3,7 @@ from abc import (ABC,
 from collections import defaultdict
 from enum import (IntEnum,
                   unique)
+from fractions import Fraction
 from functools import partial
 from numbers import (Rational,
                      Real)
@@ -10,28 +11,27 @@ from reprlib import recursive_repr
 from typing import (Callable,
                     List,
                     Optional,
-                    Tuple,
                     Type,
-                    Union,
                     cast)
 
 from dendroid import red_black
 from prioq.base import PriorityQueue
 from reprit.base import generate_repr
 
-from clipping.hints import (Coordinate,
+from clipping.hints import (Base,
+                            Coordinate,
                             Multipolygon,
                             Point,
                             Polygon,
                             Segment)
 from clipping.utils import (Orientation,
+                            multipolygon_to_irrational_base,
                             to_bounding_box,
-                            to_irrational_intersections,
+                            to_intersections,
                             to_multipolygon_base,
                             to_multipolygon_contours,
-                            to_non_real_intersections,
                             to_non_real_orientation,
-                            to_rational_intersections,
+                            to_rational_multipolygon,
                             to_real_orientation,
                             to_segments)
 
@@ -100,16 +100,6 @@ class Event(ABC):
         Calculates orientation of angle built from points.
         """
 
-    @staticmethod
-    @abstractmethod
-    def to_intersections(first_segment: Segment,
-                         second_segment: Segment
-                         ) -> Union[Tuple[()], Tuple[Point],
-                                    Tuple[Point, Point]]:
-        """
-        Calculates orientation of angle built from points.
-        """
-
     @property
     def end(self) -> Point:
         return self.complement.start
@@ -153,8 +143,8 @@ class Event(ABC):
             end_x, end_y = self.end
             if x == end_x:
                 return end_y
-            (_, result), = self.to_intersections(self.segment,
-                                                 ((x, start_y), (x, end_y)))
+            (_, result), = to_intersections(self.segment,
+                                            ((x, start_y), (x, end_y)))
             return result
 
 
@@ -163,13 +153,7 @@ def _to_event_type(base: Type[Coordinate]) -> Type[Event]:
                 {Event.to_orientation.__name__: staticmethod(
                         to_real_orientation
                         if issubclass(base, Real)
-                        else to_non_real_orientation),
-                    Event.to_intersections.__name__: staticmethod(
-                            to_rational_intersections
-                            if issubclass(base, Rational)
-                            else to_irrational_intersections
-                            if issubclass(base, Real)
-                            else partial(to_non_real_intersections, base))})
+                        else to_non_real_orientation)})
 
 
 class EventsQueueKey:
@@ -382,46 +366,19 @@ EventsQueue = cast(Callable[[], PriorityQueue[Event]],
 
 class Operation:
     def __init__(self,
+                 base: Base,
                  left: Multipolygon,
                  right: Multipolygon,
                  kind: OperationKind) -> None:
         self.left = left
         self.right = right
         self.kind = kind
-        self._event_type = _to_event_type(to_multipolygon_base(left or right))
+        self._event_type = _to_event_type(base)
         self._events_queue = EventsQueue()
 
     __repr__ = generate_repr(__init__)
 
     def compute(self) -> Multipolygon:
-        result = self._try_trivial()
-        return self._try_non_trivial() if result is None else result
-
-    def _try_trivial(self) -> Optional[Multipolygon]:
-        if not (self.left and self.right):
-            # at least one of the arguments is empty
-            if self.kind is OperationKind.DIFFERENCE:
-                return self.left
-            if (self.kind is OperationKind.UNION
-                    or self.kind is OperationKind.XOR):
-                return self.left or self.right
-            return []
-        left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(
-                self.left)
-        right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(
-                self.right)
-        if (left_x_min > right_x_max or right_x_min > left_x_max
-                or left_y_min > right_y_max or right_y_min > left_y_max):
-            # the bounding boxes do not overlap
-            if self.kind is OperationKind.DIFFERENCE:
-                return self.left
-            elif (self.kind is OperationKind.UNION
-                  or self.kind is OperationKind.XOR):
-                return self.left + self.right
-            return []
-        return None
-
-    def _try_non_trivial(self) -> Multipolygon:
         return _connect_edges(self.sweep())
 
     def sweep(self) -> List[Event]:
@@ -541,8 +498,8 @@ class Operation:
     def detect_intersection(self,
                             first_event: Event,
                             second_event: Event) -> int:
-        intersections = first_event.to_intersections(first_event.segment,
-                                                     second_event.segment)
+        intersections = to_intersections(first_event.segment,
+                                         second_event.segment)
         if not intersections:
             # no intersection
             return 0
@@ -627,10 +584,41 @@ def _to_x_max(multipolygon: Multipolygon) -> Coordinate:
 
 def _compute(operation_kind: OperationKind,
              left: Multipolygon,
-             right: Multipolygon) -> Multipolygon:
+             right: Multipolygon,
+             *,
+             accurate: bool = True) -> Multipolygon:
     if not (left or right):
         return []
-    return Operation(left, right, operation_kind).compute()
+    elif not (left and right):
+        # at least one of the arguments is empty
+        if operation_kind is OperationKind.DIFFERENCE:
+            return left
+        if (operation_kind is OperationKind.UNION
+                or operation_kind is OperationKind.XOR):
+            return left or right
+        return []
+    left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
+    right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(right)
+    if (left_x_min > right_x_max or right_x_min > left_x_max
+            or left_y_min > right_y_max or right_y_min > left_y_max):
+        # the bounding boxes do not overlap
+        if operation_kind is OperationKind.DIFFERENCE:
+            return left
+        elif (operation_kind is OperationKind.UNION
+              or operation_kind is OperationKind.XOR):
+            return left + right
+        return []
+    original_base = to_multipolygon_base(left + right)
+    if not issubclass(original_base, Rational) and accurate:
+        left, right = (to_rational_multipolygon(left),
+                       to_rational_multipolygon(right))
+        base = Fraction
+    else:
+        base = original_base
+    result = Operation(base, left, right, operation_kind).compute()
+    return (multipolygon_to_irrational_base(original_base, result)
+            if not issubclass(original_base, Real) and accurate
+            else result)
 
 
 intersect = cast(Callable[[Multipolygon, Multipolygon], Multipolygon],

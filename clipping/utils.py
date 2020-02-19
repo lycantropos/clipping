@@ -1,10 +1,11 @@
 from fractions import Fraction
 from itertools import chain
+from numbers import (Integral,
+                     Number)
 from typing import (Iterable,
                     List,
-                    Tuple,
-                    Type,
-                    Union)
+                    Sequence,
+                    Type)
 
 from bentley_ottmann import linear
 from bentley_ottmann.angular import (Orientation,
@@ -13,7 +14,6 @@ from bentley_ottmann.angular import (Orientation,
 from .hints import (Base,
                     BoundingBox,
                     Contour,
-                    Coordinate,
                     Multipolygon,
                     Point,
                     Segment)
@@ -41,13 +41,28 @@ def to_segments(contour: Contour) -> List[Segment]:
 
 
 def to_multipolygon_base(multipolygon: Multipolygon) -> Base:
-    first_left_polygon_border, _ = multipolygon[0]
-    return to_contour_base(first_left_polygon_border)
+    return max({to_contour_base(contour)
+                for contour in to_multipolygon_contours(multipolygon)},
+               key=_bases_sorting_key)
 
 
 def to_contour_base(contour: Contour) -> Base:
-    first_vertex_x, _ = contour[0]
-    return type(first_vertex_x)
+    return max({type(coordinate)
+                for vertex in contour
+                for coordinate in vertex},
+               key=_bases_sorting_key)
+
+
+def _bases_sorting_key(base: Base,
+                       types: Sequence[Type[Number]] = Integral.__mro__[::-1]
+                       ) -> int:
+    try:
+        return next(index
+                    for index, type_ in enumerate(types)
+                    if issubclass(base, type_))
+    except StopIteration:
+        raise TypeError('{type} is not recognized as a number type.'
+                        .format(type=base))
 
 
 def to_non_real_orientation(first_ray_point: Point,
@@ -58,24 +73,17 @@ def to_non_real_orientation(first_ray_point: Point,
                                _to_real_point(second_ray_point))
 
 
-to_rational_intersections = linear.find_intersections
+to_intersections = linear.find_intersections
 
 
-def to_irrational_intersections(first_segment: Segment,
-                                second_segment: Segment
-                                ) -> Union[Tuple[()], Tuple[Point],
-                                           Tuple[Point, Point]]:
-    return to_rational_intersections(to_rational_segment(first_segment),
-                                     to_rational_segment(second_segment))
+def to_rational_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
+    return [(to_rational_contour(border), [to_rational_contour(hole)
+                                           for hole in holes])
+            for border, holes in multipolygon]
 
 
-def to_non_real_intersections(base: Type[Coordinate],
-                              first_segment: Segment,
-                              second_segment: Segment
-                              ) -> Union[Tuple[()], Tuple[Point],
-                                         Tuple[Point, Point]]:
-    result = to_irrational_intersections(first_segment, second_segment)
-    return tuple(point_to_irrational_base(base, point) for point in result)
+def to_rational_contour(contour: Contour) -> Contour:
+    return [to_rational_point(vertex) for vertex in contour]
 
 
 def to_rational_segment(segment: Segment) -> Segment:
@@ -88,7 +96,20 @@ def to_rational_point(point: Point) -> Point:
     return Fraction(x), Fraction(y)
 
 
-def point_to_irrational_base(base: Type[Coordinate], point: Point) -> Point:
+def multipolygon_to_irrational_base(base: Base,
+                                    multipolygon: Multipolygon
+                                    ) -> Multipolygon:
+    return [(contour_to_irrational_base(base, border),
+             [contour_to_irrational_base(base, hole)
+              for hole in holes])
+            for border, holes in multipolygon]
+
+
+def contour_to_irrational_base(base: Base, contour: Contour) -> Contour:
+    return [point_to_irrational_base(base, vertex) for vertex in contour]
+
+
+def point_to_irrational_base(base: Base, point: Point) -> Point:
     x, y = point
     return (base(x.numerator) / x.denominator,
             base(y.numerator) / y.denominator)
