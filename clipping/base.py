@@ -25,14 +25,14 @@ from clipping.hints import (Coordinate,
                             Polygon,
                             Segment)
 from clipping.utils import (Orientation,
-                            non_real_base_orientator,
-                            real_base_orientator,
                             to_bounding_box,
                             to_irrational_intersections,
                             to_multipolygon_base,
                             to_multipolygon_contours,
                             to_non_real_intersections,
+                            to_non_real_orientation,
                             to_rational_intersections,
+                            to_real_orientation,
                             to_segments)
 
 
@@ -161,9 +161,9 @@ class Event(ABC):
 def _to_event_type(base: Type[Coordinate]) -> Type[Event]:
     return type('Event', (Event,),
                 {Event.to_orientation.__name__: staticmethod(
-                        real_base_orientator
+                        to_real_orientation
                         if issubclass(base, Real)
-                        else non_real_base_orientator),
+                        else to_non_real_orientation),
                     Event.to_intersections.__name__: staticmethod(
                             to_rational_intersections
                             if issubclass(base, Rational)

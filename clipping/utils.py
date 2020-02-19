@@ -8,7 +8,7 @@ from typing import (Iterable,
 
 from bentley_ottmann import linear
 from bentley_ottmann.angular import (Orientation,
-                                     to_orientation as real_base_orientator)
+                                     to_orientation as to_real_orientation)
 
 from .hints import (Base,
                     BoundingBox,
@@ -50,12 +50,12 @@ def to_contour_base(contour: Contour) -> Base:
     return type(first_vertex_x)
 
 
-def non_real_base_orientator(first_ray_point: Point,
-                             vertex: Point,
-                             second_ray_point: Point) -> Orientation:
-    return real_base_orientator(_to_real_point(first_ray_point),
-                                _to_real_point(vertex),
-                                _to_real_point(second_ray_point))
+def to_non_real_orientation(first_ray_point: Point,
+                            vertex: Point,
+                            second_ray_point: Point) -> Orientation:
+    return to_real_orientation(_to_real_point(first_ray_point),
+                               _to_real_point(vertex),
+                               _to_real_point(second_ray_point))
 
 
 to_rational_intersections = linear.find_intersections
