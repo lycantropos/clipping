@@ -21,7 +21,8 @@ from .hints import (Coordinate,
                     Point,
                     Polygon,
                     Segment)
-from .utils import (to_bounding_box,
+from .utils import (shrink_collinear_vertices,
+                    to_bounding_box,
                     to_multipolygon_base,
                     to_multipolygon_contours,
                     to_rational_multipolygon,
@@ -629,7 +630,6 @@ def _events_to_contours(events: List[Event]) -> List[Polygon]:
         if processed[index]:
             continue
 
-        contour_id = len(contours)
         position = index
         initial = event.start
         contour_events = [event]
@@ -649,6 +649,7 @@ def _events_to_contours(events: List[Event]) -> List[Polygon]:
         if len(contour_events) < 3:
             continue
 
+        contour_id = len(contours)
         is_internal = False
         hole_of.append(-1)
         if event.below_in_result_event is not None:
@@ -681,6 +682,7 @@ def _events_to_contours(events: List[Event]) -> List[Polygon]:
         if depth[contour_id] & 1:
             contour.reverse()
 
+        shrink_collinear_vertices(contour)
         contours.append(contour)
     return [(contour, [contours[hole_index]
                        for hole_index in holes[index]])

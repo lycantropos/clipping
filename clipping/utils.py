@@ -9,6 +9,9 @@ from typing import (Iterable,
                     Sequence,
                     Type)
 
+from bentley_ottmann.angular import (Orientation,
+                                     to_orientation)
+
 from .hints import (Base,
                     BoundingBox,
                     Contour,
@@ -88,6 +91,10 @@ def to_rational_point(point: Point) -> Point:
     return Fraction(x), Fraction(y)
 
 
-def _to_real_point(point: Point) -> Point:
-    x, y = point
-    return float(x), float(y)
+def shrink_collinear_vertices(contour: Contour) -> None:
+    for index in range(len(contour)):
+        while (max(index, 2) < len(contour)
+               and (to_orientation(contour[index - 2], contour[index - 1],
+                                   contour[index])
+                    is Orientation.COLLINEAR)):
+            del contour[index - 1]
