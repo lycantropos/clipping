@@ -92,8 +92,16 @@ def to_rational_point(point: Point) -> Point:
 
 
 def shrink_collinear_vertices(contour: Contour) -> None:
+    self_intersections, visited = set(), set()
+    visit = visited.add
+    for vertex in contour:
+        if vertex in visited:
+            self_intersections.add(vertex)
+        else:
+            visit(vertex)
     for index in range(len(contour)):
         while (max(index, 2) < len(contour)
+               and contour[index - 1] not in self_intersections
                and (to_orientation(contour[index - 2], contour[index - 1],
                                    contour[index])
                     is Orientation.COLLINEAR)):
