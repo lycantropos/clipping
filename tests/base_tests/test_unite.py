@@ -62,5 +62,7 @@ def test_associativity(multipolygons_triplet: MultipolygonsTriplet) -> None:
     result = unite(unite(left_multipolygon, mid_multipolygon),
                    right_multipolygon)
 
-    assert result == unite(left_multipolygon,
-                           unite(mid_multipolygon, right_multipolygon))
+    assert are_multipolygons_similar(result,
+                                     unite(left_multipolygon,
+                                           unite(mid_multipolygon,
+                                                 right_multipolygon)))
