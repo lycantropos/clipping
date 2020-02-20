@@ -25,6 +25,6 @@ def to_simple_multipolygons(contours: Strategy[Contour]
 multipolygons_strategies = contours_strategies.map(to_simple_multipolygons)
 multipolygons = multipolygons_strategies.flatmap(identity)
 empty_multipolygons_with_multipolygons = strategies.tuples(
-        multipolygons, strategies.builds(list))
+        strategies.builds(list), multipolygons)
 multipolygons_pairs = multipolygons_strategies.flatmap(to_pairs)
 multipolygons_triplets = multipolygons_strategies.flatmap(to_triplets)
