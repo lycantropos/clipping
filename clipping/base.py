@@ -1,8 +1,6 @@
 from collections import defaultdict
-from decimal import Decimal
 from enum import (IntEnum,
                   unique)
-from fractions import Fraction
 from functools import partial
 from numbers import Rational
 from reprlib import recursive_repr
