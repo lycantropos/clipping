@@ -573,14 +573,17 @@ def _compute(operation_kind: OperationKind,
         return []
     left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
     right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(right)
-    if (left_x_min > right_x_max or right_x_min > left_x_max
-            or left_y_min > right_y_max or right_y_min > left_y_max):
+    if (left_x_min > right_x_max or left_x_max < right_x_min
+            or left_y_min > right_y_max or left_y_max < right_y_min):
         # the bounding boxes do not overlap
         if operation_kind is OperationKind.DIFFERENCE:
             return left
         elif (operation_kind is OperationKind.UNION
               or operation_kind is OperationKind.XOR):
-            return left + right
+            if left_x_max < right_x_min or left_y_max < right_y_min:
+                return left + right
+            else:
+                return right + left
         return []
     if (not issubclass(to_multipolygon_base(left + right), Rational)
             and accurate):
