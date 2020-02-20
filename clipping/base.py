@@ -582,12 +582,11 @@ def _compute(operation_kind: OperationKind,
               or operation_kind is OperationKind.XOR):
             return left + right
         return []
-    base = to_multipolygon_base(left + right)
-    if not issubclass(base, Rational) and accurate:
+    if (not issubclass(to_multipolygon_base(left + right), Rational)
+            and accurate):
         left, right = (to_rational_multipolygon(left),
                        to_rational_multipolygon(right))
-        base = Fraction
-    return Operation(base, left, right, operation_kind).compute()
+    return Operation(left, right, operation_kind).compute()
 
 
 intersect = cast(Callable[[Multipolygon, Multipolygon], Multipolygon],
