@@ -115,7 +115,7 @@ def is_polygon(object_: Any) -> bool:
 
 def is_contour(object_: Any) -> bool:
     return (isinstance(object_, list)
-            and len(object_) > 3
+            and len(object_) >= 3
             and all(map(is_point, object_)))
 
 
