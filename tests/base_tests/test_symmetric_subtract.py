@@ -62,12 +62,10 @@ def test_equivalent_using_union_of_differences(
         multipolygons_pair: MultipolygonsPair) -> None:
     left_multipolygon, right_multipolygon = multipolygons_pair
 
-    result = symmetric_subtract(subtract(left_multipolygon,
-                                         right_multipolygon),
-                                subtract(right_multipolygon,
-                                         left_multipolygon))
+    result = symmetric_subtract(left_multipolygon, right_multipolygon)
 
-    assert result == symmetric_subtract(left_multipolygon, right_multipolygon)
+    assert result == unite(subtract(left_multipolygon, right_multipolygon),
+                           subtract(right_multipolygon, left_multipolygon))
 
 
 @given(strategies.multipolygons_pairs)
@@ -107,18 +105,3 @@ def test_associativity(multipolygons_triplet: MultipolygonsTriplet) -> None:
             result, symmetric_subtract(left_multipolygon,
                                        symmetric_subtract(mid_multipolygon,
                                                           right_multipolygon)))
-
-
-@given(strategies.multipolygons_triplets)
-def test_repeated(multipolygons_triplet: MultipolygonsTriplet) -> None:
-    (left_multipolygon, mid_multipolygon,
-     right_multipolygon) = multipolygons_triplet
-
-    result = symmetric_subtract(symmetric_subtract(left_multipolygon,
-                                                   mid_multipolygon),
-                                symmetric_subtract(mid_multipolygon,
-                                                   right_multipolygon))
-
-    assert are_multipolygons_similar(result,
-                                     symmetric_subtract(left_multipolygon,
-                                                        right_multipolygon))
