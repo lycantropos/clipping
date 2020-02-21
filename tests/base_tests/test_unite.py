@@ -2,6 +2,7 @@ from hypothesis import given
 
 from clipping.hints import Multipolygon
 from clipping.planar import (intersect,
+                             subtract,
                              unite)
 from tests.utils import (MultipolygonsPair,
                          MultipolygonsTriplet,
@@ -77,6 +78,22 @@ def test_associativity(multipolygons_triplet: MultipolygonsTriplet) -> None:
                                      unite(left_multipolygon,
                                            unite(mid_multipolygon,
                                                  right_multipolygon)))
+
+
+@given(strategies.multipolygons_triplets)
+def test_difference_operand(multipolygons_triplet: MultipolygonsTriplet
+                            ) -> None:
+    (left_multipolygon, mid_multipolygon,
+     right_multipolygon) = multipolygons_triplet
+
+    result = unite(subtract(left_multipolygon, mid_multipolygon),
+                   right_multipolygon)
+
+    assert are_multipolygons_similar(result,
+                                     subtract(unite(left_multipolygon,
+                                                    right_multipolygon),
+                                              subtract(mid_multipolygon,
+                                                       right_multipolygon)))
 
 
 @given(strategies.multipolygons_triplets)
