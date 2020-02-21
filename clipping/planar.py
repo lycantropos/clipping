@@ -130,11 +130,6 @@ class EventsQueueKey:
 
     __repr__ = generate_repr(__init__)
 
-    def __eq__(self, other: 'EventsQueueKey') -> bool:
-        return (self.event == other.event
-                if isinstance(other, EventsQueueKey)
-                else NotImplemented)
-
     def __lt__(self, other: 'EventsQueueKey') -> bool:
         if not isinstance(other, EventsQueueKey):
             return NotImplemented
