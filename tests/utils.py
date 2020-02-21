@@ -24,6 +24,11 @@ Key = Callable[[Domain], Any]
 MultipolygonsPair = Tuple[Multipolygon, Multipolygon]
 MultipolygonsTriplet = Tuple[Multipolygon, Multipolygon, Multipolygon]
 
+
+def equivalence(left_statement: bool, right_statement: bool) -> bool:
+    return left_statement is right_statement
+
+
 _sentinel = object()
 
 
