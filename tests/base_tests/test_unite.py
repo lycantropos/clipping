@@ -1,6 +1,6 @@
 from hypothesis import given
 
-from clipping.base import unite
+from clipping.planar import unite
 from clipping.hints import Multipolygon
 from tests.utils import (MultipolygonsPair,
                          MultipolygonsTriplet,

@@ -1,7 +1,7 @@
 from hypothesis import given
 
-from clipping.base import (intersect,
-                           unite)
+from clipping.planar import (intersect,
+                             unite)
 from clipping.hints import Multipolygon
 from tests.utils import (MultipolygonsPair,
                          MultipolygonsTriplet,
