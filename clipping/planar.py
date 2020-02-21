@@ -23,6 +23,7 @@ from .hints import (Coordinate,
                     Segment)
 from .utils import (shrink_collinear_vertices,
                     to_bounding_box,
+                    to_first_boundary_vertex,
                     to_multipolygon_base,
                     to_multipolygon_contours,
                     to_rational_multipolygon,
@@ -567,10 +568,9 @@ def _compute(operation_kind: OperationKind,
             return left
         elif (operation_kind is OperationKind.UNION
               or operation_kind is OperationKind.XOR):
-            if (left_x_min, left_y_max) < (right_x_min, right_y_min):
-                return left + right
-            else:
-                return right + left
+            result = right + left
+            result.sort(key=to_first_boundary_vertex)
+            return result
         return []
     if (not issubclass(to_multipolygon_base(left + right), Rational)
             and accurate):

@@ -17,6 +17,7 @@ from .hints import (Base,
                     Contour,
                     Multipolygon,
                     Point,
+                    Polygon,
                     Segment)
 
 
@@ -106,3 +107,8 @@ def shrink_collinear_vertices(contour: Contour) -> None:
                                    contour[index])
                     is Orientation.COLLINEAR)):
             del contour[index - 1]
+
+
+def to_first_boundary_vertex(polygon: Polygon) -> Point:
+    boundary, _ = polygon
+    return boundary[0]

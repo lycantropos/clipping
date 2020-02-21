@@ -14,10 +14,9 @@ from hypothesis import strategies
 from hypothesis.strategies import SearchStrategy
 
 from clipping.hints import (Contour,
-                            Multipolygon,
-                            Point,
-                            Polygon)
-from clipping.utils import to_contour_base
+                            Multipolygon)
+from clipping.utils import (to_contour_base,
+                            to_first_boundary_vertex)
 
 Strategy = SearchStrategy
 Domain = TypeVar('Domain')
@@ -51,13 +50,8 @@ def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
                                                     for hole in holes],
                                                    key=itemgetter(0)))
               for boundary, holes in multipolygon]
-    result.sort(key=_to_first_boundary_vertex)
+    result.sort(key=to_first_boundary_vertex)
     return result
-
-
-def _to_first_boundary_vertex(polygon: Polygon) -> Point:
-    boundary, _ = polygon
-    return boundary[0]
 
 
 def normalize_contour(contour: Contour) -> Contour:
