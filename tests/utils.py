@@ -1,7 +1,6 @@
 from numbers import (Number,
                      Real)
-from operator import (is_,
-                      itemgetter)
+from operator import itemgetter
 from typing import (Any,
                     Callable,
                     Iterable,
@@ -124,4 +123,4 @@ def is_point(object_: Any) -> bool:
             and len(object_) == 2
             and all(isinstance(coordinate, Number)
                     for coordinate in object_)
-            and is_(*map(type, object_)))
+            and len(set(map(type, object_))) == 1)
