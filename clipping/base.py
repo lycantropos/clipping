@@ -579,7 +579,7 @@ def _compute(operation_kind: OperationKind,
             return left
         elif (operation_kind is OperationKind.UNION
               or operation_kind is OperationKind.XOR):
-            if left_x_max < right_x_min or left_y_max < right_y_min:
+            if left_x_max <= right_x_min:
                 return left + right
             else:
                 return right + left
