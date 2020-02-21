@@ -1,5 +1,5 @@
 clipping
-=========
+========
 
 [![](https://travis-ci.com/lycantropos/clipping.svg?branch=master)](https://travis-ci.com/lycantropos/clipping "Travis CI")
 [![](https://dev.azure.com/lycantropos/clipping/_apis/build/status/lycantropos.clipping?branchName=master)](https://dev.azure.com/lycantropos/clipping/_build/latest?definitionId=21&branchName=master "Azure Pipelines")
