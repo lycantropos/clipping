@@ -251,24 +251,21 @@ class SweepLineKey:
                 return start_x < other_start_x
         elif start_orientation is end_orientation:
             return start_orientation is Orientation.CLOCKWISE
-        elif start == other_start:
-            if event.is_vertical:
-                return False
-            else:
-                return other_end_orientation is Orientation.COUNTERCLOCKWISE
         elif other_start_orientation is Orientation.COLLINEAR:
             return other_end_orientation is Orientation.COUNTERCLOCKWISE
         elif start_orientation is Orientation.COLLINEAR:
             return end_orientation is Orientation.CLOCKWISE
+        elif event.is_vertical:
+            return start_orientation is Orientation.CLOCKWISE
+        elif other_event.is_vertical:
+            return other_start_orientation is Orientation.COUNTERCLOCKWISE
         elif other_end_orientation is Orientation.COLLINEAR:
             return other_start_orientation is Orientation.COUNTERCLOCKWISE
         elif end_orientation is Orientation.COLLINEAR:
             return start_orientation is Orientation.CLOCKWISE
         else:
-            y_at_current_x, other_y_at_current_x = (
-                event.y_at(self.sweep_line.current_x),
-                other_event.y_at(self.sweep_line.current_x))
-            return y_at_current_x < other_y_at_current_x
+            current_x = self.sweep_line.current_x
+            return event.y_at(current_x) < other_event.y_at(current_x)
 
 
 EventsQueue = cast(Callable[[], PriorityQueue[Event]],
