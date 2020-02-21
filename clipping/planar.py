@@ -227,8 +227,6 @@ class SweepLineKey:
         """
         if not isinstance(other, SweepLineKey):
             return NotImplemented
-        if self is other:
-            return False
         event, other_event = self.event, other.event
         if event is other_event:
             return False
@@ -240,6 +238,8 @@ class SweepLineKey:
         other_end_x, other_end_y = other_event.end
         other_start_orientation = to_orientation(end, start, other_start)
         other_end_orientation = to_orientation(end, start, other_end)
+        start_orientation = to_orientation(other_end, other_start, start)
+        end_orientation = to_orientation(other_end, other_start, end)
         if other_start_orientation is other_end_orientation:
             if other_start_orientation is not Orientation.COLLINEAR:
                 # other segment fully lies on one side
@@ -259,6 +259,8 @@ class SweepLineKey:
             else:
                 # segments are horizontal
                 return start_x < other_start_x
+        elif start_orientation is end_orientation:
+            return start_orientation is Orientation.CLOCKWISE
         elif start == other_start:
             if event.is_vertical:
                 return False
@@ -266,14 +268,10 @@ class SweepLineKey:
                 return other_end_orientation is Orientation.COUNTERCLOCKWISE
         elif other_start_orientation is Orientation.COLLINEAR:
             return other_end_orientation is Orientation.COUNTERCLOCKWISE
-        elif other_end_orientation is Orientation.COLLINEAR:
-            return other_start_orientation is Orientation.COUNTERCLOCKWISE
-        start_orientation = to_orientation(other_end, other_start, start)
-        end_orientation = to_orientation(other_end, other_start, end)
-        if start_orientation is end_orientation:
-            return start_orientation is Orientation.CLOCKWISE
         elif start_orientation is Orientation.COLLINEAR:
             return end_orientation is Orientation.CLOCKWISE
+        elif other_end_orientation is Orientation.COLLINEAR:
+            return other_start_orientation is Orientation.COUNTERCLOCKWISE
         elif end_orientation is Orientation.COLLINEAR:
             return start_orientation is Orientation.CLOCKWISE
         else:
