@@ -1,7 +1,8 @@
 from hypothesis import given
 
 from clipping.hints import Multipolygon
-from clipping.planar import unite
+from clipping.planar import (intersect,
+                             unite)
 from tests.utils import (MultipolygonsPair,
                          MultipolygonsTriplet,
                          are_multipolygons_similar,
@@ -46,6 +47,16 @@ def test_right_neutral_element(
 
 
 @given(strategies.multipolygons_pairs)
+def test_absorption_identity(multipolygons_pair: MultipolygonsPair) -> None:
+    left_multipolygon, right_multipolygon = multipolygons_pair
+
+    result = unite(left_multipolygon, intersect(left_multipolygon,
+                                                right_multipolygon))
+
+    assert are_multipolygons_similar(result, left_multipolygon)
+
+
+@given(strategies.multipolygons_pairs)
 def test_commutativity(multipolygons_pair: MultipolygonsPair) -> None:
     left_multipolygon, right_multipolygon = multipolygons_pair
 
@@ -66,3 +77,19 @@ def test_associativity(multipolygons_triplet: MultipolygonsTriplet) -> None:
                                      unite(left_multipolygon,
                                            unite(mid_multipolygon,
                                                  right_multipolygon)))
+
+
+@given(strategies.multipolygons_triplets)
+def test_distribution_over_intersection(
+        multipolygons_triplet: MultipolygonsTriplet) -> None:
+    (left_multipolygon, mid_multipolygon,
+     right_multipolygon) = multipolygons_triplet
+
+    result = unite(left_multipolygon, intersect(mid_multipolygon,
+                                                right_multipolygon))
+
+    assert are_multipolygons_similar(result,
+                                     intersect(unite(left_multipolygon,
+                                                     mid_multipolygon),
+                                               unite(left_multipolygon,
+                                                     right_multipolygon)))
