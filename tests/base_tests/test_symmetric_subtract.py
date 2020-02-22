@@ -105,3 +105,19 @@ def test_associativity(multipolygons_triplet: MultipolygonsTriplet) -> None:
             result, symmetric_subtract(left_multipolygon,
                                        symmetric_subtract(mid_multipolygon,
                                                           right_multipolygon)))
+
+
+@given(strategies.multipolygons_triplets)
+def test_repeated(multipolygons_triplet: MultipolygonsTriplet) -> None:
+    print(multipolygons_triplet)
+    (left_multipolygon, mid_multipolygon,
+     right_multipolygon) = multipolygons_triplet
+
+    result = symmetric_subtract(symmetric_subtract(left_multipolygon,
+                                                   mid_multipolygon),
+                                symmetric_subtract(mid_multipolygon,
+                                                   right_multipolygon))
+
+    assert are_multipolygons_similar(result,
+                                     symmetric_subtract(left_multipolygon,
+                                                        right_multipolygon))
