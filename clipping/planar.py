@@ -243,7 +243,7 @@ class SweepLineKey:
                     return start_y < other_start_y
                 else:
                     # segments have same start
-                    return end_x > other_end_x
+                    return end_y < other_end_y
             elif start_y != other_start_y:
                 return start_y < other_start_y
             else:
