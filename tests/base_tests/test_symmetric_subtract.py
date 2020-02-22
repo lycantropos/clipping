@@ -109,7 +109,6 @@ def test_associativity(multipolygons_triplet: MultipolygonsTriplet) -> None:
 
 @given(strategies.multipolygons_triplets)
 def test_repeated(multipolygons_triplet: MultipolygonsTriplet) -> None:
-    print(multipolygons_triplet)
     (left_multipolygon, mid_multipolygon,
      right_multipolygon) = multipolygons_triplet
 
