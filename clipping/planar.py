@@ -615,13 +615,22 @@ def _events_to_contours(events: List[Event]) -> List[Polygon]:
         last_event.complement.contour_id = contour_id
 
         if depth[contour_id] & 1:
+            # holes will be in clockwise order
             contour.reverse()
 
         contours.append(contour)
-    return [(contour, [contours[hole_index]
-                       for hole_index in holes[index]])
-            for index, contour in enumerate(contours)
-            if not are_internal[index]]
+    result = []
+    for index, contour in enumerate(contours):
+        if not are_internal[index]:
+            result.append((contour, [contours[hole_index]
+                                     for hole_index in holes[index]]))
+        else:
+            # hole of a hole is an external polygon
+            result.extend((contours[hole_index],
+                           [contours[hole_hole_index]
+                            for hole_hole_index in holes[hole_index]])
+                          for hole_index in holes[index])
+    return result
 
 
 def _to_next_position(position: int,
