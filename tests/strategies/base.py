@@ -3,15 +3,14 @@ from functools import partial
 
 from hypothesis import strategies
 
-MAX_NUMBER = 10 ** 10
-MIN_NUMBER = -MAX_NUMBER
+MAX_FLOAT = 10 ** 10
+MIN_FLOAT = -MAX_FLOAT
 scalars_strategies_factories = {float: partial(strategies.floats,
+                                               MIN_FLOAT, MAX_FLOAT,
                                                allow_nan=False,
                                                allow_infinity=False),
-                                Fraction: partial(strategies.fractions,
-                                                  max_denominator=MAX_NUMBER),
+                                Fraction: strategies.fractions,
                                 int: strategies.integers}
 scalars_strategies = strategies.sampled_from(
-        [factory(min_value=MIN_NUMBER,
-                 max_value=MAX_NUMBER)
+        [factory()
          for factory in scalars_strategies_factories.values()])
