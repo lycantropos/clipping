@@ -513,12 +513,12 @@ def _compute(operation_kind: OperationKind,
             return left
         elif (operation_kind is OperationKind.UNION
               or operation_kind is OperationKind.XOR):
-            result = right + left
+            result = left + right
             result.sort(key=to_first_boundary_vertex)
             return result
         return []
-    if (not issubclass(to_multipolygon_base(left + right), Rational)
-            and accurate):
+    if (accurate
+            and not issubclass(to_multipolygon_base(left + right), Rational)):
         left, right = (to_rational_multipolygon(left),
                        to_rational_multipolygon(right))
     return Operation(left, right, operation_kind).compute()
