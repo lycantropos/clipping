@@ -27,7 +27,7 @@ do not overlap each other.
 
 *Polygon* --- pair of contour (called polygon's border)
 and possibly empty sequence of non-overlapping contours
-which lie within the border.
+which lie within the border (called polygon's holes).
 
 *Multipolygon* --- possibly empty sequence of non-overlapping polygons.
 """
