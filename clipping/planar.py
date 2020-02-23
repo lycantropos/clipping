@@ -547,6 +547,7 @@ def _collect_events(events: List[Event]) -> List[Event]:
             key=EventsQueueKey)
     for index, event in enumerate(result):
         event.position = index
+    for event in result:
         if not event.is_left_endpoint:
             event.position, event.complement.position = (
                 event.complement.position, event.position)
