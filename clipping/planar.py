@@ -664,7 +664,7 @@ def symmetric_subtract(left: Multipolygon,
     ...                    [([(0, 0), (1, 0), (0, 1)], [])])
     []
     """
-    return _compute(OperationKind.DIFFERENCE, left, right,
+    return _compute(OperationKind.XOR, left, right,
                     accurate=accurate)
 
 
