@@ -11,6 +11,25 @@ Memory complexity:
 Reference:
     https://doi.org/10.1016/j.advengsoft.2013.04.004
     http://www4.ujaen.es/~fmartin/bool_op.html
+
+########
+Glossary
+########
+
+*Point* --- a pair of real numbers.
+
+*Segment* (or *line segment*) --- a pair of unequal points.
+
+*Contour* --- a sequence of points (called contour's vertices)
+such that line segments formed by pairs of consecutive points
+(including the last-first point pair)
+do not overlap each other.
+
+*Polygon* --- pair of contour (called polygon's border)
+and possibly empty sequence of non-overlapping contours
+which lie within the border.
+
+*Multipolygon* --- possibly empty sequence of non-overlapping polygons.
 """
 from collections import defaultdict
 from enum import (IntEnum,
