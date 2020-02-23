@@ -16,11 +16,11 @@ Reference:
 Glossary
 ########
 
-*Point* --- a pair of real numbers.
+*Point* --- pair of real numbers.
 
-*Segment* (or *line segment*) --- a pair of unequal points.
+*Segment* (or *line segment*) --- pair of unequal points.
 
-*Contour* --- a sequence of points (called contour's vertices)
+*Contour* --- sequence of points (called contour's vertices)
 such that line segments formed by pairs of consecutive points
 (including the last-first point pair)
 do not overlap each other.
