@@ -1,3 +1,17 @@
+"""
+Boolean operations on polygons/multipolygons on plane.
+
+Based on algorithm by F. Martinez et al.
+
+Time complexity:
+    ``O((len(left) + len(right) + len(intersections)) * log (len(left) \
++ len(right)))``
+Memory complexity:
+    ``O(len(left) + len(right) + len(intersections))``
+Reference:
+    https://doi.org/10.1016/j.advengsoft.2013.04.004
+    http://www4.ujaen.es/~fmartin/bool_op.html
+"""
 from collections import defaultdict
 from enum import (IntEnum,
                   unique)
@@ -531,17 +545,6 @@ def intersect(left: Multipolygon,
     """
     Returns intersection of multipolygons.
 
-    Based on algorithm by F. Martinez et al.
-
-    Time complexity:
-        ``O((len(left) + len(right) + len(intersections))
-            * log (len(left) + len(right)))``
-    Memory complexity:
-        ``O(len(left) + len(right) + len(intersections))``
-    Reference:
-        https://doi.org/10.1016/j.advengsoft.2013.04.004
-        http://www4.ujaen.es/~fmartin/bool_op.html
-
     :param left: left operand.
     :param right: right operand.
     :param accurate:
@@ -569,17 +572,6 @@ def unite(left: Multipolygon,
           accurate: bool = True) -> Multipolygon:
     """
     Returns union of multipolygons.
-
-    Based on algorithm by F. Martinez et al.
-
-    Time complexity:
-        ``O((len(left) + len(right) + len(intersections))
-            * log (len(left) + len(right)))``
-    Memory complexity:
-        ``O(len(left) + len(right) + len(intersections))``
-    Reference:
-        https://doi.org/10.1016/j.advengsoft.2013.04.004
-        http://www4.ujaen.es/~fmartin/bool_op.html
 
     :param left: left operand.
     :param right: right operand.
