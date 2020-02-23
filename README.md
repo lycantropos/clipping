@@ -66,6 +66,40 @@ Install:
   pypy setup.py install
   ```
 
+Usage
+-----
+```python
+>>> left_triangle = [([(0, 0), (1, 0), (0, 1)], [])]
+>>> right_triangle = [([(0, 1), (1, 0), (1, 1)], [])]
+>>> square = [([(0, 0), (1, 0), (1, 1), (0, 1)], [])]
+>>> from clipping.planar import intersect
+>>> all(intersect(square, triangle) == intersect(triangle, square) == triangle
+...     for triangle in (left_triangle, right_triangle))
+True
+>>> from clipping.planar import unite
+>>> all(unite(square, triangle) == unite(triangle, square) == square
+...     for triangle in (left_triangle, right_triangle))
+True
+>>> unite(left_triangle, right_triangle) == unite(right_triangle, left_triangle) == square
+True
+>>> from clipping.planar import subtract
+>>> all(subtract(triangle, square) == []
+...     for triangle in (left_triangle, right_triangle))
+True
+>>> subtract(square, left_triangle) == right_triangle
+True
+>>> subtract(square, right_triangle) == left_triangle
+True
+>>> from clipping.planar import symmetric_subtract
+>>> symmetric_subtract(left_triangle, right_triangle) == square
+True
+>>> symmetric_subtract(square, left_triangle) == right_triangle
+True
+>>> symmetric_subtract(square, right_triangle) == left_triangle
+True
+
+```
+
 Development
 -----------
 
