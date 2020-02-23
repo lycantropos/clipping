@@ -44,13 +44,10 @@ from .utils import (shrink_collinear_vertices,
                     to_segments)
 
 
-class _EnumBase(IntEnum):
-    def __repr__(self) -> str:
-        return type(self).__qualname__ + '.' + self.name
-
-
 @unique
-class EdgeType(_EnumBase):
+class EdgeType(IntEnum):
+    __doc__ = ''
+
     NORMAL = 0
     NON_CONTRIBUTING = 1
     SAME_TRANSITION = 2
@@ -58,7 +55,9 @@ class EdgeType(_EnumBase):
 
 
 @unique
-class OperationKind(_EnumBase):
+class OperationKind(IntEnum):
+    __doc__ = ''
+
     INTERSECTION = 0
     UNION = 1
     DIFFERENCE = 2
