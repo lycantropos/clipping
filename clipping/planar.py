@@ -524,8 +524,45 @@ def _compute(operation_kind: OperationKind,
     return Operation(left, right, operation_kind).compute()
 
 
-intersect = cast(Callable[[Multipolygon, Multipolygon], Multipolygon],
-                 partial(_compute, OperationKind.INTERSECTION))
+def intersect(left: Multipolygon,
+              right: Multipolygon,
+              *,
+              accurate: bool = True) -> Multipolygon:
+    """
+    Returns intersection of multipolygons.
+
+    Based on algorithm by F. Martinez et al.
+
+    Time complexity:
+        ``O((len(left) + len(right) + len(intersections))
+            * log (len(left) + len(right)))``
+    Memory complexity:
+        ``O(len(left) + len(right) + len(intersections))``
+    Reference:
+        https://doi.org/10.1016/j.advengsoft.2013.04.004
+        http://www4.ujaen.es/~fmartin/bool_op.html
+
+    :param left: left operand.
+    :param right: right operand.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: intersection of operands.
+
+    >>> intersect([], [])
+    []
+    >>> intersect([([(0, 0), (1, 0), (0, 1)], [])], [])
+    []
+    >>> intersect([], [([(0, 0), (1, 0), (0, 1)], [])])
+    []
+    >>> intersect([([(0, 0), (1, 0), (0, 1)], [])],
+    ...           [([(0, 0), (1, 0), (0, 1)], [])])
+    [([(0, 0), (1, 0), (0, 1)], [])]
+    """
+    return _compute(OperationKind.INTERSECTION, left, right,
+                    accurate=accurate)
+
+
 unite = cast(Callable[[Multipolygon, Multipolygon], Multipolygon],
              partial(_compute, OperationKind.UNION))
 subtract = cast(Callable[[Multipolygon, Multipolygon], Multipolygon],
