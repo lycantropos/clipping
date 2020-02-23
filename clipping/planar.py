@@ -593,8 +593,34 @@ def unite(left: Multipolygon,
                     accurate=accurate)
 
 
-subtract = cast(Callable[[Multipolygon, Multipolygon], Multipolygon],
-                partial(_compute, OperationKind.DIFFERENCE))
+def subtract(minuend: Multipolygon,
+             subtrahend: Multipolygon,
+             *,
+             accurate: bool = True) -> Multipolygon:
+    """
+    Returns difference of multipolygons.
+
+    :param minuend: multipolygon from which to subtract.
+    :param subtrahend: multipolygon which to subtract.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: difference between minuend and subtrahend.
+
+    >>> subtract([], [])
+    []
+    >>> subtract([([(0, 0), (1, 0), (0, 1)], [])], [])
+    [([(0, 0), (1, 0), (0, 1)], [])]
+    >>> subtract([], [([(0, 0), (1, 0), (0, 1)], [])])
+    []
+    >>> subtract([([(0, 0), (1, 0), (0, 1)], [])],
+    ...          [([(0, 0), (1, 0), (0, 1)], [])])
+    []
+    """
+    return _compute(OperationKind.DIFFERENCE, minuend, subtrahend,
+                    accurate=accurate)
+
+
 symmetric_subtract = cast(Callable[[Multipolygon, Multipolygon], Multipolygon],
                           partial(_compute, OperationKind.XOR))
 
