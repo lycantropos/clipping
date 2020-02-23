@@ -8,4 +8,3 @@ Welcome to clipping's documentation!
 
 .. automodule:: clipping.planar
     :members:
-    :special-members:
