@@ -1,5 +1,5 @@
 """
-Boolean operations on polygons/multipolygons on plane.
+Boolean operations on polygons/multipolygons in the plane.
 
 Based on algorithm by F. Martinez et al.
 
