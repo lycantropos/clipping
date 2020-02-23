@@ -621,8 +621,32 @@ def subtract(minuend: Multipolygon,
                     accurate=accurate)
 
 
-symmetric_subtract = cast(Callable[[Multipolygon, Multipolygon], Multipolygon],
-                          partial(_compute, OperationKind.XOR))
+def symmetric_subtract(left: Multipolygon,
+                       right: Multipolygon,
+                       *,
+                       accurate: bool = True) -> Multipolygon:
+    """
+    Returns symmetric difference of multipolygons.
+
+    :param left: left operand.
+    :param right: right operand.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: symmetric difference of operands.
+
+    >>> symmetric_subtract([], [])
+    []
+    >>> symmetric_subtract([([(0, 0), (1, 0), (0, 1)], [])], [])
+    [([(0, 0), (1, 0), (0, 1)], [])]
+    >>> symmetric_subtract([], [([(0, 0), (1, 0), (0, 1)], [])])
+    [([(0, 0), (1, 0), (0, 1)], [])]
+    >>> symmetric_subtract([([(0, 0), (1, 0), (0, 1)], [])],
+    ...                    [([(0, 0), (1, 0), (0, 1)], [])])
+    []
+    """
+    return _compute(OperationKind.DIFFERENCE, left, right,
+                    accurate=accurate)
 
 
 def _connect_edges(events: List[Event]) -> List[Polygon]:
