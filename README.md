@@ -3,6 +3,7 @@ clipping
 
 [![](https://travis-ci.com/lycantropos/clipping.svg?branch=master)](https://travis-ci.com/lycantropos/clipping "Travis CI")
 [![](https://dev.azure.com/lycantropos/clipping/_apis/build/status/lycantropos.clipping?branchName=master)](https://dev.azure.com/lycantropos/clipping/_build/latest?definitionId=21&branchName=master "Azure Pipelines")
+[![](https://readthedocs.org/projects/clip/badge/?version=latest)](https://clip.readthedocs.io/en/latest "Documentation")
 [![](https://codecov.io/gh/lycantropos/clipping/branch/master/graph/badge.svg)](https://codecov.io/gh/lycantropos/clipping "Codecov")
 [![](https://img.shields.io/github/license/lycantropos/clipping.svg)](https://github.com/lycantropos/clipping/blob/master/LICENSE "License")
 [![](https://badge.fury.io/py/clipping.svg)](https://badge.fury.io/py/clipping "PyPI")
