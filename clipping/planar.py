@@ -339,6 +339,9 @@ class Operation:
             sweep_line.move_to(start_x)
             result.append(event)
             if event.is_left_endpoint:
+                if event in sweep_line:
+                    del result[-1]
+                    continue
                 sweep_line.add(event)
                 try:
                     above_event = sweep_line.above(event)
