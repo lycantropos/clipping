@@ -189,13 +189,12 @@ class EventsQueueKey:
                                                    event.end)
             # the lowest segment is processed first
             if other_end_orientation is Orientation.COLLINEAR:
-                _, end_y = event.end
-                _, other_end_y = other_event.end
-                if end_y != other_end_y:
-                    return end_y < other_end_y
+                end_x, end_y = event.end
+                other_end_x, other_end_y = other_event.end
+                if event.from_left is not other_event.from_left:
+                    return event.from_left
                 else:
-                    # segments are equal
-                    return event.from_left > other_event.from_left
+                    return end_y < other_end_y
             else:
                 return other_end_orientation is Orientation.COUNTERCLOCKWISE
 
