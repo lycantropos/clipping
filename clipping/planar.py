@@ -782,6 +782,6 @@ def _to_next_position(position: int,
         else:
             result += 1
     result = position - 1
-    while result >= original_index and processed[result]:
+    while result > original_index and processed[result]:
         result -= 1
     return result
