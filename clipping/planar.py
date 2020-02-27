@@ -16,20 +16,21 @@ Reference:
 Glossary
 ########
 
-*Point* --- pair of real numbers.
+**Point** --- pair of real numbers (called *point's coordinates*).
 
-*Segment* (or *line segment*) --- pair of unequal points.
+**Segment** (or **line segment**) --- pair of unequal points
+(called *segment's endpoints*).
 
-*Contour* --- sequence of points (called contour's vertices)
+**Contour** --- sequence of points (called *contour's vertices*)
 such that line segments formed by pairs of consecutive points
 (including the last-first point pair)
 do not overlap each other.
 
-*Polygon* --- pair of contour (called polygon's border)
+**Polygon** --- pair of contour (called *polygon's border*)
 and possibly empty sequence of non-overlapping contours
-which lie within the border (called polygon's holes).
+which lie within the border (called *polygon's holes*).
 
-*Multipolygon* --- possibly empty sequence of non-overlapping polygons.
+**Multipolygon** --- possibly empty sequence of non-overlapping polygons.
 """
 from .core import operation as _operation
 from .hints import Multipolygon
