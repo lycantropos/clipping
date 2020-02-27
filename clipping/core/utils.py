@@ -80,11 +80,6 @@ def to_rational_contour(contour: Contour) -> Contour:
     return [to_rational_point(vertex) for vertex in contour]
 
 
-def to_rational_segment(segment: Segment) -> Segment:
-    start, end = segment
-    return to_rational_point(start), to_rational_point(end)
-
-
 def to_rational_point(point: Point) -> Point:
     x, y = point
     return Fraction(x), Fraction(y)
