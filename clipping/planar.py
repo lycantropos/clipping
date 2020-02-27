@@ -434,16 +434,14 @@ class Operation:
             return 0
         elif len(intersections) == 1:
             # segments intersect
-            point, = intersections
             if (first_event.start == second_event.start
                     or first_event.end == second_event.end):
                 # segments intersect at an endpoint of both line segments
                 return 0
+            point, = intersections
             if first_event.start != point and first_event.end != point:
-                # if the intersection start is not an endpoint of le1.segment
                 self.divide_segment(first_event, point)
             if second_event.start != point and second_event.end != point:
-                # if the intersection start is not an endpoint of le2.segment
                 self.divide_segment(second_event, point)
             return 1
         # segments overlap
