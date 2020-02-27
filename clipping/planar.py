@@ -405,58 +405,56 @@ class Operation(ABC):
     def in_result(self, event: Event) -> bool:
         """Detects if event will be presented in result of the operation."""
 
-    def detect_intersection(self,
-                            first_event: Event,
-                            second_event: Event) -> int:
-        intersections = linear.find_intersections(first_event.segment,
-                                                  second_event.segment)
+    def detect_intersection(self, event: Event, above_event: Event) -> int:
+        intersections = linear.find_intersections(event.segment,
+                                                  above_event.segment)
         if not intersections:
             # no intersection
             return 0
         elif len(intersections) == 1:
             # segments intersect
-            if (first_event.start == second_event.start
-                    or first_event.end == second_event.end):
+            if (event.start == above_event.start
+                    or event.end == above_event.end):
                 # segments intersect at an endpoint of both line segments
                 return 0
             point, = intersections
-            if first_event.start != point and first_event.end != point:
-                self.divide_segment(first_event, point)
-            if second_event.start != point and second_event.end != point:
-                self.divide_segment(second_event, point)
+            if event.start != point and event.end != point:
+                self.divide_segment(event, point)
+            if above_event.start != point and above_event.end != point:
+                self.divide_segment(above_event, point)
             return 1
         # segments overlap
-        if first_event.from_left is second_event.from_left:
+        if event.from_left is above_event.from_left:
             raise ValueError('Edges of the same polygon should not overlap.')
 
         sorted_events = []
-        starts_equal = first_event.start == second_event.start
+        starts_equal = event.start == above_event.start
         if starts_equal:
             sorted_events.append(None)
-        elif EventsQueueKey(first_event) > EventsQueueKey(second_event):
-            sorted_events.append(second_event)
-            sorted_events.append(first_event)
+        elif EventsQueueKey(event) > EventsQueueKey(above_event):
+            sorted_events.append(above_event)
+            sorted_events.append(event)
         else:
-            sorted_events.append(first_event)
-            sorted_events.append(second_event)
+            sorted_events.append(event)
+            sorted_events.append(above_event)
 
-        ends_equal = first_event.end == second_event.end
+        ends_equal = event.end == above_event.end
         if ends_equal:
             sorted_events.append(None)
-        elif (EventsQueueKey(first_event.complement)
-              > EventsQueueKey(second_event.complement)):
-            sorted_events.append(second_event.complement)
-            sorted_events.append(first_event.complement)
+        elif (EventsQueueKey(event.complement)
+              > EventsQueueKey(above_event.complement)):
+            sorted_events.append(above_event.complement)
+            sorted_events.append(event.complement)
         else:
-            sorted_events.append(first_event.complement)
-            sorted_events.append(second_event.complement)
+            sorted_events.append(event.complement)
+            sorted_events.append(above_event.complement)
 
         if starts_equal:
             # both line segments are equal or share the left endpoint
-            first_event.edge_type = EdgeType.NON_CONTRIBUTING
-            second_event.edge_type = (
+            event.edge_type = EdgeType.NON_CONTRIBUTING
+            above_event.edge_type = (
                 EdgeType.SAME_TRANSITION
-                if first_event.in_out is second_event.in_out
+                if event.in_out is above_event.in_out
                 else EdgeType.DIFFERENT_TRANSITION)
             if not ends_equal:
                 self.divide_segment(sorted_events[2].complement,
