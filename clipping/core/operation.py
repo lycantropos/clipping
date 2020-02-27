@@ -1,6 +1,7 @@
 from abc import (ABC,
                  abstractmethod)
 from collections import defaultdict
+from itertools import groupby
 from numbers import Rational
 from typing import (DefaultDict,
                     List,
@@ -412,7 +413,7 @@ def _events_to_contours(events: List[Event],
 def _shrink_collinear_vertices(contour: Contour) -> None:
     self_intersections, visited = set(), set()
     visit = visited.add
-    for vertex in contour:
+    for vertex, _ in groupby(contour):
         if vertex in visited:
             self_intersections.add(vertex)
         else:
