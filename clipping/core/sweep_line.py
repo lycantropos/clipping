@@ -14,6 +14,8 @@ from .event import Event
 
 
 class SweepLine:
+    __slots__ = ('current_x', '_tree')
+
     def __init__(self, *events: Event,
                  current_x: Optional[Coordinate] = None) -> None:
         self.current_x = current_x
