@@ -312,10 +312,12 @@ def events_to_multipolygon(events: List[Event]) -> Multipolygon:
 
 
 def _collect_events(events: List[Event]) -> List[Event]:
-    result = sorted([event
-                     for event in events
-                     if event.in_result],
-                    key=EventsQueueKey)
+    result = sorted(
+            [event
+             for event in events
+             if not event.is_right_endpoint and event.in_result
+             or event.is_right_endpoint and event.complement.in_result],
+            key=EventsQueueKey)
     for index, event in enumerate(result):
         event.position = index
         if event.is_right_endpoint:
