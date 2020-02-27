@@ -84,13 +84,13 @@ class OperationKind(IntEnum):
 
 
 class Event:
-    __slots__ = ('is_left_endpoint', 'start', 'complement', 'from_left',
+    __slots__ = ('is_right_endpoint', 'start', 'complement', 'from_left',
                  'edge_type', 'in_out', 'other_in_out', 'in_result',
                  'result_in_out', 'position', 'contour_id',
                  'below_in_result_event')
 
     def __init__(self,
-                 is_left_endpoint: bool,
+                 is_right_endpoint: bool,
                  start: Point,
                  complement: Optional['Event'],
                  from_left: bool,
@@ -102,7 +102,7 @@ class Event:
                  position: int = 0,
                  contour_id: Optional[int] = None,
                  below_in_result_event: Optional['Event'] = None) -> None:
-        self.is_left_endpoint = is_left_endpoint
+        self.is_right_endpoint = is_right_endpoint
         self.start = start
         self.complement = complement
         self.from_left = from_left
@@ -176,11 +176,11 @@ class EventsQueueKey:
             # different points, but same x-coordinate,
             # the event with lower y-coordinate is processed first
             return start_y < other_start_y
-        elif event.is_left_endpoint is not other_event.is_left_endpoint:
+        elif event.is_right_endpoint is not other_event.is_right_endpoint:
             # same start, but one is a left endpoint
             # and the other a right endpoint,
             # the right endpoint is processed first
-            return not event.is_left_endpoint
+            return event.is_right_endpoint
         # same start, both events are left endpoints
         # or both are right endpoints
         else:
@@ -225,11 +225,17 @@ class SweepLine:
     def remove(self, event: Event) -> None:
         self._tree.remove(event)
 
-    def above(self, event: Event) -> Event:
-        return self._tree.next(event)
+    def above(self, event: Event) -> Optional[Event]:
+        try:
+            return self._tree.next(event)
+        except ValueError:
+            return None
 
-    def below(self, event: Event) -> Event:
-        return self._tree.prev(event)
+    def below(self, event: Event) -> Optional[Event]:
+        try:
+            return self._tree.prev(event)
+        except ValueError:
+            return None
 
 
 class SweepLineKey:
@@ -336,20 +342,20 @@ class Operation:
                     or is_difference and start_x > left_x_max):
                 break
             sweep_line.move_to(start_x)
-            result.append(event)
-            if event.is_left_endpoint:
+            if event.is_right_endpoint:
+                result.append(event)
+                event = event.complement
                 if event in sweep_line:
-                    del result[-1]
-                    continue
+                    above_event, below_event = (sweep_line.above(event),
+                                                sweep_line.below(event))
+                    sweep_line.remove(event)
+                    if above_event is not None and below_event is not None:
+                        self.detect_intersection(below_event, above_event)
+            elif event not in sweep_line:
+                result.append(event)
                 sweep_line.add(event)
-                try:
-                    above_event = sweep_line.above(event)
-                except ValueError:
-                    above_event = None
-                try:
-                    below_event = sweep_line.below(event)
-                except ValueError:
-                    below_event = None
+                above_event, below_event = (sweep_line.above(event),
+                                            sweep_line.below(event))
                 self.compute_fields(event, below_event)
                 if above_event is not None:
                     if self.detect_intersection(event, above_event) == 2:
@@ -357,27 +363,9 @@ class Operation:
                         self.compute_fields(above_event, event)
                 if below_event is not None:
                     if self.detect_intersection(below_event, event) == 2:
-                        try:
-                            below_below_event = sweep_line.below(below_event)
-                        except ValueError:
-                            below_below_event = None
+                        below_below_event = sweep_line.below(below_event)
                         self.compute_fields(below_event, below_below_event)
                         self.compute_fields(event, below_event)
-            else:
-                event = event.complement
-                if event not in sweep_line:
-                    continue
-                try:
-                    above_event = sweep_line.above(event)
-                except ValueError:
-                    above_event = None
-                try:
-                    below_event = sweep_line.below(event)
-                except ValueError:
-                    below_event = None
-                sweep_line.remove(event)
-                if above_event is not None and below_event is not None:
-                    self.detect_intersection(below_event, above_event)
         return result
 
     def fill_queue(self) -> None:
@@ -390,8 +378,8 @@ class Operation:
 
     def process_segment(self, segment: Segment, from_left: bool) -> None:
         start, end = sorted(segment)
-        start_event = Event(True, start, None, from_left, EdgeType.NORMAL)
-        end_event = Event(False, end, start_event, from_left, EdgeType.NORMAL)
+        start_event = Event(False, start, None, from_left, EdgeType.NORMAL)
+        end_event = Event(True, end, start_event, from_left, EdgeType.NORMAL)
         start_event.complement = end_event
         self._events_queue.push(start_event)
         self._events_queue.push(end_event)
@@ -511,9 +499,9 @@ class Operation:
             return 3
 
     def divide_segment(self, event: Event, point: Point) -> None:
-        left_event = Event(True, point, event.complement, event.from_left,
+        left_event = Event(False, point, event.complement, event.from_left,
                            EdgeType.NORMAL)
-        right_event = Event(False, point, event, event.from_left,
+        right_event = Event(True, point, event, event.from_left,
                             EdgeType.NORMAL)
         event.complement.complement, event.complement = left_event, right_event
         self._events_queue.push(left_event)
@@ -679,12 +667,12 @@ def _collect_events(events: List[Event]) -> List[Event]:
     result = sorted(
             [event
              for event in events
-             if event.is_left_endpoint and event.in_result
-             or not event.is_left_endpoint and event.complement.in_result],
+             if not event.is_right_endpoint and event.in_result
+             or event.is_right_endpoint and event.complement.in_result],
             key=EventsQueueKey)
     for index, event in enumerate(result):
         event.position = index
-        if not event.is_left_endpoint:
+        if event.is_right_endpoint:
             event.position, event.complement.position = (
                 event.complement.position, event.position)
     return result
@@ -742,12 +730,12 @@ def _events_to_contours(events: List[Event]) -> List[Polygon]:
         are_internal[contour_id] = is_internal
 
         for step in steps:
-            if step.is_left_endpoint:
-                step.result_in_out = False
-                step.contour_id = contour_id
-            else:
+            if step.is_right_endpoint:
                 step.complement.result_in_out = True
                 step.complement.contour_id = contour_id
+            else:
+                step.result_in_out = False
+                step.contour_id = contour_id
         last_event.complement.result_in_out = True
         last_event.complement.contour_id = contour_id
 
