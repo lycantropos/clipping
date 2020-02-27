@@ -9,16 +9,14 @@ from typing import (Iterable,
                     Sequence,
                     Type)
 
-from bentley_ottmann.angular import (Orientation,
-                                     to_orientation)
-
-from .hints import (Base,
-                    BoundingBox,
-                    Contour,
-                    Multipolygon,
-                    Point,
-                    Polygon,
-                    Segment)
+from clipping.hints import (Base,
+                            BoundingBox,
+                            Contour,
+                            Coordinate,
+                            Multipolygon,
+                            Point,
+                            Polygon,
+                            Segment)
 
 
 def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:
@@ -92,23 +90,10 @@ def to_rational_point(point: Point) -> Point:
     return Fraction(x), Fraction(y)
 
 
-def shrink_collinear_vertices(contour: Contour) -> None:
-    self_intersections, visited = set(), set()
-    visit = visited.add
-    for vertex in contour:
-        if vertex in visited:
-            self_intersections.add(vertex)
-        else:
-            visit(vertex)
-    for index in range(len(contour)):
-        while (max(index, 2) < len(contour)
-               and contour[index - 1] not in self_intersections
-               and (to_orientation(contour[index - 2], contour[index - 1],
-                                   contour[index])
-                    is Orientation.COLLINEAR)):
-            del contour[index - 1]
-
-
 def to_first_boundary_vertex(polygon: Polygon) -> Point:
     boundary, _ = polygon
     return boundary[0]
+
+
+def to_multipolygon_x_max(multipolygon: Multipolygon) -> Coordinate:
+    return max(x for border, _ in multipolygon for x, _ in border)

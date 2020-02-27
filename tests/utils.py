@@ -13,10 +13,10 @@ from bentley_ottmann.angular import (Orientation,
 from hypothesis import strategies
 from hypothesis.strategies import SearchStrategy
 
+from clipping.core.utils import (to_contour_base,
+                                 to_first_boundary_vertex)
 from clipping.hints import (Contour,
                             Multipolygon)
-from clipping.utils import (to_contour_base,
-                            to_first_boundary_vertex)
 
 Strategy = SearchStrategy
 Domain = TypeVar('Domain')
