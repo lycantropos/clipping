@@ -336,6 +336,22 @@ class Operation(ABC):
             self.process_event(self._events_queue.pop(), result, sweep_line)
         return result
 
+    def fill_queue(self) -> None:
+        for contour in to_multipolygon_contours(self.left):
+            for segment in to_segments(contour):
+                self.register_segment(segment, True)
+        for contour in to_multipolygon_contours(self.right):
+            for segment in to_segments(contour):
+                self.register_segment(segment, False)
+
+    def register_segment(self, segment: Segment, from_left: bool) -> None:
+        start, end = sorted(segment)
+        start_event = Event(False, start, None, from_left, EdgeType.NORMAL)
+        end_event = Event(True, end, start_event, from_left, EdgeType.NORMAL)
+        start_event.complement = end_event
+        self._events_queue.push(start_event)
+        self._events_queue.push(end_event)
+
     def process_event(self, event: Event, processed_events: List[Event],
                       sweep_line: SweepLine) -> None:
         start_x, _ = event.start
@@ -364,22 +380,6 @@ class Operation(ABC):
                     below_below_event = sweep_line.below(below_event)
                     self.compute_fields(below_event, below_below_event)
                     self.compute_fields(event, below_event)
-
-    def fill_queue(self) -> None:
-        for contour in to_multipolygon_contours(self.left):
-            for segment in to_segments(contour):
-                self.register_segment(segment, True)
-        for contour in to_multipolygon_contours(self.right):
-            for segment in to_segments(contour):
-                self.register_segment(segment, False)
-
-    def register_segment(self, segment: Segment, from_left: bool) -> None:
-        start, end = sorted(segment)
-        start_event = Event(False, start, None, from_left, EdgeType.NORMAL)
-        end_event = Event(True, end, start_event, from_left, EdgeType.NORMAL)
-        start_event.complement = end_event
-        self._events_queue.push(start_event)
-        self._events_queue.push(end_event)
 
     def compute_fields(self, event: Event, below_event: Optional[Event]
                        ) -> None:
