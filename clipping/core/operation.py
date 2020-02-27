@@ -346,7 +346,7 @@ def _contours_to_multipolygon(contours: List[Contour],
 def _events_to_contours(events: List[Event],
                         are_internal: DefaultDict[int, bool],
                         holes: DefaultDict[int, List[int]]) -> List[Contour]:
-    depths, holes_of = defaultdict(int), {}
+    depths, parents = defaultdict(int), {}
     processed = [False] * len(events)
     contours = []
     for index, event in enumerate(events):
@@ -379,17 +379,17 @@ def _events_to_contours(events: List[Event],
 
         is_internal = False
         if event.below_in_result_event is not None:
-            lower_contour_id = event.below_in_result_event.contour_id
+            below_in_result_contour_id = event.below_in_result_event.contour_id
             if not event.below_in_result_event.result_in_out:
-                holes[lower_contour_id].append(contour_id)
-                holes_of[contour_id] = lower_contour_id
-                depths[contour_id] = depths[lower_contour_id] + 1
+                holes[below_in_result_contour_id].append(contour_id)
+                parents[contour_id] = below_in_result_contour_id
+                depths[contour_id] = depths[below_in_result_contour_id] + 1
                 is_internal = True
-            elif are_internal[lower_contour_id]:
-                lower_contour_hole_id = holes_of[lower_contour_id]
-                holes[lower_contour_hole_id].append(contour_id)
-                holes_of[contour_id] = lower_contour_hole_id
-                depths[contour_id] = depths[lower_contour_id]
+            elif are_internal[below_in_result_contour_id]:
+                below_in_result_parent_id = parents[below_in_result_contour_id]
+                holes[below_in_result_parent_id].append(contour_id)
+                parents[contour_id] = below_in_result_parent_id
+                depths[contour_id] = depths[below_in_result_contour_id]
                 is_internal = True
         are_internal[contour_id] = is_internal
 
