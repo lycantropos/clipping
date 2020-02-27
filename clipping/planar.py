@@ -31,6 +31,8 @@ which lie within the border (called polygon's holes).
 
 *Multipolygon* --- possibly empty sequence of non-overlapping polygons.
 """
+from abc import (ABC,
+                 abstractmethod)
 from collections import defaultdict
 from enum import (IntEnum,
                   unique)
@@ -40,6 +42,7 @@ from reprlib import recursive_repr
 from typing import (Callable,
                     List,
                     Optional,
+                    Type,
                     cast)
 
 from bentley_ottmann import linear
@@ -310,16 +313,14 @@ EventsQueue = cast(Callable[[], PriorityQueue[Event]],
                            key=EventsQueueKey))
 
 
-class Operation:
-    __slots__ = ('left', 'right', 'kind', '_events_queue')
+class Operation(ABC):
+    __slots__ = ('left', 'right', '_events_queue')
 
     def __init__(self,
                  left: Multipolygon,
-                 right: Multipolygon,
-                 kind: OperationKind) -> None:
+                 right: Multipolygon) -> None:
         self.left = left
         self.right = right
-        self.kind = kind
         self._events_queue = EventsQueue()
 
     __repr__ = generate_repr(__init__)
@@ -331,52 +332,48 @@ class Operation:
         self.fill_queue()
         result = []
         sweep_line = SweepLine()
-        is_intersection = self.kind is OperationKind.INTERSECTION
-        is_difference = self.kind is OperationKind.DIFFERENCE
-        left_x_max, right_x_max = _to_x_max(self.left), _to_x_max(self.right)
-        min_max_x = min(left_x_max, right_x_max)
         while self._events_queue:
-            event = self._events_queue.pop()
-            start_x, _ = event.start
-            if (is_intersection and start_x > min_max_x
-                    or is_difference and start_x > left_x_max):
-                break
-            sweep_line.move_to(start_x)
-            if event.is_right_endpoint:
-                result.append(event)
-                event = event.complement
-                if event in sweep_line:
-                    above_event, below_event = (sweep_line.above(event),
-                                                sweep_line.below(event))
-                    sweep_line.remove(event)
-                    if above_event is not None and below_event is not None:
-                        self.detect_intersection(below_event, above_event)
-            elif event not in sweep_line:
-                result.append(event)
-                sweep_line.add(event)
+            self.process_event(self._events_queue.pop(), result, sweep_line)
+        return result
+
+    def process_event(self, event: Event, processed_events: List[Event],
+                      sweep_line: SweepLine) -> None:
+        start_x, _ = event.start
+        sweep_line.move_to(start_x)
+        if event.is_right_endpoint:
+            processed_events.append(event)
+            event = event.complement
+            if event in sweep_line:
                 above_event, below_event = (sweep_line.above(event),
                                             sweep_line.below(event))
-                self.compute_fields(event, below_event)
-                if above_event is not None:
-                    if self.detect_intersection(event, above_event) == 2:
-                        self.compute_fields(event, below_event)
-                        self.compute_fields(above_event, event)
-                if below_event is not None:
-                    if self.detect_intersection(below_event, event) == 2:
-                        below_below_event = sweep_line.below(below_event)
-                        self.compute_fields(below_event, below_below_event)
-                        self.compute_fields(event, below_event)
-        return result
+                sweep_line.remove(event)
+                if above_event is not None and below_event is not None:
+                    self.detect_intersection(below_event, above_event)
+        elif event not in sweep_line:
+            processed_events.append(event)
+            sweep_line.add(event)
+            above_event, below_event = (sweep_line.above(event),
+                                        sweep_line.below(event))
+            self.compute_fields(event, below_event)
+            if above_event is not None:
+                if self.detect_intersection(event, above_event) == 2:
+                    self.compute_fields(event, below_event)
+                    self.compute_fields(above_event, event)
+            if below_event is not None:
+                if self.detect_intersection(below_event, event) == 2:
+                    below_below_event = sweep_line.below(below_event)
+                    self.compute_fields(below_event, below_below_event)
+                    self.compute_fields(event, below_event)
 
     def fill_queue(self) -> None:
         for contour in to_multipolygon_contours(self.left):
             for segment in to_segments(contour):
-                self.process_segment(segment, True)
+                self.register_segment(segment, True)
         for contour in to_multipolygon_contours(self.right):
             for segment in to_segments(contour):
-                self.process_segment(segment, False)
+                self.register_segment(segment, False)
 
-    def process_segment(self, segment: Segment, from_left: bool) -> None:
+    def register_segment(self, segment: Segment, from_left: bool) -> None:
         start, end = sorted(segment)
         start_event = Event(False, start, None, from_left, EdgeType.NORMAL)
         end_event = Event(True, end, start_event, from_left, EdgeType.NORMAL)
@@ -404,25 +401,9 @@ class Operation:
                                            else below_event)
         event.in_result = self.in_result(event)
 
+    @abstractmethod
     def in_result(self, event: Event) -> bool:
-        edge_type = event.edge_type
-        operation_kind = self.kind
-        if edge_type is EdgeType.NORMAL:
-            if operation_kind is OperationKind.INTERSECTION:
-                return not event.other_in_out
-            elif operation_kind is OperationKind.UNION:
-                return event.other_in_out
-            elif operation_kind is OperationKind.DIFFERENCE:
-                return event.from_left is event.other_in_out
-            else:
-                return operation_kind is OperationKind.XOR
-        elif edge_type is EdgeType.SAME_TRANSITION:
-            return (operation_kind is OperationKind.INTERSECTION
-                    or operation_kind is OperationKind.UNION)
-        elif edge_type is EdgeType.DIFFERENT_TRANSITION:
-            return operation_kind is OperationKind.DIFFERENCE
-        else:
-            return False
+        """Detects if event will be presented in result of the operation."""
 
     def detect_intersection(self,
                             first_event: Event,
@@ -506,11 +487,64 @@ class Operation:
         self._events_queue.push(right_event)
 
 
+class Difference(Operation):
+    def sweep(self) -> List[Event]:
+        self.fill_queue()
+        result = []
+        sweep_line = SweepLine()
+        left_x_max = _to_x_max(self.left)
+        while self._events_queue:
+            event = self._events_queue.pop()
+            start_x, _ = event.start
+            if start_x > left_x_max:
+                break
+            self.process_event(event, result, sweep_line)
+        return result
+
+    def in_result(self, event: Event) -> bool:
+        edge_type = event.edge_type
+        return (edge_type is EdgeType.NORMAL
+                and event.from_left is event.other_in_out
+                or edge_type is EdgeType.DIFFERENT_TRANSITION)
+
+
+class Intersection(Operation):
+    def sweep(self) -> List[Event]:
+        self.fill_queue()
+        result = []
+        sweep_line = SweepLine()
+        min_max_x = min(_to_x_max(self.left), _to_x_max(self.right))
+        while self._events_queue:
+            event = self._events_queue.pop()
+            start_x, _ = event.start
+            if start_x > min_max_x:
+                break
+            self.process_event(event, result, sweep_line)
+        return result
+
+    def in_result(self, event: Event) -> bool:
+        edge_type = event.edge_type
+        return (edge_type is EdgeType.NORMAL and not event.other_in_out
+                or edge_type is EdgeType.SAME_TRANSITION)
+
+
+class SymmetricDifference(Operation):
+    def in_result(self, event: Event) -> bool:
+        return event.edge_type is EdgeType.NORMAL
+
+
+class Union(Operation):
+    def in_result(self, event: Event) -> bool:
+        edge_type = event.edge_type
+        return (edge_type is EdgeType.NORMAL and event.other_in_out
+                or edge_type is EdgeType.SAME_TRANSITION)
+
+
 def _to_x_max(multipolygon: Multipolygon) -> Coordinate:
     return max(x for border, _ in multipolygon for x, _ in border)
 
 
-def _compute(operation_kind: OperationKind,
+def _compute(operation: Type[Operation],
              left: Multipolygon,
              right: Multipolygon,
              *,
@@ -519,30 +553,30 @@ def _compute(operation_kind: OperationKind,
         return []
     elif not (left and right):
         # at least one of the arguments is empty
-        if operation_kind is OperationKind.DIFFERENCE:
+        if operation is Difference:
             return left
-        if (operation_kind is OperationKind.UNION
-                or operation_kind is OperationKind.XOR):
+        elif operation is Intersection:
+            return []
+        else:
             return left or right
-        return []
     left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
     right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(right)
     if (left_x_min > right_x_max or left_x_max < right_x_min
             or left_y_min > right_y_max or left_y_max < right_y_min):
         # the bounding boxes do not overlap
-        if operation_kind is OperationKind.DIFFERENCE:
+        if operation is Difference:
             return left
-        elif (operation_kind is OperationKind.UNION
-              or operation_kind is OperationKind.XOR):
+        elif operation is Intersection:
+            return []
+        else:
             result = left + right
             result.sort(key=to_first_boundary_vertex)
             return result
-        return []
     if (accurate
             and not issubclass(to_multipolygon_base(left + right), Rational)):
         left, right = (to_rational_multipolygon(left),
                        to_rational_multipolygon(right))
-    return Operation(left, right, operation_kind).compute()
+    return operation(left, right).compute()
 
 
 def intersect(left: Multipolygon,
@@ -569,35 +603,7 @@ def intersect(left: Multipolygon,
     ...           [([(0, 0), (1, 0), (0, 1)], [])])
     [([(0, 0), (1, 0), (0, 1)], [])]
     """
-    return _compute(OperationKind.INTERSECTION, left, right,
-                    accurate=accurate)
-
-
-def unite(left: Multipolygon,
-          right: Multipolygon,
-          *,
-          accurate: bool = True) -> Multipolygon:
-    """
-    Returns union of multipolygons.
-
-    :param left: left operand.
-    :param right: right operand.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
-    :returns: union of operands.
-
-    >>> unite([], [])
-    []
-    >>> unite([([(0, 0), (1, 0), (0, 1)], [])], [])
-    [([(0, 0), (1, 0), (0, 1)], [])]
-    >>> unite([], [([(0, 0), (1, 0), (0, 1)], [])])
-    [([(0, 0), (1, 0), (0, 1)], [])]
-    >>> unite([([(0, 0), (1, 0), (0, 1)], [])],
-    ...       [([(0, 0), (1, 0), (0, 1)], [])])
-    [([(0, 0), (1, 0), (0, 1)], [])]
-    """
-    return _compute(OperationKind.UNION, left, right,
+    return _compute(Intersection, left, right,
                     accurate=accurate)
 
 
@@ -625,7 +631,7 @@ def subtract(minuend: Multipolygon,
     ...          [([(0, 0), (1, 0), (0, 1)], [])])
     []
     """
-    return _compute(OperationKind.DIFFERENCE, minuend, subtrahend,
+    return _compute(Difference, minuend, subtrahend,
                     accurate=accurate)
 
 
@@ -653,7 +659,35 @@ def symmetric_subtract(left: Multipolygon,
     ...                    [([(0, 0), (1, 0), (0, 1)], [])])
     []
     """
-    return _compute(OperationKind.XOR, left, right,
+    return _compute(SymmetricDifference, left, right,
+                    accurate=accurate)
+
+
+def unite(left: Multipolygon,
+          right: Multipolygon,
+          *,
+          accurate: bool = True) -> Multipolygon:
+    """
+    Returns union of multipolygons.
+
+    :param left: left operand.
+    :param right: right operand.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: union of operands.
+
+    >>> unite([], [])
+    []
+    >>> unite([([(0, 0), (1, 0), (0, 1)], [])], [])
+    [([(0, 0), (1, 0), (0, 1)], [])]
+    >>> unite([], [([(0, 0), (1, 0), (0, 1)], [])])
+    [([(0, 0), (1, 0), (0, 1)], [])]
+    >>> unite([([(0, 0), (1, 0), (0, 1)], [])],
+    ...       [([(0, 0), (1, 0), (0, 1)], [])])
+    [([(0, 0), (1, 0), (0, 1)], [])]
+    """
+    return _compute(Union, left, right,
                     accurate=accurate)
 
 
