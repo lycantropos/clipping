@@ -12,7 +12,7 @@ from .enums import EdgeType
 
 class Event:
     __slots__ = ('is_right_endpoint', 'start', 'complement', 'from_left',
-                 'edge_type', 'in_out', 'other_in_out', 'in_result',
+                 'edge_type', 'in_out', 'other_in_out', '_in_result',
                  'result_in_out', 'position', 'contour_id',
                  'below_in_result_event')
 
@@ -36,13 +36,21 @@ class Event:
         self.edge_type = edge_type
         self.in_out = in_out
         self.other_in_out = other_in_out
-        self.in_result = in_result
+        self._in_result = in_result
         self.result_in_out = result_in_out
         self.position = position
         self.contour_id = contour_id
         self.below_in_result_event = below_in_result_event
 
     __repr__ = recursive_repr()(generate_repr(__init__))
+
+    @property
+    def in_result(self) -> bool:
+        return self._in_result
+
+    @in_result.setter
+    def in_result(self, value: bool) -> None:
+        self._in_result = self.complement._in_result = value
 
     @property
     def end(self) -> Point:
