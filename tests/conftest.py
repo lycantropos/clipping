@@ -1,7 +1,6 @@
 import os
 
 from hypothesis import (HealthCheck,
-                        Verbosity,
                         settings)
 
 on_azure_pipelines = bool(os.getenv('TF_BUILD', False))
@@ -12,6 +11,4 @@ settings.register_profile('default',
                                         else settings.default.max_examples),
                           deadline=None,
                           suppress_health_check=[HealthCheck.filter_too_much,
-                                                 HealthCheck.too_slow],
-                          verbosity=Verbosity(settings.default.verbosity
-                                              + on_travis_ci))
+                                                 HealthCheck.too_slow])
