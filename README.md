@@ -77,6 +77,14 @@ Usage
 >>> all(intersect(square, triangle) == intersect(triangle, square) == triangle
 ...     for triangle in (left_triangle, right_triangle))
 True
+>>> intersect(left_triangle, right_triangle) == []
+True
+>>> from clipping.planar import complete_intersect
+>>> all(complete_intersect(square, triangle) == intersect(square, triangle)
+...     for triangle in (left_triangle, right_triangle))
+True
+>>> complete_intersect(left_triangle, right_triangle) == ([], [((0, 1), (1, 0))], [])
+True
 >>> from clipping.planar import unite
 >>> all(unite(square, triangle) == unite(triangle, square) == square
 ...     for triangle in (left_triangle, right_triangle))
