@@ -45,7 +45,8 @@ def complete_intersect(left: Multipolygon,
                        accurate: bool = True) -> Union[GeometryCollection,
                                                        Multipolygon]:
     """
-    Returns intersection of multipolygons.
+    Returns intersection of multipolygons considering degenerate cases
+    with polygons touching each other in points/segments.
 
     :param left: left operand.
     :param right: right operand.
