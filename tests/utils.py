@@ -98,6 +98,16 @@ def to_triplets(strategy: Strategy[Domain]
     return strategies.tuples(strategy, strategy, strategy)
 
 
+def is_geometry_collection(object_: Any) -> bool:
+    return (isinstance(object_, tuple)
+            and len(object_) == 3
+            and all(isinstance(element, list)
+                    for element in object_)
+            and all(map(is_point, object_[0]))
+            and all(map(is_segment, object_[1]))
+            and all(map(is_polygon, object_[2])))
+
+
 def is_multipolygon(object_: Any) -> bool:
     return (isinstance(object_, list)
             and all(map(is_polygon, object_)))
@@ -115,6 +125,13 @@ def is_contour(object_: Any) -> bool:
     return (isinstance(object_, list)
             and len(object_) >= 3
             and all(map(is_point, object_)))
+
+
+def is_segment(object_: Any) -> bool:
+    return (isinstance(object_, tuple)
+            and len(object_) == 2
+            and all(map(is_point, object_))
+            and len(set(object_)) == 2)
 
 
 def is_point(object_: Any) -> bool:
