@@ -1,11 +1,14 @@
 from abc import (ABC,
                  abstractmethod)
 from collections import defaultdict
+from itertools import groupby
 from numbers import Rational
+from operator import attrgetter
 from typing import (DefaultDict,
                     List,
                     Optional,
-                    Type)
+                    Type,
+                    Union as Union_)
 
 from bentley_ottmann import linear
 from bentley_ottmann.angular import (Orientation,
@@ -13,6 +16,7 @@ from bentley_ottmann.angular import (Orientation,
 from reprit.base import generate_repr
 
 from clipping.hints import (Contour,
+                            GeometryCollection,
                             Multipolygon,
                             Point,
                             Segment)
@@ -21,7 +25,8 @@ from .event import Event
 from .events_queue import (EventsQueue,
                            EventsQueueKey)
 from .sweep_line import SweepLine
-from .utils import (to_bounding_box,
+from .utils import (all_equal,
+                    to_bounding_box,
                     to_first_boundary_vertex,
                     to_multipolygon_base,
                     to_multipolygon_contours,
@@ -244,6 +249,36 @@ class Intersection(Operation):
                 or edge_type is EdgeType.SAME_TRANSITION)
 
 
+class CompleteIntersection(Intersection):
+    def compute(self) -> Union_[GeometryCollection, Multipolygon]:
+        events = sorted(self.sweep(),
+                        key=EventsQueueKey)
+        degenerate_points, degenerate_segments = [], []
+        for point, same_point_events in groupby(events,
+                                                key=attrgetter('start')):
+            same_point_events = list(same_point_events)
+            if (all((event.is_right_endpoint or not event.in_result)
+                    and not (event.is_right_endpoint
+                             and event.complement.in_result)
+                    for event in same_point_events)
+                    and not all_equal(event.from_left
+                                      for event in same_point_events)):
+                no_segment_found = True
+                for event, next_event in zip(same_point_events,
+                                             same_point_events[1:]):
+                    if (event.from_left is not next_event.from_left
+                            and event.segment == next_event.segment):
+                        no_segment_found = False
+                        if not event.is_right_endpoint:
+                            degenerate_segments.append(next_event.segment)
+                if no_segment_found:
+                    degenerate_points.append(point)
+        multipolygon = events_to_multipolygon(events)
+        return ((degenerate_points, degenerate_segments, multipolygon)
+                if degenerate_points or degenerate_segments
+                else multipolygon)
+
+
 class SymmetricDifference(Operation):
     def in_result(self, event: Event) -> bool:
         return event.edge_type is EdgeType.NORMAL
@@ -260,7 +295,7 @@ def compute(operation: Type[Operation],
             left: Multipolygon,
             right: Multipolygon,
             *,
-            accurate: bool) -> Multipolygon:
+            accurate: bool) -> Union_[GeometryCollection, Multipolygon]:
     """
     Returns result of given operation using optimizations for degenerate cases.
 
@@ -278,10 +313,10 @@ def compute(operation: Type[Operation],
         # at least one of the arguments is empty
         if operation is Difference:
             return left
-        elif operation is Intersection:
-            return []
-        else:
+        elif operation is Union or operation is SymmetricDifference:
             return left or right
+        else:
+            return []
     left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
     right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(right)
     if (left_x_min > right_x_max or left_x_max < right_x_min
@@ -289,12 +324,12 @@ def compute(operation: Type[Operation],
         # the bounding boxes do not overlap
         if operation is Difference:
             return left
-        elif operation is Intersection:
-            return []
-        else:
+        elif operation is Union or operation is SymmetricDifference:
             result = left + right
             result.sort(key=to_first_boundary_vertex)
             return result
+        else:
+            return []
     if (accurate
             and not issubclass(to_multipolygon_base(left + right), Rational)):
         left, right = (to_rational_multipolygon(left),

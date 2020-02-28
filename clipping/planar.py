@@ -32,8 +32,46 @@ which lie within the border (called *polygon's holes*).
 
 **Multipolygon** --- possibly empty sequence of non-overlapping polygons.
 """
+from typing import Union
+
 from .core import operation as _operation
-from .hints import Multipolygon
+from .hints import (GeometryCollection,
+                    Multipolygon)
+
+
+def complete_intersect(left: Multipolygon,
+                       right: Multipolygon,
+                       *,
+                       accurate: bool = True) -> Union[GeometryCollection,
+                                                       Multipolygon]:
+    """
+    Returns intersection of multipolygons.
+
+    :param left: left operand.
+    :param right: right operand.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: intersection of operands.
+
+    >>> complete_intersect([], [])
+    []
+    >>> complete_intersect([([(0, 0), (1, 0), (0, 1)], [])], [])
+    []
+    >>> complete_intersect([], [([(0, 0), (1, 0), (0, 1)], [])])
+    []
+    >>> complete_intersect([([(0, 0), (1, 0), (0, 1)], [])],
+    ...                    [([(0, 0), (1, 0), (0, 1)], [])])
+    [(0, 0), (1, 0), (0, 1)], [])]
+    >>> complete_intersect([([(0, 0), (1, 0), (0, 1)], [])],
+    ...                    [([(0, 1), (1, 0), (1, 1)], [])])
+    ([], [((0, 1), (1, 0))], [])
+    >>> complete_intersect([([(0, 0), (1, 0), (0, 1)], [])],
+    ...                    [([(1, 0), (2, 0), (2, 1)], [])])
+    ([(1, 0)], [], [])
+    """
+    return _operation.compute(_operation.CompleteIntersection, left, right,
+                              accurate=accurate)
 
 
 def intersect(left: Multipolygon,

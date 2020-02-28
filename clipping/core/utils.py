@@ -1,10 +1,12 @@
 from fractions import Fraction
-from itertools import chain
+from itertools import (chain,
+                       groupby)
 from numbers import (Integral,
                      Number,
                      Rational,
                      Real)
-from typing import (Iterable,
+from typing import (Any,
+                    Iterable,
                     List,
                     Sequence,
                     Type)
@@ -17,6 +19,11 @@ from clipping.hints import (Base,
                             Point,
                             Polygon,
                             Segment)
+
+
+def all_equal(iterable: Iterable[Any]) -> bool:
+    groups = groupby(iterable)
+    return next(groups, True) and not next(groups, False)
 
 
 def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:
