@@ -1,8 +1,8 @@
 from reprlib import recursive_repr
 from typing import Optional
 
-from bentley_ottmann import linear
 from reprit.base import generate_repr
+from robust.linear import segments_intersection
 
 from clipping.hints import (Coordinate,
                             Point,
@@ -75,7 +75,6 @@ class Event:
             end_x, end_y = self.end
             if x == end_x:
                 return end_y
-            (_, result), = linear.find_intersections(self.segment,
-                                                     ((x, start_y),
-                                                      (x, end_y)))
+            _, result = segments_intersection(self.segment,
+                                              ((x, start_y), (x, end_y)))
             return result

@@ -8,10 +8,10 @@ from typing import (Any,
                     Tuple,
                     TypeVar)
 
-from bentley_ottmann.angular import (Orientation,
-                                     to_orientation)
 from hypothesis import strategies
 from hypothesis.strategies import SearchStrategy
+from robust.angular import (Orientation,
+                            orientation)
 
 from clipping.core.utils import (to_contour_base,
                                  to_first_boundary_vertex)
@@ -74,7 +74,7 @@ def _to_first_angle_orientation(contour: Contour) -> Orientation:
     if not issubclass(to_contour_base(first_angle_vertices), Real):
         first_angle_vertices = [(float(x), float(y))
                                 for x, y in first_angle_vertices]
-    return to_orientation(*first_angle_vertices)
+    return orientation(*first_angle_vertices)
 
 
 def _rotate_sequence(sequence: Domain,

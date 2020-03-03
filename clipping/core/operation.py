@@ -10,10 +10,12 @@ from typing import (DefaultDict,
                     Type,
                     Union as Union_)
 
-from bentley_ottmann import linear
-from bentley_ottmann.angular import (Orientation,
-                                     to_orientation)
 from reprit.base import generate_repr
+from robust.angular import (Orientation,
+                            orientation)
+from robust.linear import (SegmentsRelationship,
+                           segments_intersection,
+                           segments_relationship)
 
 from clipping.hints import (Contour,
                             GeometryCollection,
@@ -128,18 +130,18 @@ class Operation(ABC):
         """Detects if event will be presented in result of the operation."""
 
     def detect_intersection(self, event: Event, above_event: Event) -> int:
-        intersections = linear.find_intersections(event.segment,
-                                                  above_event.segment)
-        if not intersections:
+        segment, above_segment = event.segment, above_event.segment
+        relationship = segments_relationship(segment, above_segment)
+        if relationship is SegmentsRelationship.NONE:
             # no intersection
             return 0
-        elif len(intersections) == 1:
+        elif relationship is SegmentsRelationship.CROSS:
             # segments intersect
             if (event.start == above_event.start
                     or event.end == above_event.end):
                 # segments intersect at an endpoint of both line segments
                 return 0
-            point, = intersections
+            point = segments_intersection(segment, above_segment)
             if event.start != point and event.end != point:
                 self.divide_segment(event, point)
             if above_event.start != point and above_event.end != point:
@@ -457,8 +459,8 @@ def _shrink_collinear_vertices(contour: Contour) -> None:
     for index in range(len(contour)):
         while (max(index, 2) < len(contour)
                and contour[index - 1] not in self_intersections
-               and (to_orientation(contour[index - 2], contour[index - 1],
-                                   contour[index])
+               and (orientation(contour[index - 2], contour[index - 1],
+                                contour[index])
                     is Orientation.COLLINEAR)):
             del contour[index - 1]
 

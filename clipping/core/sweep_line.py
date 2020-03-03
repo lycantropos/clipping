@@ -4,10 +4,10 @@ from typing import (Callable,
                     Optional,
                     cast)
 
-from bentley_ottmann.angular import (Orientation,
-                                     to_orientation)
 from dendroid import red_black
 from reprit.base import generate_repr
+from robust.angular import (Orientation,
+                            orientation)
 
 from clipping.hints import Coordinate
 from .event import Event
@@ -79,8 +79,8 @@ class SweepLineKey:
         other_start_x, other_start_y = other_event.start
         end_x, end_y = event.end
         other_end_x, other_end_y = other_event.end
-        other_start_orientation = to_orientation(end, start, other_start)
-        other_end_orientation = to_orientation(end, start, other_end)
+        other_start_orientation = orientation(end, start, other_start)
+        other_end_orientation = orientation(end, start, other_end)
         if other_start_orientation is other_end_orientation:
             if other_start_orientation is not Orientation.COLLINEAR:
                 # other segment fully lies on one side
@@ -100,8 +100,8 @@ class SweepLineKey:
             else:
                 # segments are horizontal
                 return start_x < other_start_x
-        start_orientation = to_orientation(other_end, other_start, start)
-        end_orientation = to_orientation(other_end, other_start, end)
+        start_orientation = orientation(other_end, other_start, start)
+        end_orientation = orientation(other_end, other_start, end)
         if start_orientation is end_orientation:
             return start_orientation is Orientation.CLOCKWISE
         elif other_start_orientation is Orientation.COLLINEAR:
