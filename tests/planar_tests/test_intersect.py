@@ -8,7 +8,7 @@ from tests.utils import (MultipolygonsPair,
                          MultipolygonsTriplet,
                          are_multipolygons_similar,
                          is_multipolygon,
-                         reverse_multipolygon)
+                         reverse_polygons)
 from . import strategies
 
 
@@ -112,6 +112,7 @@ def test_reversed(multipolygons_pair: MultipolygonsPair) -> None:
     result = intersect(left_multipolygon, right_multipolygon)
 
     assert result == intersect(left_multipolygon[::-1], right_multipolygon)
+    assert result == intersect(left_multipolygon, right_multipolygon[::-1])
 
 
 @given(strategies.multipolygons_pairs)
@@ -120,5 +121,7 @@ def test_reversed_polygons(multipolygons_pair: MultipolygonsPair) -> None:
 
     result = intersect(left_multipolygon, right_multipolygon)
 
-    assert result == intersect(reverse_multipolygon(left_multipolygon),
+    assert result == intersect(reverse_polygons(left_multipolygon),
                                right_multipolygon)
+    assert result == intersect(left_multipolygon,
+                               reverse_polygons(right_multipolygon))
