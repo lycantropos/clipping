@@ -60,7 +60,8 @@ def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
 
 
 def normalize_contour(contour: Contour) -> Contour:
-    return to_counterclockwise_contour(_rotate_sequence(contour))
+    return to_counterclockwise_contour(rotate_sequence(contour,
+                                                       to_index_min(contour)))
 
 
 def to_counterclockwise_contour(contour: Contour) -> Contour:
@@ -77,12 +78,8 @@ def _to_first_angle_orientation(contour: Contour) -> Orientation:
     return orientation(*first_angle_vertices)
 
 
-def _rotate_sequence(sequence: Domain,
-                     *,
-                     key: Optional[Key] = None) -> Domain:
-    index_min = to_index_min(sequence,
-                             key=key)
-    return sequence[index_min:] + sequence[:index_min]
+def rotate_sequence(sequence: Domain, index: int) -> Domain:
+    return sequence[index:] + sequence[:index]
 
 
 def identity(value: Domain) -> Domain:
