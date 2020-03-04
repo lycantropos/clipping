@@ -7,7 +7,8 @@ from clipping.planar import (intersect,
 from tests.utils import (MultipolygonsPair,
                          MultipolygonsTriplet,
                          are_multipolygons_similar,
-                         is_multipolygon)
+                         is_multipolygon,
+                         reverse_polygons)
 from . import strategies
 
 
@@ -110,3 +111,27 @@ def test_distribution_over_intersection(
                                                      mid_multipolygon),
                                                unite(left_multipolygon,
                                                      right_multipolygon)))
+
+
+@given(strategies.multipolygons_pairs)
+def test_reversed(multipolygons_pair: MultipolygonsPair) -> None:
+    left_multipolygon, right_multipolygon = multipolygons_pair
+
+    result = unite(left_multipolygon, right_multipolygon)
+
+    assert result == unite(left_multipolygon[::-1], right_multipolygon)
+    assert result == unite(left_multipolygon, right_multipolygon[::-1])
+
+
+@given(strategies.multipolygons_pairs)
+def test_reversed_polygons(multipolygons_pair: MultipolygonsPair) -> None:
+    left_multipolygon, right_multipolygon = multipolygons_pair
+
+    result = unite(left_multipolygon, right_multipolygon)
+
+    assert are_multipolygons_similar(result,
+                                     unite(reverse_polygons(left_multipolygon),
+                                           right_multipolygon))
+    assert are_multipolygons_similar(
+            result,
+            unite(left_multipolygon, reverse_polygons(right_multipolygon)))
