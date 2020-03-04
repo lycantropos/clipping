@@ -456,13 +456,23 @@ def _shrink_collinear_vertices(contour: Contour) -> None:
             self_intersections.add(vertex)
         else:
             visit(vertex)
-    for index in range(len(contour)):
-        while (max(index, 2) < len(contour)
+    index = -len(contour) + 1
+    while index < 0:
+        while (max(2, -index) < len(contour)
+               and contour[index + 1] not in self_intersections
+               and (orientation(contour[index + 2], contour[index + 1],
+                                contour[index])
+                    is Orientation.COLLINEAR)):
+            del contour[index + 1]
+        index += 1
+    while index < len(contour):
+        while (max(2, index) < len(contour)
                and contour[index - 1] not in self_intersections
                and (orientation(contour[index - 2], contour[index - 1],
                                 contour[index])
                     is Orientation.COLLINEAR)):
             del contour[index - 1]
+        index += 1
 
 
 def _to_next_position(position: int,
