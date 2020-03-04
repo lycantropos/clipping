@@ -137,3 +137,8 @@ def is_point(object_: Any) -> bool:
             and all(isinstance(coordinate, Number)
                     for coordinate in object_)
             and len(set(map(type, object_))) == 1)
+
+
+def reverse_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
+    return [(border[::-1], [hole[::-1] for hole in holes])
+            for border, holes in multipolygon]
