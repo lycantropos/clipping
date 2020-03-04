@@ -7,7 +7,8 @@ from clipping.planar import (complete_intersect,
 from tests.utils import (MultipolygonsPair,
                          are_multipolygons_similar,
                          is_geometry_collection,
-                         is_multipolygon)
+                         is_multipolygon,
+                         reverse_polygons)
 from . import strategies
 
 
@@ -76,3 +77,27 @@ def test_connection_with_intersection(multipolygons_pair: MultipolygonsPair
     assert (result[2]
             if is_geometry_collection(result)
             else result) == intersect(left_multipolygon, right_multipolygon)
+
+
+@given(strategies.multipolygons_pairs)
+def test_reversed(multipolygons_pair: MultipolygonsPair) -> None:
+    left_multipolygon, right_multipolygon = multipolygons_pair
+
+    result = complete_intersect(left_multipolygon, right_multipolygon)
+
+    assert result == complete_intersect(left_multipolygon[::-1],
+                                        right_multipolygon)
+    assert result == complete_intersect(left_multipolygon,
+                                        right_multipolygon[::-1])
+
+
+@given(strategies.multipolygons_pairs)
+def test_reversed_polygons(multipolygons_pair: MultipolygonsPair) -> None:
+    left_multipolygon, right_multipolygon = multipolygons_pair
+
+    result = complete_intersect(left_multipolygon, right_multipolygon)
+
+    assert result == complete_intersect(reverse_polygons(left_multipolygon),
+                                        right_multipolygon)
+    assert result == complete_intersect(left_multipolygon,
+                                        reverse_polygons(right_multipolygon))
