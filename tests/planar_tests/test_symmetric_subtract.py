@@ -141,7 +141,9 @@ def test_reversed_polygons(multipolygons_pair: MultipolygonsPair) -> None:
 
     result = symmetric_subtract(left_multipolygon, right_multipolygon)
 
-    assert result == symmetric_subtract(reverse_polygons(left_multipolygon),
-                                        right_multipolygon)
-    assert result == symmetric_subtract(left_multipolygon,
-                                        reverse_polygons(right_multipolygon))
+    assert are_multipolygons_similar(
+            result, symmetric_subtract(reverse_polygons(left_multipolygon),
+                                       right_multipolygon))
+    assert are_multipolygons_similar(
+            result, symmetric_subtract(left_multipolygon,
+                                       reverse_polygons(right_multipolygon)))
