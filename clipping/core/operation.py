@@ -135,7 +135,60 @@ class Operation(ABC):
         if relationship is SegmentsRelationship.NONE:
             # no intersection
             return 0
-        elif relationship is SegmentsRelationship.CROSS:
+        elif relationship is SegmentsRelationship.OVERLAP:
+            # segments overlap
+            if event.from_left is above_event.from_left:
+                raise ValueError(
+                    'Edges of the same polygon should not overlap.')
+
+            sorted_events = []
+            starts_equal = event.start == above_event.start
+            if starts_equal:
+                sorted_events.append(None)
+            elif EventsQueueKey(event) > EventsQueueKey(above_event):
+                sorted_events.append(above_event)
+                sorted_events.append(event)
+            else:
+                sorted_events.append(event)
+                sorted_events.append(above_event)
+
+            ends_equal = event.end == above_event.end
+            if ends_equal:
+                sorted_events.append(None)
+            elif (EventsQueueKey(event.complement)
+                  > EventsQueueKey(above_event.complement)):
+                sorted_events.append(above_event.complement)
+                sorted_events.append(event.complement)
+            else:
+                sorted_events.append(event.complement)
+                sorted_events.append(above_event.complement)
+
+            if starts_equal:
+                # both line segments are equal or share the left endpoint
+                event.edge_type = EdgeType.NON_CONTRIBUTING
+                above_event.edge_type = (
+                    EdgeType.SAME_TRANSITION
+                    if event.in_out is above_event.in_out
+                    else EdgeType.DIFFERENT_TRANSITION)
+                if not ends_equal:
+                    self.divide_segment(sorted_events[2].complement,
+                                        sorted_events[1].start)
+                return 2
+            elif ends_equal:
+                # the line segments share the right endpoint
+                self.divide_segment(sorted_events[0], sorted_events[1].start)
+                return 3
+            else:
+                self.divide_segment(sorted_events[0]
+                                    # one line segment includes the other one
+                                    if (sorted_events[0]
+                                        is sorted_events[3].complement)
+                                    # no line segment includes the other one
+                                    else sorted_events[1],
+                                    sorted_events[2].start)
+                self.divide_segment(sorted_events[0], sorted_events[1].start)
+                return 3
+        else:
             # segments intersect
             if (event.start == above_event.start
                     or event.end == above_event.end):
@@ -147,57 +200,6 @@ class Operation(ABC):
             if above_event.start != point and above_event.end != point:
                 self.divide_segment(above_event, point)
             return 1
-        # segments overlap
-        if event.from_left is above_event.from_left:
-            raise ValueError('Edges of the same polygon should not overlap.')
-
-        sorted_events = []
-        starts_equal = event.start == above_event.start
-        if starts_equal:
-            sorted_events.append(None)
-        elif EventsQueueKey(event) > EventsQueueKey(above_event):
-            sorted_events.append(above_event)
-            sorted_events.append(event)
-        else:
-            sorted_events.append(event)
-            sorted_events.append(above_event)
-
-        ends_equal = event.end == above_event.end
-        if ends_equal:
-            sorted_events.append(None)
-        elif (EventsQueueKey(event.complement)
-              > EventsQueueKey(above_event.complement)):
-            sorted_events.append(above_event.complement)
-            sorted_events.append(event.complement)
-        else:
-            sorted_events.append(event.complement)
-            sorted_events.append(above_event.complement)
-
-        if starts_equal:
-            # both line segments are equal or share the left endpoint
-            event.edge_type = EdgeType.NON_CONTRIBUTING
-            above_event.edge_type = (
-                EdgeType.SAME_TRANSITION
-                if event.in_out is above_event.in_out
-                else EdgeType.DIFFERENT_TRANSITION)
-            if not ends_equal:
-                self.divide_segment(sorted_events[2].complement,
-                                    sorted_events[1].start)
-            return 2
-        elif ends_equal:
-            # the line segments share the right endpoint
-            self.divide_segment(sorted_events[0], sorted_events[1].start)
-            return 3
-        else:
-            self.divide_segment(sorted_events[0]
-                                # one line segment includes the other one
-                                if (sorted_events[0]
-                                    is sorted_events[3].complement)
-                                # no line segment includes the other one
-                                else sorted_events[1],
-                                sorted_events[2].start)
-            self.divide_segment(sorted_events[0], sorted_events[1].start)
-            return 3
 
     def divide_segment(self, event: Event, point: Point) -> None:
         left_event = Event(False, point, event.complement, event.from_left,
