@@ -138,9 +138,8 @@ class Operation(ABC):
         elif relationship is SegmentsRelationship.OVERLAP:
             # segments overlap
             if event.from_left is above_event.from_left:
-                raise ValueError(
-                    'Edges of the same polygon should not overlap.')
-
+                raise ValueError('Edges of the same polygon '
+                                 'should not overlap.')
             sorted_events = []
             starts_equal = event.start == above_event.start
             if starts_equal:
@@ -166,10 +165,9 @@ class Operation(ABC):
             if starts_equal:
                 # both line segments are equal or share the left endpoint
                 event.edge_type = EdgeType.NON_CONTRIBUTING
-                above_event.edge_type = (
-                    EdgeType.SAME_TRANSITION
-                    if event.in_out is above_event.in_out
-                    else EdgeType.DIFFERENT_TRANSITION)
+                above_event.edge_type = (EdgeType.SAME_TRANSITION
+                                         if event.in_out is above_event.in_out
+                                         else EdgeType.DIFFERENT_TRANSITION)
                 if not ends_equal:
                     self.divide_segment(sorted_events[2].complement,
                                         sorted_events[1].start)
