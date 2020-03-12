@@ -1,8 +1,7 @@
 from hypothesis import strategies
 from hypothesis_geometry import planar
 
-from clipping.hints import (Contour,
-                            Multipolygon,
+from clipping.hints import (Multipolygon,
                             Polygon)
 from tests.strategies import scalars_strategies
 from tests.utils import (Strategy,
@@ -10,22 +9,19 @@ from tests.utils import (Strategy,
                          to_pairs,
                          to_triplets)
 
-contours_strategies = scalars_strategies.map(planar.contours)
-
+polygons_strategies = scalars_strategies.map(planar.polygons)
 empty_multipolygons = strategies.builds(list)
 
 
-def to_simple_multipolygons(contours: Strategy[Contour]
-                            ) -> Strategy[Multipolygon]:
-    def to_simple_multipolygon(polygon: Polygon) -> Multipolygon:
+def to_multipolygons(polygons: Strategy[Polygon]
+                     ) -> Strategy[Multipolygon]:
+    def to_multipolygon(polygon: Polygon) -> Multipolygon:
         return [polygon]
 
-    return (empty_multipolygons
-            | (strategies.tuples(contours, empty_multipolygons)
-               .map(to_simple_multipolygon)))
+    return empty_multipolygons | polygons.map(to_multipolygon)
 
 
-multipolygons_strategies = contours_strategies.map(to_simple_multipolygons)
+multipolygons_strategies = polygons_strategies.map(to_multipolygons)
 multipolygons = multipolygons_strategies.flatmap(identity)
 empty_multipolygons_with_multipolygons = strategies.tuples(empty_multipolygons,
                                                            multipolygons)
