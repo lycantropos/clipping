@@ -1,1 +1,1 @@
-from .base import scalars_strategies
+from .base import coordinates_strategies

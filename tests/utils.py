@@ -82,10 +82,6 @@ def rotate_sequence(sequence: Domain, index: int) -> Domain:
     return sequence[index:] + sequence[:index]
 
 
-def identity(value: Domain) -> Domain:
-    return value
-
-
 def to_pairs(strategy: Strategy[Domain]) -> Strategy[Tuple[Domain, Domain]]:
     return strategies.tuples(strategy, strategy)
 
