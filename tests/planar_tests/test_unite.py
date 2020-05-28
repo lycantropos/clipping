@@ -119,8 +119,10 @@ def test_reversed(multipolygons_pair: MultipolygonsPair) -> None:
 
     result = unite(left_multipolygon, right_multipolygon)
 
-    assert result == unite(left_multipolygon[::-1], right_multipolygon)
-    assert result == unite(left_multipolygon, right_multipolygon[::-1])
+    assert are_multipolygons_similar(
+            result, unite(left_multipolygon[::-1], right_multipolygon))
+    assert are_multipolygons_similar(
+            result, unite(left_multipolygon, right_multipolygon[::-1]))
 
 
 @given(strategies.multipolygons_pairs)
