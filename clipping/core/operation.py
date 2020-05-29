@@ -96,11 +96,11 @@ class Operation(ABC):
                                         sweep_line.below(event))
             self.compute_fields(event, below_event)
             if above_event is not None:
-                if self.detect_intersection(event, above_event) == 2:
+                if self.detect_intersection(event, above_event):
                     self.compute_fields(event, below_event)
                     self.compute_fields(above_event, event)
             if below_event is not None:
-                if self.detect_intersection(below_event, event) == 2:
+                if self.detect_intersection(below_event, event):
                     below_below_event = sweep_line.below(below_event)
                     self.compute_fields(below_event, below_below_event)
                     self.compute_fields(event, below_event)
@@ -129,75 +129,61 @@ class Operation(ABC):
     def in_result(self, event: Event) -> bool:
         """Detects if event will be presented in result of the operation."""
 
-    def detect_intersection(self, event: Event, above_event: Event) -> int:
-        segment, above_segment = event.segment, above_event.segment
-        relationship = segments_relationship(segment, above_segment)
-        if relationship is SegmentsRelationship.NONE:
-            # no intersection
-            return 0
-        elif relationship is SegmentsRelationship.OVERLAP:
+    def detect_intersection(self, below_event: Event, event: Event) -> int:
+        below_segment, segment = below_event.segment, event.segment
+        relationship = segments_relationship(below_segment, segment)
+        if relationship is SegmentsRelationship.OVERLAP:
             # segments overlap
-            if event.from_left is above_event.from_left:
+            if below_event.from_left is event.from_left:
                 raise ValueError('Edges of the same multipolygon '
                                  'should not overlap.')
-            sorted_events = []
-            starts_equal = event.start == above_event.start
+            starts_equal = below_event.start == event.start
             if starts_equal:
-                sorted_events.append(None)
-            elif EventsQueueKey(event) > EventsQueueKey(above_event):
-                sorted_events.append(above_event)
-                sorted_events.append(event)
+                start_min = start_max = None
+            elif EventsQueueKey(event) < EventsQueueKey(below_event):
+                start_min, start_max = event, below_event
             else:
-                sorted_events.append(event)
-                sorted_events.append(above_event)
+                start_min, start_max = below_event, event
 
-            ends_equal = event.end == above_event.end
+            ends_equal = event.end == below_event.end
             if ends_equal:
-                sorted_events.append(None)
+                end_min = end_max = None
             elif (EventsQueueKey(event.complement)
-                  > EventsQueueKey(above_event.complement)):
-                sorted_events.append(above_event.complement)
-                sorted_events.append(event.complement)
+                  < EventsQueueKey(below_event.complement)):
+                end_min, end_max = event.complement, below_event.complement
             else:
-                sorted_events.append(event.complement)
-                sorted_events.append(above_event.complement)
+                end_min, end_max = below_event.complement, event.complement
 
             if starts_equal:
                 # both line segments are equal or share the left endpoint
-                event.edge_type = EdgeType.NON_CONTRIBUTING
-                above_event.edge_type = (EdgeType.SAME_TRANSITION
-                                         if event.in_out is above_event.in_out
-                                         else EdgeType.DIFFERENT_TRANSITION)
+                below_event.edge_type = EdgeType.NON_CONTRIBUTING
+                event.edge_type = (EdgeType.SAME_TRANSITION
+                                   if event.in_out is below_event.in_out
+                                   else EdgeType.DIFFERENT_TRANSITION)
                 if not ends_equal:
-                    self.divide_segment(sorted_events[2].complement,
-                                        sorted_events[1].start)
-                return 2
+                    self.divide_segment(end_max.complement, end_min.start)
+                return True
             elif ends_equal:
                 # the line segments share the right endpoint
-                self.divide_segment(sorted_events[0], sorted_events[1].start)
-                return 3
+                self.divide_segment(start_min, start_max.start)
+            elif start_min is end_max.complement:
+                # one line segment includes the other one
+                self.divide_segment(start_min, end_min.start)
+                self.divide_segment(start_min, start_max.start)
             else:
-                self.divide_segment(sorted_events[0]
-                                    # one line segment includes the other one
-                                    if (sorted_events[0]
-                                        is sorted_events[3].complement)
-                                    # no line segment includes the other one
-                                    else sorted_events[1],
-                                    sorted_events[2].start)
-                self.divide_segment(sorted_events[0], sorted_events[1].start)
-                return 3
-        else:
-            # segments intersect
-            if (event.start == above_event.start
-                    or event.end == above_event.end):
-                # segments intersect at an endpoint of both line segments
-                return 0
-            point = segments_intersection(segment, above_segment)
-            if event.start != point and event.end != point:
+                # no line segment includes the other one
+                self.divide_segment(start_max, end_min.start)
+                self.divide_segment(start_min, start_max.start)
+        elif (relationship is not SegmentsRelationship.NONE
+              and event.start != below_event.start
+              and event.end != below_event.end):
+            # segments do not intersect at endpoints
+            point = segments_intersection(below_segment, segment)
+            if point != below_event.start and point != below_event.end:
+                self.divide_segment(below_event, point)
+            if point != event.start and point != event.end:
                 self.divide_segment(event, point)
-            if above_event.start != point and above_event.end != point:
-                self.divide_segment(above_event, point)
-            return 1
+        return False
 
     def divide_segment(self, event: Event, point: Point) -> None:
         left_event = Event(False, point, event.complement, event.from_left,
