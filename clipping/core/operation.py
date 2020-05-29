@@ -242,6 +242,8 @@ class Intersection(Operation):
 
 
 class CompleteIntersection(Intersection):
+    __slots__ = ()
+
     def compute(self) -> Union_[GeometryCollection, Multipolygon]:
         events = sorted(self.sweep(),
                         key=EventsQueueKey)
