@@ -281,6 +281,8 @@ class SymmetricDifference(Operation):
 
 
 class Union(Operation):
+    __slots__ = ()
+
     def in_result(self, event: Event) -> bool:
         edge_type = event.edge_type
         return (edge_type is EdgeType.NORMAL and event.other_in_out
