@@ -219,6 +219,8 @@ class Difference(Operation):
 
 
 class Intersection(Operation):
+    __slots__ = ()
+
     def sweep(self) -> List[Event]:
         self.fill_queue()
         result = []
