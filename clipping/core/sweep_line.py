@@ -1,6 +1,5 @@
 from functools import partial
 from typing import (Callable,
-                    List,
                     Optional,
                     cast)
 
@@ -16,18 +15,12 @@ from .event import Event
 class SweepLine:
     __slots__ = ('current_x', '_tree')
 
-    def __init__(self, *events: Event,
-                 current_x: Optional[Coordinate] = None) -> None:
+    def __init__(self, current_x: Optional[Coordinate] = None) -> None:
         self.current_x = current_x
-        self._tree = red_black.tree(*events,
-                                    key=cast(Callable[[Event], SweepLineKey],
+        self._tree = red_black.tree(key=cast(Callable[[Event], SweepLineKey],
                                              partial(SweepLineKey, self)))
 
     __repr__ = generate_repr(__init__)
-
-    @property
-    def events(self) -> List[Event]:
-        return list(self._tree)
 
     def __contains__(self, event: Event) -> bool:
         return event in self._tree
