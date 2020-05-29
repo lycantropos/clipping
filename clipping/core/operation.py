@@ -274,6 +274,8 @@ class CompleteIntersection(Intersection):
 
 
 class SymmetricDifference(Operation):
+    __slots__ = ()
+
     def in_result(self, event: Event) -> bool:
         return event.edge_type is EdgeType.NORMAL
 
