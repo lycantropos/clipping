@@ -95,15 +95,15 @@ class Operation(ABC):
             above_event, below_event = (sweep_line.above(event),
                                         sweep_line.below(event))
             self.compute_fields(event, below_event)
-            if above_event is not None:
-                if self.detect_intersection(event, above_event):
-                    self.compute_fields(event, below_event)
-                    self.compute_fields(above_event, event)
-            if below_event is not None:
-                if self.detect_intersection(below_event, event):
-                    below_below_event = sweep_line.below(below_event)
-                    self.compute_fields(below_event, below_below_event)
-                    self.compute_fields(event, below_event)
+            if (above_event is not None
+                    and self.detect_intersection(event, above_event)):
+                self.compute_fields(event, below_event)
+                self.compute_fields(above_event, event)
+            if (below_event is not None
+                    and self.detect_intersection(below_event, event)):
+                below_below_event = sweep_line.below(below_event)
+                self.compute_fields(below_event, below_below_event)
+                self.compute_fields(event, below_event)
 
     def compute_fields(self, event: Event, below_event: Optional[Event]
                        ) -> None:
