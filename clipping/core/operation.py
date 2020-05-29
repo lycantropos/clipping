@@ -138,7 +138,7 @@ class Operation(ABC):
         elif relationship is SegmentsRelationship.OVERLAP:
             # segments overlap
             if event.from_left is above_event.from_left:
-                raise ValueError('Edges of the same polygon '
+                raise ValueError('Edges of the same multipolygon '
                                  'should not overlap.')
             sorted_events = []
             starts_equal = event.start == above_event.start
