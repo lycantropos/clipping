@@ -11,7 +11,7 @@ from .event import Event
 
 
 class EventsQueueKey:
-    __slots__ = ('event',)
+    __slots__ = 'event',
 
     def __init__(self, event: Event) -> None:
         self.event = event
