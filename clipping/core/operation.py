@@ -196,6 +196,8 @@ class Operation(ABC):
 
 
 class Difference(Operation):
+    __slots__ = ()
+
     def sweep(self) -> List[Event]:
         self.fill_queue()
         result = []
