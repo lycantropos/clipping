@@ -38,7 +38,7 @@ from .utils import (all_equal,
 
 
 class Operation(ABC):
-    __slots__ = ('left', 'right', '_events_queue')
+    __slots__ = 'left', 'right', '_events_queue'
 
     def __init__(self,
                  left: Multipolygon,
