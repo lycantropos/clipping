@@ -9,7 +9,7 @@ on_travis_ci = bool(os.getenv('CI', False))
 is_pypy = platform.python_implementation() == 'PyPy'
 settings.register_profile('default',
                           max_examples=((settings.default.max_examples
-                                         // (2 * (1 + is_pypy)))
+                                         // (5 * (1 + is_pypy)))
                                         if on_azure_pipelines or on_travis_ci
                                         else settings.default.max_examples),
                           deadline=None,
