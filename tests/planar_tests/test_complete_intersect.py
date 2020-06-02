@@ -5,9 +5,8 @@ from clipping.planar import (complete_intersect,
                              intersect,
                              unite)
 from tests.utils import (MultipolygonsPair,
-                         are_multipolygons_similar,
-                         is_geometry_collection,
-                         is_multipolygon,
+                         is_mix,
+                         mix_similar_to_multipolygon,
                          reverse_polygons)
 from . import strategies
 
@@ -18,14 +17,14 @@ def test_basic(multipolygons_pair: MultipolygonsPair) -> None:
 
     result = complete_intersect(left_multipolygon, right_multipolygon)
 
-    assert is_geometry_collection(result) or is_multipolygon(result)
+    assert is_mix(result)
 
 
 @given(strategies.multipolygons)
 def test_idempotence(multipolygon: Multipolygon) -> None:
     result = complete_intersect(multipolygon, multipolygon)
 
-    assert are_multipolygons_similar(result, multipolygon)
+    assert mix_similar_to_multipolygon(result, multipolygon)
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)
@@ -35,7 +34,7 @@ def test_left_absorbing_element(
 
     result = complete_intersect(empty_multipolygon, multipolygon)
 
-    assert not result
+    assert not any(result)
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)
@@ -45,7 +44,7 @@ def test_right_absorbing_element(
 
     result = complete_intersect(multipolygon, empty_multipolygon)
 
-    assert not result
+    assert not any(result)
 
 
 @given(strategies.multipolygons_pairs)
@@ -55,7 +54,7 @@ def test_absorption_identity(multipolygons_pair: MultipolygonsPair) -> None:
     result = complete_intersect(left_multipolygon, unite(left_multipolygon,
                                                          right_multipolygon))
 
-    assert are_multipolygons_similar(result, left_multipolygon)
+    assert mix_similar_to_multipolygon(result, left_multipolygon)
 
 
 @given(strategies.multipolygons_pairs)
@@ -68,19 +67,18 @@ def test_commutativity(multipolygons_pair: MultipolygonsPair) -> None:
 
 
 @given(strategies.multipolygons_pairs)
-def test_connection_with_intersection(multipolygons_pair: MultipolygonsPair
-                                      ) -> None:
+def test_connection_with_intersect(multipolygons_pair: MultipolygonsPair
+                                   ) -> None:
     left_multipolygon, right_multipolygon = multipolygons_pair
 
     result = complete_intersect(left_multipolygon, right_multipolygon)
 
-    assert (result[2]
-            if is_geometry_collection(result)
-            else result) == intersect(left_multipolygon, right_multipolygon)
+    _, _, multipolygon = result
+    assert multipolygon == intersect(left_multipolygon, right_multipolygon)
 
 
 @given(strategies.multipolygons_pairs)
-def test_reversed(multipolygons_pair: MultipolygonsPair) -> None:
+def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
     left_multipolygon, right_multipolygon = multipolygons_pair
 
     result = complete_intersect(left_multipolygon, right_multipolygon)
@@ -89,14 +87,6 @@ def test_reversed(multipolygons_pair: MultipolygonsPair) -> None:
                                         right_multipolygon)
     assert result == complete_intersect(left_multipolygon,
                                         right_multipolygon[::-1])
-
-
-@given(strategies.multipolygons_pairs)
-def test_reversed_polygons(multipolygons_pair: MultipolygonsPair) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
-
-    result = complete_intersect(left_multipolygon, right_multipolygon)
-
     assert result == complete_intersect(reverse_polygons(left_multipolygon),
                                         right_multipolygon)
     assert result == complete_intersect(left_multipolygon,

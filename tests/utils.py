@@ -16,6 +16,7 @@ from robust.angular import (Orientation,
 from clipping.core.utils import (to_contour_base,
                                  to_first_boundary_vertex)
 from clipping.hints import (Contour,
+                            Mix,
                             Multipolygon)
 
 Strategy = SearchStrategy
@@ -44,6 +45,12 @@ def to_index_min(values: Iterable[Domain],
     return min(((value, index)
                 for index, value in enumerate(values)),
                **kwargs)[1]
+
+
+def mix_similar_to_multipolygon(mix: Mix, other: Multipolygon) -> bool:
+    multipoint, multisegment, multipolygon = mix
+    return (not multipoint and not multisegment
+            and are_multipolygons_similar(multipolygon, other))
 
 
 def are_multipolygons_similar(left: Multipolygon, right: Multipolygon) -> bool:
@@ -91,14 +98,20 @@ def to_triplets(strategy: Strategy[Domain]
     return strategies.tuples(strategy, strategy, strategy)
 
 
-def is_geometry_collection(object_: Any) -> bool:
+def is_mix(object_: Any) -> bool:
     return (isinstance(object_, tuple)
             and len(object_) == 3
-            and all(isinstance(element, list)
-                    for element in object_)
-            and all(map(is_point, object_[0]))
-            and all(map(is_segment, object_[1]))
-            and all(map(is_polygon, object_[2])))
+            and is_multipoint(object_[0])
+            and is_multisegment(object_[1])
+            and is_multipolygon(object_[2]))
+
+
+def is_multipoint(object_: Any) -> bool:
+    return isinstance(object_, list) and all(map(is_point, object_))
+
+
+def is_multisegment(object_: Any) -> bool:
+    return isinstance(object_, list) and all(map(is_segment, object_))
 
 
 def is_multipolygon(object_: Any) -> bool:
