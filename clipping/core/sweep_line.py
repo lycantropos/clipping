@@ -64,12 +64,10 @@ class SweepLineKey:
         event, other_event = self.event, other.event
         if event is other_event:
             return False
-        start, other_start = event.start, other_event.start
-        end, other_end = event.end, other_event.end
-        start_x, start_y = event.start
-        other_start_x, other_start_y = other_event.start
-        end_x, end_y = event.end
-        other_end_x, other_end_y = other_event.end
+        start_x, start_y = start = event.start
+        other_start_x, other_start_y = other_start = other_event.start
+        end_x, end_y = end = event.end
+        other_end_x, other_end_y = other_end = other_event.end
         other_start_orientation = orientation(end, start, other_start)
         other_end_orientation = orientation(end, start, other_end)
         if other_start_orientation is other_end_orientation:
