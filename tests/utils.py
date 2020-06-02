@@ -53,8 +53,22 @@ def mix_similar_to_multipolygon(mix: Mix, other: Multipolygon) -> bool:
             and are_multipolygons_similar(multipolygon, other))
 
 
+def are_mixes_similar(left: Mix, right: Mix) -> bool:
+    return normalize_mix(left) == normalize_mix(right)
+
+
 def are_multipolygons_similar(left: Multipolygon, right: Multipolygon) -> bool:
     return normalize_multipolygon(left) == normalize_multipolygon(right)
+
+
+def normalize_mix(mix: Mix) -> Mix:
+    multipoint, multisegment, multipolygon = mix
+    return (normalize_multipoint(multipoint),
+            normalize_multisegment(multisegment),
+            normalize_multipolygon(multipolygon))
+
+
+normalize_multipoint = normalize_multisegment = sorted
 
 
 def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
