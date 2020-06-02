@@ -7,7 +7,10 @@ from clipping.planar import (complete_intersect,
 from tests.utils import (MultipolygonsPair,
                          is_mix,
                          mix_similar_to_multipolygon,
-                         reverse_polygons)
+                         reverse_multipolygon,
+                         reverse_multipolygon_borders,
+                         reverse_multipolygon_holes,
+                         reverse_multipolygon_holes_contours)
 from . import strategies
 
 
@@ -83,11 +86,25 @@ def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
 
     result = complete_intersect(left_multipolygon, right_multipolygon)
 
-    assert result == complete_intersect(left_multipolygon[::-1],
-                                        right_multipolygon)
-    assert result == complete_intersect(left_multipolygon,
-                                        right_multipolygon[::-1])
-    assert result == complete_intersect(reverse_polygons(left_multipolygon),
-                                        right_multipolygon)
-    assert result == complete_intersect(left_multipolygon,
-                                        reverse_polygons(right_multipolygon))
+    assert result == complete_intersect(
+            reverse_multipolygon(left_multipolygon), right_multipolygon)
+    assert result == complete_intersect(
+            left_multipolygon, reverse_multipolygon(right_multipolygon))
+    assert result == complete_intersect(
+            reverse_multipolygon_borders(left_multipolygon),
+            right_multipolygon)
+    assert result == complete_intersect(
+            left_multipolygon,
+            reverse_multipolygon_borders(right_multipolygon))
+    assert result == complete_intersect(
+            reverse_multipolygon_holes(left_multipolygon),
+            right_multipolygon)
+    assert result == complete_intersect(
+            left_multipolygon,
+            reverse_multipolygon_holes(right_multipolygon))
+    assert result == complete_intersect(
+            reverse_multipolygon_holes_contours(left_multipolygon),
+            right_multipolygon)
+    assert result == complete_intersect(
+            left_multipolygon,
+            reverse_multipolygon_holes_contours(right_multipolygon))

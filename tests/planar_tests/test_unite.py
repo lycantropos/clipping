@@ -8,7 +8,10 @@ from tests.utils import (MultipolygonsPair,
                          MultipolygonsTriplet,
                          are_multipolygons_similar,
                          is_multipolygon,
-                         reverse_polygons)
+                         reverse_multipolygon,
+                         reverse_multipolygon_borders,
+                         reverse_multipolygon_holes,
+                         reverse_multipolygon_holes_contours)
 from . import strategies
 
 
@@ -114,26 +117,36 @@ def test_distribution_over_intersection(
 
 
 @given(strategies.multipolygons_pairs)
-def test_reversed(multipolygons_pair: MultipolygonsPair) -> None:
+def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
     left_multipolygon, right_multipolygon = multipolygons_pair
 
     result = unite(left_multipolygon, right_multipolygon)
 
     assert are_multipolygons_similar(
-            result, unite(left_multipolygon[::-1], right_multipolygon))
+            result, unite(reverse_multipolygon(left_multipolygon),
+                          right_multipolygon))
     assert are_multipolygons_similar(
-            result, unite(left_multipolygon, right_multipolygon[::-1]))
-
-
-@given(strategies.multipolygons_pairs)
-def test_reversed_polygons(multipolygons_pair: MultipolygonsPair) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
-
-    result = unite(left_multipolygon, right_multipolygon)
-
-    assert are_multipolygons_similar(result,
-                                     unite(reverse_polygons(left_multipolygon),
-                                           right_multipolygon))
+            result, unite(left_multipolygon,
+                          reverse_multipolygon(right_multipolygon)))
     assert are_multipolygons_similar(
             result,
-            unite(left_multipolygon, reverse_polygons(right_multipolygon)))
+            unite(reverse_multipolygon_borders(left_multipolygon),
+                  right_multipolygon))
+    assert are_multipolygons_similar(
+            result, unite(
+                    left_multipolygon,
+                    reverse_multipolygon_borders(right_multipolygon)))
+    assert are_multipolygons_similar(
+            result, unite(reverse_multipolygon_holes(left_multipolygon),
+                          right_multipolygon))
+    assert are_multipolygons_similar(
+            result, unite(left_multipolygon,
+                          reverse_multipolygon_holes(right_multipolygon)))
+    assert are_multipolygons_similar(
+            result, unite(
+                    reverse_multipolygon_holes_contours(left_multipolygon),
+                    right_multipolygon))
+    assert are_multipolygons_similar(
+            result, unite(
+                    left_multipolygon,
+                    reverse_multipolygon_holes_contours(right_multipolygon)))

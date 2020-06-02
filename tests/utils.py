@@ -148,6 +148,19 @@ def is_point(object_: Any) -> bool:
             and len(set(map(type, object_))) == 1)
 
 
-def reverse_polygons(multipolygon: Multipolygon) -> Multipolygon:
-    return [(border[::-1], [hole[::-1] for hole in holes])
+def reverse_multipolygon_borders(multipolygon: Multipolygon) -> Multipolygon:
+    return [(border[::-1], holes) for border, holes in multipolygon]
+
+
+def reverse_multipolygon_holes(multipolygon: Multipolygon) -> Multipolygon:
+    return [(border, holes[::-1]) for border, holes in multipolygon]
+
+
+def reverse_multipolygon_holes_contours(multipolygon: Multipolygon
+                                        ) -> Multipolygon:
+    return [(border, [hole[::-1] for hole in holes])
             for border, holes in multipolygon]
+
+
+def reverse_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
+    return multipolygon[::-1]

@@ -9,7 +9,10 @@ from tests.utils import (Multipolygon,
                          MultipolygonsTriplet,
                          are_multipolygons_similar,
                          is_multipolygon,
-                         reverse_polygons)
+                         reverse_multipolygon,
+                         reverse_multipolygon_borders,
+                         reverse_multipolygon_holes,
+                         reverse_multipolygon_holes_contours)
 from . import strategies
 
 
@@ -124,28 +127,39 @@ def test_repeated(multipolygons_triplet: MultipolygonsTriplet) -> None:
 
 
 @given(strategies.multipolygons_pairs)
-def test_reversed(multipolygons_pair: MultipolygonsPair) -> None:
+def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
     left_multipolygon, right_multipolygon = multipolygons_pair
 
     result = symmetric_subtract(left_multipolygon, right_multipolygon)
 
     assert are_multipolygons_similar(
-            result, symmetric_subtract(left_multipolygon[::-1],
+            result, symmetric_subtract(reverse_multipolygon(left_multipolygon),
                                        right_multipolygon))
     assert are_multipolygons_similar(
-            result, symmetric_subtract(left_multipolygon,
-                                       right_multipolygon[::-1]))
-
-
-@given(strategies.multipolygons_pairs)
-def test_reversed_polygons(multipolygons_pair: MultipolygonsPair) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
-
-    result = symmetric_subtract(left_multipolygon, right_multipolygon)
-
+            result,
+            symmetric_subtract(left_multipolygon,
+                               reverse_multipolygon(right_multipolygon)))
     assert are_multipolygons_similar(
-            result, symmetric_subtract(reverse_polygons(left_multipolygon),
-                                       right_multipolygon))
+            result,
+            symmetric_subtract(reverse_multipolygon_borders(left_multipolygon),
+                               right_multipolygon))
     assert are_multipolygons_similar(
-            result, symmetric_subtract(left_multipolygon,
-                                       reverse_polygons(right_multipolygon)))
+            result, symmetric_subtract(
+                    left_multipolygon,
+                    reverse_multipolygon_borders(right_multipolygon)))
+    assert are_multipolygons_similar(
+            result,
+            symmetric_subtract(reverse_multipolygon_holes(left_multipolygon),
+                               right_multipolygon))
+    assert are_multipolygons_similar(
+            result, symmetric_subtract(
+                    left_multipolygon,
+                    reverse_multipolygon_holes(right_multipolygon)))
+    assert are_multipolygons_similar(
+            result, symmetric_subtract(
+                    reverse_multipolygon_holes_contours(left_multipolygon),
+                    right_multipolygon))
+    assert are_multipolygons_similar(
+            result, symmetric_subtract(
+                    left_multipolygon,
+                    reverse_multipolygon_holes_contours(right_multipolygon)))
