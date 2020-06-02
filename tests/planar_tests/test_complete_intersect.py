@@ -28,8 +28,8 @@ def test_idempotence(multipolygon: Multipolygon) -> None:
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)
-def test_left_absorbing_element(
-        empty_multipolygon_with_multipolygon: MultipolygonsPair) -> None:
+def test_left_absorbing_element(empty_multipolygon_with_multipolygon
+                                : MultipolygonsPair) -> None:
     empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
 
     result = complete_intersect(empty_multipolygon, multipolygon)
@@ -38,8 +38,8 @@ def test_left_absorbing_element(
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)
-def test_right_absorbing_element(
-        empty_multipolygon_with_multipolygon: MultipolygonsPair) -> None:
+def test_right_absorbing_element(empty_multipolygon_with_multipolygon
+                                 : MultipolygonsPair) -> None:
     empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
 
     result = complete_intersect(multipolygon, empty_multipolygon)
