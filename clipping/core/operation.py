@@ -303,7 +303,10 @@ def compute(operation: Type[Operation],
     elif not all(operands):
         # at least one of the arguments is empty
         if operation is Difference:
-            return operands[0]
+            if operands[0]:
+                operands = tuple(filter(None, operands))
+            else:
+                return operands[0]
         elif operation is Union or operation is SymmetricDifference:
             operands = tuple(filter(None, operands))
         else:
