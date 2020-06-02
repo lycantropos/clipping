@@ -1,3 +1,5 @@
+from typing import List
+
 from hypothesis import given
 
 from clipping.hints import Multipolygon
@@ -11,7 +13,8 @@ from tests.utils import (MultipolygonsPair,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
                          reverse_multipolygon_holes,
-                         reverse_multipolygon_holes_contours)
+                         reverse_multipolygon_holes_contours,
+                         rotate_sequence)
 from . import strategies
 
 
@@ -24,16 +27,21 @@ def test_basic(multipolygons_pair: MultipolygonsPair) -> None:
     assert is_multipolygon(result)
 
 
-@given(strategies.multipolygons)
-def test_idempotence(multipolygon: Multipolygon) -> None:
-    result = intersect(multipolygon, multipolygon)
+@given(strategies.empty_multipolygons_lists)
+def test_degenerate(multipolygons: List[Multipolygon]) -> None:
+    assert intersect(*multipolygons) == []
 
-    assert are_multipolygons_similar(result, multipolygon)
+
+@given(strategies.multipolygons)
+def test_self(multipolygon: Multipolygon) -> None:
+    assert intersect(multipolygon) == multipolygon
+    assert are_multipolygons_similar(intersect(multipolygon, multipolygon),
+                                     multipolygon)
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)
-def test_left_absorbing_element(
-        empty_multipolygon_with_multipolygon: MultipolygonsPair) -> None:
+def test_left_absorbing_element(empty_multipolygon_with_multipolygon
+                                : MultipolygonsPair) -> None:
     empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
 
     result = intersect(empty_multipolygon, multipolygon)
@@ -42,8 +50,8 @@ def test_left_absorbing_element(
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)
-def test_right_absorbing_element(
-        empty_multipolygon_with_multipolygon: MultipolygonsPair) -> None:
+def test_right_absorbing_element(empty_multipolygon_with_multipolygon
+                                 : MultipolygonsPair) -> None:
     empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
 
     result = intersect(multipolygon, empty_multipolygon)
@@ -59,15 +67,6 @@ def test_absorption_identity(multipolygons_pair: MultipolygonsPair) -> None:
                                                 right_multipolygon))
 
     assert are_multipolygons_similar(result, left_multipolygon)
-
-
-@given(strategies.multipolygons_pairs)
-def test_commutativity(multipolygons_pair: MultipolygonsPair) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
-
-    result = intersect(left_multipolygon, right_multipolygon)
-
-    assert result == intersect(right_multipolygon, left_multipolygon)
 
 
 @given(strategies.multipolygons_triplets)
@@ -108,29 +107,33 @@ def test_distribution_over_union(multipolygons_triplet: MultipolygonsTriplet
                            intersect(left_multipolygon, right_multipolygon))
 
 
-@given(strategies.multipolygons_pairs)
-def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
+@given(strategies.non_empty_multipolygons_lists)
+def test_reversals(multipolygons: List[Multipolygon]) -> None:
+    first_multipolygon, *rest_multipolygons = multipolygons
 
-    result = intersect(left_multipolygon, right_multipolygon)
+    result = intersect(first_multipolygon, *rest_multipolygons)
 
-    assert result == intersect(
-            reverse_multipolygon(left_multipolygon), right_multipolygon)
-    assert result == intersect(
-            left_multipolygon, reverse_multipolygon(right_multipolygon))
-    assert result == intersect(
-            reverse_multipolygon_borders(left_multipolygon),
-            right_multipolygon)
-    assert result == intersect(
-            left_multipolygon,
-            reverse_multipolygon_borders(right_multipolygon))
-    assert result == intersect(reverse_multipolygon_holes(left_multipolygon),
-                               right_multipolygon)
-    assert result == intersect(left_multipolygon,
-                               reverse_multipolygon_holes(right_multipolygon))
-    assert result == intersect(
-            reverse_multipolygon_holes_contours(left_multipolygon),
-            right_multipolygon)
-    assert result == intersect(
-            left_multipolygon,
-            reverse_multipolygon_holes_contours(right_multipolygon))
+    assert are_multipolygons_similar(
+            result, intersect(reverse_multipolygon(first_multipolygon),
+                              *rest_multipolygons))
+    assert are_multipolygons_similar(
+            result, intersect(reverse_multipolygon_borders(first_multipolygon),
+                              *rest_multipolygons))
+    assert are_multipolygons_similar(
+            result, intersect(reverse_multipolygon_holes(first_multipolygon),
+                              *rest_multipolygons))
+    assert are_multipolygons_similar(
+            result,
+            intersect(reverse_multipolygon_holes_contours(first_multipolygon),
+                      *rest_multipolygons))
+
+
+@given(strategies.multipolygons_lists)
+def test_rotations(multipolygons: List[Multipolygon]) -> None:
+    result = intersect(*multipolygons)
+
+    assert all(
+            are_multipolygons_similar(result,
+                                      intersect(*rotate_sequence(multipolygons,
+                                                                 offset)))
+            for offset in range(1, len(multipolygons)))

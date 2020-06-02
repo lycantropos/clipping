@@ -5,6 +5,7 @@ from typing import (Any,
                     Callable,
                     Iterable,
                     Optional,
+                    Sequence,
                     Tuple,
                     TypeVar)
 
@@ -105,8 +106,9 @@ def _to_first_angle_orientation(contour: Contour) -> Orientation:
     return orientation(*first_angle_vertices)
 
 
-def rotate_sequence(sequence: Domain, index: int) -> Domain:
-    return sequence[index:] + sequence[:index]
+def rotate_sequence(sequence: Sequence[Domain],
+                    offset: int) -> Sequence[Domain]:
+    return sequence[offset:] + sequence[:offset]
 
 
 def to_pairs(strategy: Strategy[Domain]) -> Strategy[Tuple[Domain, Domain]]:
