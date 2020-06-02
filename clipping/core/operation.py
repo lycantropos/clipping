@@ -311,10 +311,10 @@ def compute(operation: Type[Operation],
             return left
         elif operation is Union or operation is SymmetricDifference:
             return left or right
-        elif operation is CompleteIntersection:
-            return [], [], []
         else:
-            return []
+            return (([], [], [])
+                    if operation is CompleteIntersection
+                    else [])
     left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
     right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(right)
     if (left_x_min > right_x_max or left_x_max < right_x_min
@@ -327,7 +327,9 @@ def compute(operation: Type[Operation],
             result.sort(key=to_first_boundary_vertex)
             return result
         else:
-            return []
+            return (([], [], [])
+                    if operation is CompleteIntersection
+                    else [])
     if (accurate
             and not issubclass(to_multipolygon_base(left + right), Rational)):
         left, right = (to_rational_multipolygon(left),
