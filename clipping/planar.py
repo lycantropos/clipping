@@ -35,7 +35,8 @@ which lie within the border (called *polygon's holes*).
 such that any pair of them do not cross/overlap each other.
 **Multipolygon** --- possibly empty sequence of non-overlapping polygons.
 
-**Mix** --- triplet of disjoint/touching multipoint, multisegment and multipolygon.
+**Mix** --- triplet of disjoint/touching multipoint, multisegment
+and multipolygon.
 """
 
 from .core import operation as _operation
