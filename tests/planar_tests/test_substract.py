@@ -19,11 +19,9 @@ from tests.utils import (MultipolygonsPair,
 from . import strategies
 
 
-@given(strategies.multipolygons_pairs)
-def test_basic(multipolygons_pair: MultipolygonsPair) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
-
-    result = subtract(left_multipolygon, right_multipolygon)
+@given(strategies.multipolygons_lists)
+def test_basic(multipolygons: List[Multipolygon]) -> None:
+    result = subtract(*multipolygons)
 
     assert is_multipolygon(result)
 
@@ -40,8 +38,8 @@ def test_self(multipolygon: Multipolygon) -> None:
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)
-def test_left_absorbing_element(
-        empty_multipolygon_with_multipolygon: MultipolygonsPair) -> None:
+def test_left_absorbing_element(empty_multipolygon_with_multipolygon
+                                : MultipolygonsPair) -> None:
     empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
 
     result = subtract(empty_multipolygon, multipolygon)
@@ -50,8 +48,8 @@ def test_left_absorbing_element(
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)
-def test_right_neutral_element(
-        empty_multipolygon_with_multipolygon: MultipolygonsPair) -> None:
+def test_right_neutral_element(empty_multipolygon_with_multipolygon
+                               : MultipolygonsPair) -> None:
     empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
 
     result = subtract(multipolygon, empty_multipolygon)
@@ -72,8 +70,8 @@ def test_commutative_case(multipolygons_pair: MultipolygonsPair) -> None:
 
 
 @given(strategies.multipolygons_pairs)
-def test_expressing_intersection_as_difference(
-        multipolygons_pair: MultipolygonsPair) -> None:
+def test_expressing_intersection_as_difference(multipolygons_pair
+                                               : MultipolygonsPair) -> None:
     left_multipolygon, right_multipolygon = multipolygons_pair
 
     result = subtract(left_multipolygon, subtract(left_multipolygon,
@@ -113,8 +111,8 @@ def test_intersection_minuend(multipolygons_triplet: MultipolygonsTriplet
 
 
 @given(strategies.multipolygons_triplets)
-def test_intersection_subtrahend(
-        multipolygons_triplet: MultipolygonsTriplet) -> None:
+def test_intersection_subtrahend(multipolygons_triplet: MultipolygonsTriplet
+                                 ) -> None:
     (left_multipolygon, mid_multipolygon,
      right_multipolygon) = multipolygons_triplet
 
