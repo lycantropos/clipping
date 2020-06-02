@@ -1,5 +1,8 @@
+from typing import List
+
 from hypothesis import given
 
+from clipping.hints import Multipolygon
 from clipping.planar import (intersect,
                              subtract,
                              unite)
@@ -11,7 +14,8 @@ from tests.utils import (MultipolygonsPair,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
                          reverse_multipolygon_holes,
-                         reverse_multipolygon_holes_contours)
+                         reverse_multipolygon_holes_contours,
+                         rotate_sequence)
 from . import strategies
 
 
@@ -22,6 +26,17 @@ def test_basic(multipolygons_pair: MultipolygonsPair) -> None:
     result = subtract(left_multipolygon, right_multipolygon)
 
     assert is_multipolygon(result)
+
+
+@given(strategies.empty_multipolygons_lists)
+def test_degenerate(multipolygons: List[Multipolygon]) -> None:
+    assert subtract(*multipolygons) == []
+
+
+@given(strategies.multipolygons)
+def test_self(multipolygon: Multipolygon) -> None:
+    assert subtract(multipolygon) == multipolygon
+    assert subtract(multipolygon, multipolygon) == []
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)
@@ -128,32 +143,36 @@ def test_union_subtrahend(multipolygons_triplet: MultipolygonsTriplet) -> None:
                                                         right_multipolygon)))
 
 
-@given(strategies.multipolygons_pairs)
-def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
+@given(strategies.non_empty_multipolygons_lists)
+def test_reversals(multipolygons: List[Multipolygon]) -> None:
+    first_multipolygon, *rest_multipolygons = multipolygons
 
-    result = subtract(left_multipolygon, right_multipolygon)
+    result = subtract(first_multipolygon, *rest_multipolygons)
 
     assert are_multipolygons_similar(
-            result, subtract(reverse_multipolygon(left_multipolygon),
-                             right_multipolygon))
-    assert result == subtract(
-            left_multipolygon, reverse_multipolygon(right_multipolygon))
+            result, subtract(reverse_multipolygon(first_multipolygon),
+                             *rest_multipolygons))
     assert are_multipolygons_similar(
-            result, subtract(reverse_multipolygon_borders(left_multipolygon),
-                             right_multipolygon))
-    assert result == subtract(
-            left_multipolygon,
-            reverse_multipolygon_borders(right_multipolygon))
+            result, subtract(reverse_multipolygon_borders(first_multipolygon),
+                             *rest_multipolygons))
     assert are_multipolygons_similar(
-            result, subtract(reverse_multipolygon_holes(left_multipolygon),
-                             right_multipolygon))
-    assert result == subtract(left_multipolygon,
-                              reverse_multipolygon_holes(right_multipolygon))
+            result, subtract(reverse_multipolygon_holes(first_multipolygon),
+                             *rest_multipolygons))
     assert are_multipolygons_similar(
             result,
-            subtract(reverse_multipolygon_holes_contours(left_multipolygon),
-                     right_multipolygon))
-    assert result == subtract(
-            left_multipolygon,
-            reverse_multipolygon_holes_contours(right_multipolygon))
+            subtract(reverse_multipolygon_holes_contours(first_multipolygon),
+                     *rest_multipolygons))
+
+
+@given(strategies.non_empty_multipolygons_lists)
+def test_rotations(multipolygons: List[Multipolygon]) -> None:
+    first_multipolygon, *rest_multipolygons = multipolygons
+
+    result = subtract(first_multipolygon, *rest_multipolygons)
+
+    assert all(
+            are_multipolygons_similar(
+                    result,
+                    subtract(first_multipolygon,
+                             *rotate_sequence(rest_multipolygons, offset)))
+            for offset in range(1, len(rest_multipolygons)))
