@@ -30,20 +30,23 @@ do not overlap each other.
 and possibly empty sequence of non-overlapping contours
 which lie within the border (called *polygon's holes*).
 
+**Multipoint** --- possibly empty sequence of distinct points.
+**Multisegment** --- possibly empty sequence of segments
+such that any pair of them do not cross/overlap each other.
 **Multipolygon** --- possibly empty sequence of non-overlapping polygons.
+
+**Mix** --- triplet of disjoint/touching multipoint, multisegment and multipolygon.
 """
-from typing import Union
 
 from .core import operation as _operation
-from .hints import (GeometryCollection,
+from .hints import (Mix,
                     Multipolygon)
 
 
 def complete_intersect(left: Multipolygon,
                        right: Multipolygon,
                        *,
-                       accurate: bool = True) -> Union[GeometryCollection,
-                                                       Multipolygon]:
+                       accurate: bool = True) -> Mix:
     """
     Returns intersection of multipolygons considering degenerate cases
     with polygons touching each other in points/segments.

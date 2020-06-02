@@ -18,7 +18,7 @@ from robust.linear import (SegmentsRelationship,
                            segments_relationship)
 
 from clipping.hints import (Contour,
-                            GeometryCollection,
+                            Mix,
                             Multipolygon,
                             Point,
                             Segment)
@@ -244,33 +244,29 @@ class Intersection(Operation):
 class CompleteIntersection(Intersection):
     __slots__ = ()
 
-    def compute(self) -> Union_[GeometryCollection, Multipolygon]:
+    def compute(self) -> Mix:
         events = sorted(self.sweep(),
                         key=EventsQueueKey)
-        degenerate_points, degenerate_segments = [], []
-        for point, same_point_events in groupby(events,
+        multipoint, multisegment = [], []
+        for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
-            same_point_events = list(same_point_events)
-            if (all((event.is_right_endpoint or not event.in_result)
-                    and not (event.is_right_endpoint
-                             and event.complement.in_result)
-                    for event in same_point_events)
+            same_start_events = list(same_start_events)
+            if (all(event.is_right_endpoint or not event.in_result
+                    for event in same_start_events)
                     and not all_equal(event.from_left
-                                      for event in same_point_events)):
+                                      for event in same_start_events)):
                 no_segment_found = True
-                for event, next_event in zip(same_point_events,
-                                             same_point_events[1:]):
+                for event, next_event in zip(same_start_events,
+                                             same_start_events[1:]):
                     if (event.from_left is not next_event.from_left
                             and event.segment == next_event.segment):
                         no_segment_found = False
                         if not event.is_right_endpoint:
-                            degenerate_segments.append(next_event.segment)
+                            multisegment.append(next_event.segment)
                 if no_segment_found:
-                    degenerate_points.append(point)
+                    multipoint.append(start)
         multipolygon = events_to_multipolygon(events)
-        return ((degenerate_points, degenerate_segments, multipolygon)
-                if degenerate_points or degenerate_segments
-                else multipolygon)
+        return multipoint, multisegment, multipolygon
 
 
 class SymmetricDifference(Operation):
@@ -293,7 +289,7 @@ def compute(operation: Type[Operation],
             left: Multipolygon,
             right: Multipolygon,
             *,
-            accurate: bool) -> Union_[GeometryCollection, Multipolygon]:
+            accurate: bool) -> Union_[Mix, Multipolygon]:
     """
     Returns result of given operation using optimizations for degenerate cases.
 
@@ -306,13 +302,17 @@ def compute(operation: Type[Operation],
     :returns: result of operation on operands.
     """
     if not (left or right):
-        return []
+        return (([], [], [])
+                if operation is CompleteIntersection
+                else [])
     elif not (left and right):
         # at least one of the arguments is empty
         if operation is Difference:
             return left
         elif operation is Union or operation is SymmetricDifference:
             return left or right
+        elif operation is CompleteIntersection:
+            return [], [], []
         else:
             return []
     left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
