@@ -1,12 +1,15 @@
 from abc import (ABC,
                  abstractmethod)
 from collections import defaultdict
-from itertools import groupby
+from itertools import (combinations,
+                       groupby,
+                       starmap)
 from numbers import Rational
 from operator import attrgetter
 from typing import (DefaultDict,
                     List,
                     Optional,
+                    Sequence,
                     Type,
                     Union as Union_)
 
@@ -28,23 +31,23 @@ from .events_queue import (EventsQueue,
                            EventsQueueKey)
 from .sweep_line import SweepLine
 from .utils import (all_equal,
-                    to_bounding_box,
+                    are_bounding_boxes_disjoint,
+                    flatten,
+                    multipolygon_to_bounding_box,
                     to_first_boundary_vertex,
-                    to_multipolygon_base,
-                    to_multipolygon_contours,
                     to_multipolygon_x_max,
+                    to_polygons_base,
+                    to_polygons_contours,
                     to_rational_multipolygon,
                     to_segments)
 
 
 class Operation(ABC):
-    __slots__ = 'left', 'right', '_events_queue'
+    __slots__ = 'operands', '_events_queue'
 
     def __init__(self,
-                 left: Multipolygon,
-                 right: Multipolygon) -> None:
-        self.left = left
-        self.right = right
+                 operands: Sequence[Multipolygon]) -> None:
+        self.operands = operands
         self._events_queue = EventsQueue()
 
     __repr__ = generate_repr(__init__)
@@ -61,17 +64,15 @@ class Operation(ABC):
         return result
 
     def fill_queue(self) -> None:
-        for contour in to_multipolygon_contours(self.left):
-            for segment in to_segments(contour):
-                self.register_segment(segment, True)
-        for contour in to_multipolygon_contours(self.right):
-            for segment in to_segments(contour):
-                self.register_segment(segment, False)
+        for operand_id, operand in enumerate(self.operands):
+            for contour in to_polygons_contours(operand):
+                for segment in to_segments(contour):
+                    self.register_segment(segment, operand_id)
 
-    def register_segment(self, segment: Segment, from_left: bool) -> None:
+    def register_segment(self, segment: Segment, operand_id: int) -> None:
         start, end = sorted(segment)
-        start_event = Event(False, start, None, from_left, EdgeType.NORMAL)
-        end_event = Event(True, end, start_event, from_left, EdgeType.NORMAL)
+        start_event = Event(False, start, None, operand_id)
+        end_event = Event(True, end, start_event, operand_id)
         start_event.complement = end_event
         self._events_queue.push(start_event)
         self._events_queue.push(end_event)
@@ -111,7 +112,7 @@ class Operation(ABC):
             event.in_out = False
             event.other_in_out = True
         else:
-            if event.from_left is below_event.from_left:
+            if event.operand_id == below_event.operand_id:
                 event.in_out = not below_event.in_out
                 event.other_in_out = below_event.other_in_out
             else:
@@ -134,7 +135,7 @@ class Operation(ABC):
         relationship = segments_relationship(below_segment, segment)
         if relationship is SegmentsRelationship.OVERLAP:
             # segments overlap
-            if below_event.from_left is event.from_left:
+            if below_event.operand_id == event.operand_id:
                 raise ValueError('Edges of the same multipolygon '
                                  'should not overlap.')
             starts_equal = below_event.start == event.start
@@ -186,10 +187,8 @@ class Operation(ABC):
         return False
 
     def divide_segment(self, event: Event, point: Point) -> None:
-        left_event = Event(False, point, event.complement, event.from_left,
-                           EdgeType.NORMAL)
-        right_event = Event(True, point, event, event.from_left,
-                            EdgeType.NORMAL)
+        left_event = Event(False, point, event.complement, event.operand_id)
+        right_event = Event(True, point, event, event.operand_id)
         event.complement.complement, event.complement = left_event, right_event
         self._events_queue.push(left_event)
         self._events_queue.push(right_event)
@@ -202,11 +201,11 @@ class Difference(Operation):
         self.fill_queue()
         result = []
         sweep_line = SweepLine()
-        left_x_max = to_multipolygon_x_max(self.left)
+        minuend_x_max = to_multipolygon_x_max(self.operands[0])
         while self._events_queue:
             event = self._events_queue.pop()
             start_x, _ = event.start
-            if start_x > left_x_max:
+            if start_x > minuend_x_max:
                 break
             self.process_event(event, result, sweep_line)
         return result
@@ -214,7 +213,7 @@ class Difference(Operation):
     def in_result(self, event: Event) -> bool:
         edge_type = event.edge_type
         return (edge_type is EdgeType.NORMAL
-                and event.from_left is event.other_in_out
+                and (event.operand_id == 0) is event.other_in_out
                 or edge_type is EdgeType.DIFFERENT_TRANSITION)
 
 
@@ -225,8 +224,7 @@ class Intersection(Operation):
         self.fill_queue()
         result = []
         sweep_line = SweepLine()
-        min_max_x = min(to_multipolygon_x_max(self.left),
-                        to_multipolygon_x_max(self.right))
+        min_max_x = min(map(to_multipolygon_x_max, self.operands))
         while self._events_queue:
             event = self._events_queue.pop()
             start_x, _ = event.start
@@ -253,12 +251,12 @@ class CompleteIntersection(Intersection):
             same_start_events = list(same_start_events)
             if (all(event.is_right_endpoint or not event.in_result
                     for event in same_start_events)
-                    and not all_equal(event.from_left
+                    and not all_equal(event.operand_id
                                       for event in same_start_events)):
                 no_segment_found = True
                 for event, next_event in zip(same_start_events,
                                              same_start_events[1:]):
-                    if (event.from_left is not next_event.from_left
+                    if (event.operand_id != next_event.operand_id
                             and event.segment == next_event.segment):
                         no_segment_found = False
                         if not event.is_right_endpoint:
@@ -286,55 +284,51 @@ class Union(Operation):
 
 
 def compute(operation: Type[Operation],
-            left: Multipolygon,
-            right: Multipolygon,
-            *,
+            operands: Sequence[Multipolygon],
             accurate: bool) -> Union_[Mix, Multipolygon]:
     """
     Returns result of given operation using optimizations for degenerate cases.
 
     :param operation: type of operation to perform.
-    :param left: left operand.
-    :param right: right operand.
+    :param operands: operation arguments.
     :param accurate:
         flag that tells whether to use slow but more accurate arithmetic
         for floating point numbers.
     :returns: result of operation on operands.
     """
-    if not (left or right):
+    if not any(operands):
         return (([], [], [])
                 if operation is CompleteIntersection
                 else [])
-    elif not (left and right):
+    elif not all(operands):
         # at least one of the arguments is empty
         if operation is Difference:
-            return left
+            return operands[0]
         elif operation is Union or operation is SymmetricDifference:
-            return left or right
+            operands = tuple(filter(None, operands))
         else:
             return (([], [], [])
                     if operation is CompleteIntersection
                     else [])
-    left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
-    right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(right)
-    if (left_x_min > right_x_max or left_x_max < right_x_min
-            or left_y_min > right_y_max or left_y_max < right_y_min):
-        # the bounding boxes do not overlap
+    if len(operands) == 1:
+        return operands[0]
+    if all(starmap(are_bounding_boxes_disjoint,
+                   combinations(map(multipolygon_to_bounding_box, operands),
+                                2))):
         if operation is Difference:
-            return left
+            return operands[0]
         elif operation is Union or operation is SymmetricDifference:
-            result = left + right
-            result.sort(key=to_first_boundary_vertex)
-            return result
+            return sorted(flatten(operands),
+                          key=to_first_boundary_vertex)
         else:
             return (([], [], [])
                     if operation is CompleteIntersection
                     else [])
     if (accurate
-            and not issubclass(to_multipolygon_base(left + right), Rational)):
-        left, right = (to_rational_multipolygon(left),
-                       to_rational_multipolygon(right))
-    return operation(left, right).compute()
+            and not issubclass(to_polygons_base(flatten(operands)),
+                               Rational)):
+        operands = tuple(map(to_rational_multipolygon, operands))
+    return operation(operands).compute()
 
 
 def events_to_multipolygon(events: List[Event]) -> Multipolygon:

@@ -44,16 +44,13 @@ from .hints import (Mix,
                     Multipolygon)
 
 
-def complete_intersect(left: Multipolygon,
-                       right: Multipolygon,
-                       *,
+def complete_intersect(*operands: Multipolygon,
                        accurate: bool = True) -> Mix:
     """
     Returns intersection of multipolygons considering cases
     with polygons touching each other in points/segments.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param operands: multipolygons to intersect.
     :param accurate:
         flag that tells whether to use slow but more accurate arithmetic
         for floating point numbers.
@@ -75,19 +72,16 @@ def complete_intersect(left: Multipolygon,
     ...                    [([(1, 0), (2, 0), (2, 1)], [])])
     ([(1, 0)], [], [])
     """
-    return _operation.compute(_operation.CompleteIntersection, left, right,
+    return _operation.compute(_operation.CompleteIntersection, operands,
                               accurate=accurate)
 
 
-def intersect(left: Multipolygon,
-              right: Multipolygon,
-              *,
+def intersect(*operands: Multipolygon,
               accurate: bool = True) -> Multipolygon:
     """
     Returns intersection of multipolygons.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param operands: multipolygons to operate on.
     :param accurate:
         flag that tells whether to use slow but more accurate arithmetic
         for floating point numbers.
@@ -103,19 +97,19 @@ def intersect(left: Multipolygon,
     ...           [([(0, 0), (1, 0), (0, 1)], [])])
     [([(0, 0), (1, 0), (0, 1)], [])]
     """
-    return _operation.compute(_operation.Intersection, left, right,
+    return _operation.compute(_operation.Intersection, *operands,
                               accurate=accurate)
 
 
-def subtract(minuend: Multipolygon,
-             subtrahend: Multipolygon,
-             *,
+def subtract(*operands: Multipolygon,
              accurate: bool = True) -> Multipolygon:
     """
     Returns difference of multipolygons.
 
-    :param minuend: multipolygon from which to subtract.
-    :param subtrahend: multipolygon which to subtract.
+    :param operands:
+        multipolygons to operate on,
+        first multipolygon is to subtract from (minuend),
+        rest are multipolygons to subtract (subtrahends).
     :param accurate:
         flag that tells whether to use slow but more accurate arithmetic
         for floating point numbers.
@@ -131,19 +125,16 @@ def subtract(minuend: Multipolygon,
     ...          [([(0, 0), (1, 0), (0, 1)], [])])
     []
     """
-    return _operation.compute(_operation.Difference, minuend, subtrahend,
+    return _operation.compute(_operation.Difference, operands,
                               accurate=accurate)
 
 
-def symmetric_subtract(left: Multipolygon,
-                       right: Multipolygon,
-                       *,
+def symmetric_subtract(*operands: Multipolygon,
                        accurate: bool = True) -> Multipolygon:
     """
     Returns symmetric difference of multipolygons.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param operands: multipolygons to operate on.
     :param accurate:
         flag that tells whether to use slow but more accurate arithmetic
         for floating point numbers.
@@ -159,19 +150,16 @@ def symmetric_subtract(left: Multipolygon,
     ...                    [([(0, 0), (1, 0), (0, 1)], [])])
     []
     """
-    return _operation.compute(_operation.SymmetricDifference, left, right,
+    return _operation.compute(_operation.SymmetricDifference, operands,
                               accurate=accurate)
 
 
-def unite(left: Multipolygon,
-          right: Multipolygon,
-          *,
+def unite(*operands: Multipolygon,
           accurate: bool = True) -> Multipolygon:
     """
     Returns union of multipolygons.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param operands: multipolygons to operate on.
     :param accurate:
         flag that tells whether to use slow but more accurate arithmetic
         for floating point numbers.
@@ -187,5 +175,5 @@ def unite(left: Multipolygon,
     ...       [([(0, 0), (1, 0), (0, 1)], [])])
     [([(0, 0), (1, 0), (0, 1)], [])]
     """
-    return _operation.compute(_operation.Union, left, right,
+    return _operation.compute(_operation.Union, operands,
                               accurate=accurate)

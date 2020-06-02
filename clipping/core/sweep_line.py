@@ -75,8 +75,8 @@ class SweepLineKey:
                 # other segment fully lies on one side
                 return other_start_orientation is Orientation.COUNTERCLOCKWISE
             # segments are collinear
-            elif event.from_left is not other_event.from_left:
-                return event.from_left
+            elif event.operand_id != other_event.operand_id:
+                return event.operand_id < other_event.operand_id
             elif start_x == other_start_x:
                 if start_y != other_start_y:
                     # segments are vertical

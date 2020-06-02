@@ -11,7 +11,7 @@ from .enums import EdgeType
 
 
 class Event:
-    __slots__ = ('is_right_endpoint', 'start', 'complement', 'from_left',
+    __slots__ = ('is_right_endpoint', 'start', 'complement', 'operand_id',
                  'edge_type', 'in_out', 'other_in_out', 'in_result',
                  'result_in_out', 'position', 'contour_id',
                  'below_in_result_event')
@@ -20,8 +20,8 @@ class Event:
                  is_right_endpoint: bool,
                  start: Point,
                  complement: Optional['Event'],
-                 from_left: bool,
-                 edge_type: EdgeType,
+                 operand_id: int,
+                 edge_type: EdgeType = EdgeType.NORMAL,
                  in_out: bool = False,
                  other_in_out: bool = False,
                  in_result: bool = False,
@@ -32,7 +32,7 @@ class Event:
         self.is_right_endpoint = is_right_endpoint
         self.start = start
         self.complement = complement
-        self.from_left = from_left
+        self.operand_id = operand_id
         self.edge_type = edge_type
         self.in_out = in_out
         self.other_in_out = other_in_out
