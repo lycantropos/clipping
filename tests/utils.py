@@ -17,7 +17,9 @@ from clipping.core.utils import (to_contour_base,
                                  to_first_boundary_vertex)
 from clipping.hints import (Contour,
                             Mix,
-                            Multipolygon)
+                            Multipoint,
+                            Multipolygon,
+                            Multisegment)
 
 Strategy = SearchStrategy
 Domain = TypeVar('Domain')
@@ -54,21 +56,25 @@ def mix_similar_to_multipolygon(mix: Mix, other: Multipolygon) -> bool:
 
 
 def are_mixes_similar(left: Mix, right: Mix) -> bool:
-    return normalize_mix(left) == normalize_mix(right)
+    left_multipoint, left_multisegment, left_multipolygon = left
+    right_multipoint, right_multisegment, right_multipolygon = right
+    return (are_multipoints_similar(left_multipoint, right_multipoint)
+            and are_multisegments_similar(left_multisegment,
+                                          right_multisegment)
+            and are_multipolygons_similar(left_multipolygon,
+                                          right_multipolygon))
+
+
+def are_multipoints_similar(left: Multipoint, right: Multipoint) -> bool:
+    return len(left) == len(right) and frozenset(left) == frozenset(right)
+
+
+def are_multisegments_similar(left: Multisegment, right: Multisegment) -> bool:
+    return len(left) == len(right) and frozenset(left) == frozenset(right)
 
 
 def are_multipolygons_similar(left: Multipolygon, right: Multipolygon) -> bool:
     return normalize_multipolygon(left) == normalize_multipolygon(right)
-
-
-def normalize_mix(mix: Mix) -> Mix:
-    multipoint, multisegment, multipolygon = mix
-    return (normalize_multipoint(multipoint),
-            normalize_multisegment(multisegment),
-            normalize_multipolygon(multipolygon))
-
-
-normalize_multipoint = normalize_multisegment = sorted
 
 
 def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
