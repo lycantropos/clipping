@@ -97,7 +97,7 @@ def intersect(*operands: Multipolygon,
     ...           [([(0, 0), (1, 0), (0, 1)], [])])
     [([(0, 0), (1, 0), (0, 1)], [])]
     """
-    return _operation.compute(_operation.Intersection, *operands,
+    return _operation.compute(_operation.Intersection, operands,
                               accurate=accurate)
 
 
