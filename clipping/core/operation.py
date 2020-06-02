@@ -311,7 +311,9 @@ def compute(operation: Type[Operation],
                     if operation is CompleteIntersection
                     else [])
     if len(operands) == 1:
-        return operands[0]
+        return (([], [], operands[0])
+                if operation is CompleteIntersection
+                else operands[0])
     if all(starmap(are_bounding_boxes_disjoint,
                    combinations(map(multipolygon_to_bounding_box, operands),
                                 2))):
