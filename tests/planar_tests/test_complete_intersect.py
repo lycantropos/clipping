@@ -13,7 +13,8 @@ from tests.utils import (MultipolygonsPair,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
                          reverse_multipolygon_holes,
-                         reverse_multipolygon_holes_contours)
+                         reverse_multipolygon_holes_contours,
+                         rotate_sequence)
 from . import strategies
 
 
@@ -67,15 +68,6 @@ def test_absorption_identity(multipolygons_pair: MultipolygonsPair) -> None:
     assert mix_similar_to_multipolygon(result, left_multipolygon)
 
 
-@given(strategies.multipolygons_pairs)
-def test_commutativity(multipolygons_pair: MultipolygonsPair) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
-
-    result = complete_intersect(left_multipolygon, right_multipolygon)
-
-    assert result == complete_intersect(right_multipolygon, left_multipolygon)
-
-
 @given(strategies.multipolygons_lists)
 def test_connection_with_intersect(multipolygons: List[Multipolygon]) -> None:
     result = complete_intersect(*multipolygons)
@@ -108,3 +100,14 @@ def test_reversals(multipolygons: List[Multipolygon]) -> None:
             complete_intersect(
                     reverse_multipolygon_holes_contours(first_multipolygon),
                     *rest_multipolygons))
+
+
+@given(strategies.multipolygons_lists)
+def test_rotations(multipolygons: List[Multipolygon]) -> None:
+    result = complete_intersect(*multipolygons)
+
+    assert all(
+            are_mixes_similar(
+                    result, complete_intersect(*rotate_sequence(multipolygons,
+                                                                offset)))
+            for offset in range(1, len(multipolygons)))
