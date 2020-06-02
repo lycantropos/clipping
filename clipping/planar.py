@@ -48,7 +48,7 @@ def complete_intersect(left: Multipolygon,
                        *,
                        accurate: bool = True) -> Mix:
     """
-    Returns intersection of multipolygons considering degenerate cases
+    Returns intersection of multipolygons considering cases
     with polygons touching each other in points/segments.
 
     :param left: left operand.
