@@ -7,7 +7,6 @@ from operator import attrgetter
 from typing import (DefaultDict,
                     List,
                     Optional,
-                    Type,
                     Union as Union_)
 
 from reprit.base import generate_repr
@@ -40,19 +39,33 @@ from .utils import (all_equal,
 
 
 class Operation(ABC):
-    __slots__ = 'left', 'right', '_events_queue'
+    __slots__ = 'left', 'right', 'accurate', '_events_queue'
 
     def __init__(self,
                  left: Multipolygon,
-                 right: Multipolygon) -> None:
+                 right: Multipolygon,
+                 accurate: bool) -> None:
+        """
+        Initializes operation.
+
+        :param left: left operand.
+        :param right: right operand.
+        :param accurate:
+            flag that tells whether to use slow but more accurate arithmetic
+            for floating point numbers.
+        """
         self.left = left
         self.right = right
+        self.accurate = accurate
         self._events_queue = EventsQueue()
 
     __repr__ = generate_repr(__init__)
 
-    def compute(self) -> Multipolygon:
-        return events_to_multipolygon(self.sweep())
+    @abstractmethod
+    def compute(self) -> Union_[Multipolygon, Mix]:
+        """
+        Computes result of the operation.
+        """
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -200,6 +213,25 @@ class Operation(ABC):
 class Difference(Operation):
     __slots__ = ()
 
+    def compute(self) -> Multipolygon:
+        left, right = self.left, self.right
+        if not (left and right):
+            # at least one of the arguments is empty
+            return left
+        left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
+        right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(
+                right)
+        if (left_x_min > right_x_max or left_x_max < right_x_min
+                or left_y_min > right_y_max or left_y_max < right_y_min):
+            # the bounding boxes do not overlap
+            return left
+        if (self.accurate
+                and not issubclass(to_multipolygon_base(left + right),
+                                   Rational)):
+            self.left, self.right = (to_rational_multipolygon(left),
+                                     to_rational_multipolygon(right))
+        return events_to_multipolygon(self.sweep())
+
     def sweep(self) -> List[Event]:
         self.fill_queue()
         result = []
@@ -222,6 +254,25 @@ class Difference(Operation):
 
 class Intersection(Operation):
     __slots__ = ()
+
+    def compute(self) -> Multipolygon:
+        left, right = self.left, self.right
+        if not (left and right):
+            # at least one of the arguments is empty
+            return []
+        left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
+        right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(
+                right)
+        if (left_x_min > right_x_max or left_x_max < right_x_min
+                or left_y_min > right_y_max or left_y_max < right_y_min):
+            # the bounding boxes do not overlap
+            return []
+        if (self.accurate
+                and not issubclass(to_multipolygon_base(left + right),
+                                   Rational)):
+            self.left, self.right = (to_rational_multipolygon(left),
+                                     to_rational_multipolygon(right))
+        return events_to_multipolygon(self.sweep())
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -247,6 +298,22 @@ class CompleteIntersection(Intersection):
     __slots__ = ()
 
     def compute(self) -> Mix:
+        left, right = self.left, self.right
+        if not (left and right):
+            # at least one of the arguments is empty
+            return [], [], []
+        left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
+        right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(
+                right)
+        if (left_x_min > right_x_max or left_x_max < right_x_min
+                or left_y_min > right_y_max or left_y_max < right_y_min):
+            # the bounding boxes do not overlap
+            return [], [], []
+        if (self.accurate
+                and not issubclass(to_multipolygon_base(left + right),
+                                   Rational)):
+            self.left, self.right = (to_rational_multipolygon(left),
+                                     to_rational_multipolygon(right))
         events = sorted(self.sweep(),
                         key=EventsQueueKey)
         multipoint = []  # type: Multipoint
@@ -275,6 +342,27 @@ class CompleteIntersection(Intersection):
 class SymmetricDifference(Operation):
     __slots__ = ()
 
+    def compute(self) -> Multipolygon:
+        left, right = self.left, self.right
+        if not (left and right):
+            # at least one of the arguments is empty
+            return left or right
+        left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
+        right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(
+                right)
+        if (left_x_min > right_x_max or left_x_max < right_x_min
+                or left_y_min > right_y_max or left_y_max < right_y_min):
+            # the bounding boxes do not overlap
+            result = left + right
+            result.sort(key=to_first_boundary_vertex)
+            return result
+        if (self.accurate
+                and not issubclass(to_multipolygon_base(left + right),
+                                   Rational)):
+            self.left, self.right = (to_rational_multipolygon(left),
+                                     to_rational_multipolygon(right))
+        return events_to_multipolygon(self.sweep())
+
     def in_result(self, event: Event) -> bool:
         return event.edge_type is EdgeType.NORMAL
 
@@ -282,62 +370,33 @@ class SymmetricDifference(Operation):
 class Union(Operation):
     __slots__ = ()
 
+    def compute(self) -> Multipolygon:
+        left, right = self.left, self.right
+        if not (left or right):
+            return []
+        elif not (left and right):
+            # at least one of the arguments is empty
+            return left or right
+        left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
+        right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(
+                right)
+        if (left_x_min > right_x_max or left_x_max < right_x_min
+                or left_y_min > right_y_max or left_y_max < right_y_min):
+            # the bounding boxes do not overlap
+            result = left + right
+            result.sort(key=to_first_boundary_vertex)
+            return result
+        if (self.accurate
+                and not issubclass(to_multipolygon_base(left + right),
+                                   Rational)):
+            self.left, self.right = (to_rational_multipolygon(left),
+                                     to_rational_multipolygon(right))
+        return events_to_multipolygon(self.sweep())
+
     def in_result(self, event: Event) -> bool:
         edge_type = event.edge_type
         return (edge_type is EdgeType.NORMAL and event.other_in_out
                 or edge_type is EdgeType.SAME_TRANSITION)
-
-
-def compute(operation: Type[Operation],
-            left: Multipolygon,
-            right: Multipolygon,
-            *,
-            accurate: bool) -> Union_[Mix, Multipolygon]:
-    """
-    Returns result of given operation using optimizations for degenerate cases.
-
-    :param operation: type of operation to perform.
-    :param left: left operand.
-    :param right: right operand.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
-    :returns: result of operation on operands.
-    """
-    if not (left or right):
-        return (([], [], [])
-                if operation is CompleteIntersection
-                else [])
-    elif not (left and right):
-        # at least one of the arguments is empty
-        if operation is Difference:
-            return left
-        elif operation is Union or operation is SymmetricDifference:
-            return left or right
-        else:
-            return (([], [], [])
-                    if operation is CompleteIntersection
-                    else [])
-    left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
-    right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(right)
-    if (left_x_min > right_x_max or left_x_max < right_x_min
-            or left_y_min > right_y_max or left_y_max < right_y_min):
-        # the bounding boxes do not overlap
-        if operation is Difference:
-            return left
-        elif operation is Union or operation is SymmetricDifference:
-            result = left + right
-            result.sort(key=to_first_boundary_vertex)
-            return result
-        else:
-            return (([], [], [])
-                    if operation is CompleteIntersection
-                    else [])
-    if (accurate
-            and not issubclass(to_multipolygon_base(left + right), Rational)):
-        left, right = (to_rational_multipolygon(left),
-                       to_rational_multipolygon(right))
-    return operation(left, right).compute()
 
 
 def events_to_multipolygon(events: List[Event]) -> Multipolygon:

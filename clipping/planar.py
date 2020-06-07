@@ -75,8 +75,7 @@ def complete_intersect(left: Multipolygon,
     ...                    [([(1, 0), (2, 0), (2, 1)], [])])
     ([(1, 0)], [], [])
     """
-    return _operation.compute(_operation.CompleteIntersection, left, right,
-                              accurate=accurate)
+    return _operation.CompleteIntersection(left, right, accurate).compute()
 
 
 def intersect(left: Multipolygon,
@@ -103,8 +102,7 @@ def intersect(left: Multipolygon,
     ...           [([(0, 0), (1, 0), (0, 1)], [])])
     [([(0, 0), (1, 0), (0, 1)], [])]
     """
-    return _operation.compute(_operation.Intersection, left, right,
-                              accurate=accurate)
+    return _operation.Intersection(left, right, accurate).compute()
 
 
 def subtract(minuend: Multipolygon,
@@ -131,8 +129,7 @@ def subtract(minuend: Multipolygon,
     ...          [([(0, 0), (1, 0), (0, 1)], [])])
     []
     """
-    return _operation.compute(_operation.Difference, minuend, subtrahend,
-                              accurate=accurate)
+    return _operation.Difference(minuend, subtrahend, accurate).compute()
 
 
 def symmetric_subtract(left: Multipolygon,
@@ -159,8 +156,7 @@ def symmetric_subtract(left: Multipolygon,
     ...                    [([(0, 0), (1, 0), (0, 1)], [])])
     []
     """
-    return _operation.compute(_operation.SymmetricDifference, left, right,
-                              accurate=accurate)
+    return _operation.SymmetricDifference(left, right, accurate).compute()
 
 
 def unite(left: Multipolygon,
@@ -187,5 +183,4 @@ def unite(left: Multipolygon,
     ...       [([(0, 0), (1, 0), (0, 1)], [])])
     [([(0, 0), (1, 0), (0, 1)], [])]
     """
-    return _operation.compute(_operation.Union, left, right,
-                              accurate=accurate)
+    return _operation.Union(left, right, accurate).compute()
