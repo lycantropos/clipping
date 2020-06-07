@@ -366,15 +366,15 @@ def _contours_to_multipolygon(contours: List[Contour],
                               ) -> Multipolygon:
     result = []
     for index, contour in enumerate(contours):
-        if not are_internal[index]:
-            result.append((contour, [contours[hole_index]
-                                     for hole_index in holes[index]]))
-        else:
+        if are_internal[index]:
             # hole of a hole is an external polygon
             result.extend((contours[hole_index],
                            [contours[hole_hole_index]
                             for hole_hole_index in holes[hole_index]])
                           for hole_index in holes[index])
+        else:
+            result.append((contour, [contours[hole_index]
+                                     for hole_index in holes[index]]))
     return result
 
 
