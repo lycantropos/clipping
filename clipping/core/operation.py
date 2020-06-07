@@ -19,7 +19,9 @@ from robust.linear import (SegmentsRelationship,
 
 from clipping.hints import (Contour,
                             Mix,
+                            Multipoint,
                             Multipolygon,
+                            Multisegment,
                             Point,
                             Segment)
 from .enums import EdgeType
@@ -247,7 +249,8 @@ class CompleteIntersection(Intersection):
     def compute(self) -> Mix:
         events = sorted(self.sweep(),
                         key=EventsQueueKey)
-        multipoint, multisegment = [], []
+        multipoint = []  # type: Multipoint
+        multisegment = []  # type: Multisegment
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
