@@ -24,6 +24,7 @@ from clipping.hints import (Contour,
 Strategy = SearchStrategy
 Domain = TypeVar('Domain')
 Key = Callable[[Domain], Any]
+MultipolygonWithMultisegment = Tuple[Multipolygon, Multisegment]
 MultipolygonsPair = Tuple[Multipolygon, Multipolygon]
 MultipolygonsTriplet = Tuple[Multipolygon, Multipolygon, Multipolygon]
 
@@ -184,3 +185,11 @@ def reverse_multipolygon_holes_contours(multipolygon: Multipolygon
 
 def reverse_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
     return multipolygon[::-1]
+
+
+def reverse_multisegment(multisegment: Multisegment) -> Multisegment:
+    return multisegment[::-1]
+
+
+def reverse_multisegment_endpoints(multisegment: Multisegment) -> Multisegment:
+    return [(end, start) for start, end in multisegment]

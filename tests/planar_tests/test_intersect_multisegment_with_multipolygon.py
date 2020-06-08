@@ -1,0 +1,108 @@
+from hypothesis import given
+from orient.planar import (Relation,
+                           point_in_multipolygon,
+                           point_in_multisegment,
+                           segment_in_multipolygon,
+                           segment_in_multisegment)
+
+from clipping.core.utils import (to_rational_multipolygon,
+                                 to_rational_multisegment)
+from clipping.planar import intersect_multipolygon_with_multisegment
+from tests.utils import (MultipolygonWithMultisegment,
+                         is_mix,
+                         reverse_multipolygon,
+                         reverse_multipolygon_borders,
+                         reverse_multipolygon_holes,
+                         reverse_multipolygon_holes_contours,
+                         reverse_multisegment,
+                         reverse_multisegment_endpoints)
+from . import strategies
+
+
+@given(strategies.multipolygons_with_multisegments)
+def test_basic(multipolygon_with_multisegment: MultipolygonWithMultisegment
+               ) -> None:
+    multipolygon, multisegment = multipolygon_with_multisegment
+
+    result = intersect_multipolygon_with_multisegment(multipolygon,
+                                                      multisegment)
+
+    assert is_mix(result)
+
+
+@given(strategies.multipolygons_with_multisegments)
+def test_properties(multipolygon_with_multisegment
+                    : MultipolygonWithMultisegment) -> None:
+    multipolygon, multisegment = multipolygon_with_multisegment
+
+    result = intersect_multipolygon_with_multisegment(multipolygon,
+                                                      multisegment)
+
+    result_multipoint, result_multisegment, result_multipolygon = result
+    rational_multisegment = to_rational_multisegment(multisegment)
+    rational_multipolygon = to_rational_multipolygon(multipolygon)
+    assert (not result_multipoint
+            or all(point_in_multisegment(point, multisegment)
+                   is Relation.COMPONENT
+                   for point in result_multipoint))
+    assert (not result_multipoint
+            or all(point_in_multipolygon(point, multipolygon)
+                   is Relation.COMPONENT
+                   for point in result_multipoint))
+    assert (not result_multisegment
+            or all(segment_in_multisegment(segment, rational_multisegment)
+                   in (Relation.EQUAL, Relation.COMPONENT)
+                   for segment in result_multisegment))
+    assert (not result_multisegment
+            or all(segment_in_multipolygon(segment, rational_multipolygon)
+                   in (Relation.COMPONENT, Relation.ENCLOSED, Relation.WITHIN)
+                   for segment in result_multisegment))
+    assert not result_multipolygon
+
+
+@given(strategies.empty_multipolygons_with_multisegments)
+def test_left_absorbing_element(empty_multipolygon_with_multisegment
+                                : MultipolygonWithMultisegment) -> None:
+    empty_multipolygon, multisegment = empty_multipolygon_with_multisegment
+
+    result = intersect_multipolygon_with_multisegment(empty_multipolygon,
+                                                      multisegment)
+
+    assert not any(result)
+
+
+@given(strategies.multipolygons_with_empty_multisegments)
+def test_right_absorbing_element(multipolygon_with_empty_multisegment
+                                 : MultipolygonWithMultisegment) -> None:
+    multipolygon, empty_multisegment = multipolygon_with_empty_multisegment
+
+    result = intersect_multipolygon_with_multisegment(multipolygon,
+                                                      empty_multisegment)
+
+    assert not any(result)
+
+
+@given(strategies.multipolygons_with_multisegments)
+def test_reversals(multipolygon_with_multisegment: MultipolygonWithMultisegment
+                   ) -> None:
+    multipolygon, multisegment = multipolygon_with_multisegment
+
+    result = intersect_multipolygon_with_multisegment(multipolygon,
+                                                      multisegment)
+
+    assert result == intersect_multipolygon_with_multisegment(
+            reverse_multipolygon(multipolygon), multisegment)
+    assert result == intersect_multipolygon_with_multisegment(
+            reverse_multipolygon_borders(multipolygon),
+            multisegment)
+    assert result == intersect_multipolygon_with_multisegment(
+            reverse_multipolygon_holes(multipolygon),
+            multisegment)
+    assert result == intersect_multipolygon_with_multisegment(
+            reverse_multipolygon_holes_contours(multipolygon),
+            multisegment)
+    assert result == intersect_multipolygon_with_multisegment(
+            multipolygon, reverse_multisegment(multisegment))
+    assert result == intersect_multipolygon_with_multisegment(
+            multipolygon,
+            reverse_multisegment_endpoints(multisegment))
