@@ -62,6 +62,27 @@ class LinearEvent:
             return result
 
 
+class MixedEvent(LinearEvent):
+    __slots__ = 'in_out', 'other_in_out', 'overlaps', 'in_result'
+
+    def __init__(self,
+                 is_right_endpoint: bool,
+                 start: Point,
+                 complement: Optional['MixedEvent'],
+                 from_left: bool,
+                 in_out: bool = False,
+                 other_in_out: bool = False,
+                 overlaps: bool = False,
+                 in_result: bool = False) -> None:
+        super().__init__(is_right_endpoint, start, complement, from_left)
+        self.in_out = in_out
+        self.other_in_out = other_in_out
+        self.overlaps = overlaps
+        self.in_result = in_result
+
+    __repr__ = recursive_repr()(generate_repr(__init__))
+
+
 class ShapedEvent(LinearEvent):
     __slots__ = ('in_out', 'other_in_out', 'in_result', 'edge_type',
                  'result_in_out', 'position', 'contour_id',
@@ -94,4 +115,4 @@ class ShapedEvent(LinearEvent):
     __repr__ = recursive_repr()(generate_repr(__init__))
 
 
-Event = TypeVar('Event', LinearEvent, ShapedEvent)
+Event = TypeVar('Event', LinearEvent, MixedEvent, ShapedEvent)

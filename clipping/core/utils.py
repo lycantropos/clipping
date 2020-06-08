@@ -16,6 +16,7 @@ from clipping.hints import (Base,
                             Contour,
                             Coordinate,
                             Multipolygon,
+                            Multisegment,
                             Point,
                             Polygon,
                             Segment)
@@ -53,9 +54,21 @@ def to_segments(contour: Contour) -> List[Segment]:
             for index in range(len(contour))]
 
 
+def to_mixed_base(multisegment: Multisegment,
+                  multipolygon: Multipolygon) -> Base:
+    return max(to_multisegment_base(multisegment),
+               to_multipolygon_base(multipolygon),
+               key=_bases_key)
+
+
 def to_multipolygon_base(multipolygon: Multipolygon) -> Base:
     return max({to_contour_base(contour)
                 for contour in to_multipolygon_contours(multipolygon)},
+               key=_bases_key)
+
+
+def to_multisegment_base(multisegment: Multisegment) -> Base:
+    return max(set(map(type, flatten(flatten(multisegment)))),
                key=_bases_key)
 
 
@@ -89,6 +102,11 @@ def to_rational_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
             for border, holes in multipolygon]
 
 
+def to_rational_multisegment(multisegment: Multisegment) -> Multisegment:
+    return [(to_rational_point(start), to_rational_point(end))
+            for start, end in multisegment]
+
+
 def to_rational_contour(contour: Contour) -> Contour:
     return [to_rational_point(vertex) for vertex in contour]
 
@@ -105,3 +123,7 @@ def to_first_boundary_vertex(polygon: Polygon) -> Point:
 
 def to_multipolygon_x_max(multipolygon: Multipolygon) -> Coordinate:
     return max(x for border, _ in multipolygon for x, _ in border)
+
+
+def to_multisegment_x_max(multisegment: Multisegment) -> Coordinate:
+    return max(x for x, _ in flatten(multisegment))

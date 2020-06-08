@@ -39,9 +39,45 @@ such that any pair of them do not cross/overlap each other.
 and multipolygon.
 """
 
-from .core import shaped as _shaped
+from .core import (mixed as _mixed,
+                   shaped as _shaped)
 from .hints import (Mix,
-                    Multipolygon)
+                    Multipolygon,
+                    Multisegment)
+
+
+def intersect_multipolygon_with_multisegment(multipolygon: Multipolygon,
+                                             multisegment: Multisegment,
+                                             *,
+                                             accurate: bool = True) -> Mix:
+    """
+    Returns intersection of multipolygon with multisegment.
+
+    :param multipolygon: multipolygon to intersect with.
+    :param multisegment: multisegment to intersect with.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: intersection of multipolygon with multisegment.
+
+    >>> intersect_multipolygon_with_multisegment([], [])
+    ([], [], [])
+    >>> intersect_multipolygon_with_multisegment(
+    ...         [([(0, 0), (1, 0), (0, 1)], [])], [])
+    ([], [], [])
+    >>> intersect_multipolygon_with_multisegment(
+    ...         [], [((0, 0), (1, 0)), ((0, 1), (1, 0))])
+    ([], [], [])
+    >>> intersect_multipolygon_with_multisegment(
+    ...         [([(0, 0), (1, 0), (0, 1)], [])],
+    ...         [((0, 0), (1, 0)), ((0, 1), (1, 0))])
+    ([], [((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
+    >>> intersect_multipolygon_with_multisegment(
+    ...         [([(0, 0), (1, 0), (0, 1)], [])],
+    ...         [((0, 0), (1, 0)), ((0, 1), (1, 0))])
+    ([], [((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
+    """
+    return _mixed.Intersection(multisegment, multipolygon, accurate).compute()
 
 
 def complete_intersect_multipolygons(left: Multipolygon,
