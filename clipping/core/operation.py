@@ -231,7 +231,6 @@ class Difference(Operation):
     def compute(self) -> Multipolygon:
         if (not (self.left and self.right)
                 or self.are_operands_bounding_boxes_disjoint()):
-            # at least one of the arguments is empty
             return self.left
         self.normalize_operands()
         return events_to_multipolygon(self.sweep())
@@ -292,7 +291,6 @@ class CompleteIntersection(Intersection):
     def compute(self) -> Mix:
         if (not (self.left and self.right)
                 or self.are_operands_bounding_boxes_disjoint()):
-            # at least one of the arguments is empty
             return [], [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
