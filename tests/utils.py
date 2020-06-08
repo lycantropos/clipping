@@ -71,7 +71,9 @@ def are_multipoints_similar(left: Multipoint, right: Multipoint) -> bool:
 
 
 def are_multisegments_similar(left: Multisegment, right: Multisegment) -> bool:
-    return len(left) == len(right) and frozenset(left) == frozenset(right)
+    return (len(left) == len(right)
+            and (frozenset(map(frozenset, left))
+                 == frozenset(map(frozenset, right))))
 
 
 def are_multipolygons_similar(left: Multipolygon, right: Multipolygon) -> bool:
