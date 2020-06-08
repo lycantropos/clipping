@@ -30,6 +30,7 @@ from .events_queue import (EventsQueue,
 from .sweep_line import SweepLine
 from .utils import (all_equal,
                     are_bounding_boxes_disjoint,
+                    flatten,
                     to_bounding_box,
                     to_first_boundary_vertex,
                     to_multipolygon_base,
@@ -63,8 +64,9 @@ class Operation(ABC):
     __repr__ = generate_repr(__init__)
 
     def are_operands_bounding_boxes_disjoint(self) -> bool:
-        return are_bounding_boxes_disjoint(to_bounding_box(self.left),
-                                           to_bounding_box(self.right))
+        return are_bounding_boxes_disjoint(
+                to_bounding_box(flatten(border for border, _ in self.left)),
+                to_bounding_box(flatten(border for border, _ in self.right)))
 
     @abstractmethod
     def compute(self) -> Union_[Multipolygon, Mix]:
