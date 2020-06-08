@@ -80,6 +80,41 @@ def intersect_multipolygon_with_multisegment(multipolygon: Multipolygon,
     return _mixed.Intersection(multisegment, multipolygon, accurate).compute()
 
 
+def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
+                                            multipolygon: Multipolygon,
+                                            *,
+                                            accurate: bool = True
+                                            ) -> Multisegment:
+    """
+    Returns difference of multisegment with multipolygon.
+
+    :param multisegment: multisegment to subtract from.
+    :param multipolygon: multipolygon to subtract.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: difference of multisegment with multipolygon.
+
+    >>> subtract_multipolygon_from_multisegment([], [])
+    []
+    >>> subtract_multipolygon_from_multisegment(
+    ...         [], [([(0, 0), (1, 0), (0, 1)], [])])
+    []
+    >>> subtract_multipolygon_from_multisegment(
+    ...         [((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
+    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
+    >>> subtract_multipolygon_from_multisegment(
+    ...         [((0, 0), (1, 0)), ((0, 1), (1, 0))],
+    ...         [([(0, 0), (1, 0), (0, 1)], [])])
+    []
+    >>> subtract_multipolygon_from_multisegment(
+    ...         [((0, 0), (1, 0)), ((1, 1), (2, 2))],
+    ...         [([(0, 0), (1, 0), (1, 1), (0, 1)], [])])
+    [((1, 1), (2, 2))]
+    """
+    return _mixed.Difference(multisegment, multipolygon, accurate).compute()
+
+
 def complete_intersect_multipolygons(left: Multipolygon,
                                      right: Multipolygon,
                                      *,
