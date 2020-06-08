@@ -29,6 +29,7 @@ from .events_queue import (EventsQueue,
                            EventsQueueKey)
 from .sweep_line import SweepLine
 from .utils import (all_equal,
+                    are_bounding_boxes_disjoint,
                     to_bounding_box,
                     to_first_boundary_vertex,
                     to_multipolygon_base,
@@ -61,64 +62,15 @@ class Operation(ABC):
 
     __repr__ = generate_repr(__init__)
 
+    def are_operands_bounding_boxes_disjoint(self) -> bool:
+        return are_bounding_boxes_disjoint(to_bounding_box(self.left),
+                                           to_bounding_box(self.right))
+
     @abstractmethod
     def compute(self) -> Union_[Multipolygon, Mix]:
         """
         Computes result of the operation.
         """
-
-    def sweep(self) -> List[Event]:
-        self.fill_queue()
-        result = []
-        sweep_line = SweepLine()
-        while self._events_queue:
-            self.process_event(self._events_queue.pop(), result, sweep_line)
-        return result
-
-    def fill_queue(self) -> None:
-        for contour in to_multipolygon_contours(self.left):
-            for segment in to_segments(contour):
-                self.register_segment(segment, True)
-        for contour in to_multipolygon_contours(self.right):
-            for segment in to_segments(contour):
-                self.register_segment(segment, False)
-
-    def register_segment(self, segment: Segment, from_left: bool) -> None:
-        start, end = sorted(segment)
-        start_event = Event(False, start, None, from_left, EdgeType.NORMAL)
-        end_event = Event(True, end, start_event, from_left, EdgeType.NORMAL)
-        start_event.complement = end_event
-        self._events_queue.push(start_event)
-        self._events_queue.push(end_event)
-
-    def process_event(self, event: Event, processed_events: List[Event],
-                      sweep_line: SweepLine) -> None:
-        start_x, _ = event.start
-        sweep_line.move_to(start_x)
-        if event.is_right_endpoint:
-            processed_events.append(event)
-            event = event.complement
-            if event in sweep_line:
-                above_event, below_event = (sweep_line.above(event),
-                                            sweep_line.below(event))
-                sweep_line.remove(event)
-                if above_event is not None and below_event is not None:
-                    self.detect_intersection(below_event, above_event)
-        elif event not in sweep_line:
-            processed_events.append(event)
-            sweep_line.add(event)
-            above_event, below_event = (sweep_line.above(event),
-                                        sweep_line.below(event))
-            self.compute_fields(event, below_event)
-            if (above_event is not None
-                    and self.detect_intersection(event, above_event)):
-                self.compute_fields(event, below_event)
-                self.compute_fields(above_event, event)
-            if (below_event is not None
-                    and self.detect_intersection(below_event, event)):
-                below_below_event = sweep_line.below(below_event)
-                self.compute_fields(below_event, below_below_event)
-                self.compute_fields(event, below_event)
 
     def compute_fields(self, event: Event, below_event: Optional[Event]
                        ) -> None:
@@ -139,10 +91,6 @@ class Operation(ABC):
                                                or below_event.is_vertical)
                                            else below_event)
         event.in_result = self.in_result(event)
-
-    @abstractmethod
-    def in_result(self, event: Event) -> bool:
-        """Detects if event will be presented in result of the operation."""
 
     def detect_intersection(self, below_event: Event, event: Event) -> int:
         below_segment, segment = below_event.segment, event.segment
@@ -209,28 +157,88 @@ class Operation(ABC):
         self._events_queue.push(left_event)
         self._events_queue.push(right_event)
 
+    def fill_queue(self) -> None:
+        for contour in to_multipolygon_contours(self.left):
+            for segment in to_segments(contour):
+                self.register_segment(segment, True)
+        for contour in to_multipolygon_contours(self.right):
+            for segment in to_segments(contour):
+                self.register_segment(segment, False)
 
-class Difference(Operation):
-    __slots__ = ()
+    @abstractmethod
+    def in_result(self, event: Event) -> bool:
+        """Detects if event will be presented in result of the operation."""
 
-    def compute(self) -> Multipolygon:
+    def normalize_operands(self) -> None:
         left, right = self.left, self.right
-        if not (left and right):
-            # at least one of the arguments is empty
-            return left
-        left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
-        right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(
-                right)
-        if (left_x_min > right_x_max or left_x_max < right_x_min
-                or left_y_min > right_y_max or left_y_max < right_y_min):
-            # the bounding boxes do not overlap
-            return left
         if (self.accurate
                 and not issubclass(to_multipolygon_base(left + right),
                                    Rational)):
             self.left, self.right = (to_rational_multipolygon(left),
                                      to_rational_multipolygon(right))
+
+    def sweep(self) -> List[Event]:
+        self.fill_queue()
+        result = []
+        sweep_line = SweepLine()
+        while self._events_queue:
+            self.process_event(self._events_queue.pop(), result, sweep_line)
+        return result
+
+    def process_event(self, event: Event, processed_events: List[Event],
+                      sweep_line: SweepLine) -> None:
+        start_x, _ = event.start
+        sweep_line.move_to(start_x)
+        if event.is_right_endpoint:
+            processed_events.append(event)
+            event = event.complement
+            if event in sweep_line:
+                above_event, below_event = (sweep_line.above(event),
+                                            sweep_line.below(event))
+                sweep_line.remove(event)
+                if above_event is not None and below_event is not None:
+                    self.detect_intersection(below_event, above_event)
+        elif event not in sweep_line:
+            processed_events.append(event)
+            sweep_line.add(event)
+            above_event, below_event = (sweep_line.above(event),
+                                        sweep_line.below(event))
+            self.compute_fields(event, below_event)
+            if (above_event is not None
+                    and self.detect_intersection(event, above_event)):
+                self.compute_fields(event, below_event)
+                self.compute_fields(above_event, event)
+            if (below_event is not None
+                    and self.detect_intersection(below_event, event)):
+                below_below_event = sweep_line.below(below_event)
+                self.compute_fields(below_event, below_below_event)
+                self.compute_fields(event, below_event)
+
+    def register_segment(self, segment: Segment, from_left: bool) -> None:
+        start, end = sorted(segment)
+        start_event = Event(False, start, None, from_left, EdgeType.NORMAL)
+        end_event = Event(True, end, start_event, from_left, EdgeType.NORMAL)
+        start_event.complement = end_event
+        self._events_queue.push(start_event)
+        self._events_queue.push(end_event)
+
+
+class Difference(Operation):
+    __slots__ = ()
+
+    def compute(self) -> Multipolygon:
+        if (not (self.left and self.right)
+                or self.are_operands_bounding_boxes_disjoint()):
+            # at least one of the arguments is empty
+            return self.left
+        self.normalize_operands()
         return events_to_multipolygon(self.sweep())
+
+    def in_result(self, event: Event) -> bool:
+        edge_type = event.edge_type
+        return (edge_type is EdgeType.NORMAL
+                and event.from_left is event.other_in_out
+                or edge_type is EdgeType.DIFFERENT_TRANSITION)
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -245,33 +253,15 @@ class Difference(Operation):
             self.process_event(event, result, sweep_line)
         return result
 
-    def in_result(self, event: Event) -> bool:
-        edge_type = event.edge_type
-        return (edge_type is EdgeType.NORMAL
-                and event.from_left is event.other_in_out
-                or edge_type is EdgeType.DIFFERENT_TRANSITION)
-
 
 class Intersection(Operation):
     __slots__ = ()
 
     def compute(self) -> Multipolygon:
-        left, right = self.left, self.right
-        if not (left and right):
-            # at least one of the arguments is empty
+        if (not (self.left and self.right)
+                or self.are_operands_bounding_boxes_disjoint()):
             return []
-        left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
-        right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(
-                right)
-        if (left_x_min > right_x_max or left_x_max < right_x_min
-                or left_y_min > right_y_max or left_y_max < right_y_min):
-            # the bounding boxes do not overlap
-            return []
-        if (self.accurate
-                and not issubclass(to_multipolygon_base(left + right),
-                                   Rational)):
-            self.left, self.right = (to_rational_multipolygon(left),
-                                     to_rational_multipolygon(right))
+        self.normalize_operands()
         return events_to_multipolygon(self.sweep())
 
     def sweep(self) -> List[Event]:
@@ -298,22 +288,11 @@ class CompleteIntersection(Intersection):
     __slots__ = ()
 
     def compute(self) -> Mix:
-        left, right = self.left, self.right
-        if not (left and right):
+        if (not (self.left and self.right)
+                or self.are_operands_bounding_boxes_disjoint()):
             # at least one of the arguments is empty
             return [], [], []
-        left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
-        right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(
-                right)
-        if (left_x_min > right_x_max or left_x_max < right_x_min
-                or left_y_min > right_y_max or left_y_max < right_y_min):
-            # the bounding boxes do not overlap
-            return [], [], []
-        if (self.accurate
-                and not issubclass(to_multipolygon_base(left + right),
-                                   Rational)):
-            self.left, self.right = (to_rational_multipolygon(left),
-                                     to_rational_multipolygon(right))
+        self.normalize_operands()
         events = sorted(self.sweep(),
                         key=EventsQueueKey)
         multipoint = []  # type: Multipoint
@@ -343,24 +322,13 @@ class SymmetricDifference(Operation):
     __slots__ = ()
 
     def compute(self) -> Multipolygon:
-        left, right = self.left, self.right
-        if not (left and right):
-            # at least one of the arguments is empty
-            return left or right
-        left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
-        right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(
-                right)
-        if (left_x_min > right_x_max or left_x_max < right_x_min
-                or left_y_min > right_y_max or left_y_max < right_y_min):
-            # the bounding boxes do not overlap
-            result = left + right
+        if not (self.left and self.right):
+            return self.left or self.right
+        elif self.are_operands_bounding_boxes_disjoint():
+            result = self.left + self.right
             result.sort(key=to_first_boundary_vertex)
             return result
-        if (self.accurate
-                and not issubclass(to_multipolygon_base(left + right),
-                                   Rational)):
-            self.left, self.right = (to_rational_multipolygon(left),
-                                     to_rational_multipolygon(right))
+        self.normalize_operands()
         return events_to_multipolygon(self.sweep())
 
     def in_result(self, event: Event) -> bool:
@@ -371,26 +339,13 @@ class Union(Operation):
     __slots__ = ()
 
     def compute(self) -> Multipolygon:
-        left, right = self.left, self.right
-        if not (left or right):
-            return []
-        elif not (left and right):
-            # at least one of the arguments is empty
-            return left or right
-        left_x_min, left_x_max, left_y_min, left_y_max = to_bounding_box(left)
-        right_x_min, right_x_max, right_y_min, right_y_max = to_bounding_box(
-                right)
-        if (left_x_min > right_x_max or left_x_max < right_x_min
-                or left_y_min > right_y_max or left_y_max < right_y_min):
-            # the bounding boxes do not overlap
-            result = left + right
+        if not (self.left and self.right):
+            return self.left or self.right
+        elif self.are_operands_bounding_boxes_disjoint():
+            result = self.left + self.right
             result.sort(key=to_first_boundary_vertex)
             return result
-        if (self.accurate
-                and not issubclass(to_multipolygon_base(left + right),
-                                   Rational)):
-            self.left, self.right = (to_rational_multipolygon(left),
-                                     to_rational_multipolygon(right))
+        self.normalize_operands()
         return events_to_multipolygon(self.sweep())
 
     def in_result(self, event: Event) -> bool:

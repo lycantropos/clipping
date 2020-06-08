@@ -42,6 +42,13 @@ def to_bounding_box(multipolygon: Multipolygon) -> BoundingBox:
     return x_min, x_max, y_min, y_max
 
 
+def are_bounding_boxes_disjoint(left: BoundingBox, right: BoundingBox) -> bool:
+    left_x_min, left_x_max, left_y_min, left_y_max = left
+    right_x_min, right_x_max, right_y_min, right_y_max = right
+    return (left_x_min > right_x_max or left_x_max < right_x_min
+            or left_y_min > right_y_max or left_y_max < right_y_min)
+
+
 def to_segments(contour: Contour) -> List[Segment]:
     return [(contour[index], contour[(index + 1) % len(contour)])
             for index in range(len(contour))]
