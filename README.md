@@ -73,38 +73,38 @@ Usage
 >>> left_triangle = [([(0, 0), (1, 0), (0, 1)], [])]
 >>> right_triangle = [([(0, 1), (1, 0), (1, 1)], [])]
 >>> square = [([(0, 0), (1, 0), (1, 1), (0, 1)], [])]
->>> from clipping.planar import intersect
->>> all(intersect(square, triangle) == intersect(triangle, square) == triangle
+>>> from clipping.planar import intersect_multipolygons
+>>> all(intersect_multipolygons(square, triangle) == intersect_multipolygons(triangle, square) == triangle
 ...     for triangle in (left_triangle, right_triangle))
 True
->>> intersect(left_triangle, right_triangle) == []
+>>> intersect_multipolygons(left_triangle, right_triangle) == []
 True
->>> from clipping.planar import complete_intersect
->>> all(complete_intersect(square, triangle) == ([], [], intersect(square, triangle))
+>>> from clipping.planar import complete_intersect_multipolygons
+>>> all(complete_intersect_multipolygons(square, triangle) == ([], [], intersect_multipolygons(square, triangle))
 ...     for triangle in (left_triangle, right_triangle))
 True
->>> complete_intersect(left_triangle, right_triangle) == ([], [((0, 1), (1, 0))], [])
+>>> complete_intersect_multipolygons(left_triangle, right_triangle) == ([], [((0, 1), (1, 0))], [])
 True
->>> from clipping.planar import unite
->>> all(unite(square, triangle) == unite(triangle, square) == square
+>>> from clipping.planar import unite_multipolygons
+>>> all(unite_multipolygons(square, triangle) == unite_multipolygons(triangle, square) == square
 ...     for triangle in (left_triangle, right_triangle))
 True
->>> unite(left_triangle, right_triangle) == unite(right_triangle, left_triangle) == square
+>>> unite_multipolygons(left_triangle, right_triangle) == unite_multipolygons(right_triangle, left_triangle) == square
 True
->>> from clipping.planar import subtract
->>> all(subtract(triangle, square) == []
+>>> from clipping.planar import subtract_multipolygons
+>>> all(subtract_multipolygons(triangle, square) == []
 ...     for triangle in (left_triangle, right_triangle))
 True
->>> subtract(square, left_triangle) == right_triangle
+>>> subtract_multipolygons(square, left_triangle) == right_triangle
 True
->>> subtract(square, right_triangle) == left_triangle
+>>> subtract_multipolygons(square, right_triangle) == left_triangle
 True
->>> from clipping.planar import symmetric_subtract
->>> symmetric_subtract(left_triangle, right_triangle) == square
+>>> from clipping.planar import symmetric_subtract_multipolygons
+>>> symmetric_subtract_multipolygons(left_triangle, right_triangle) == square
 True
->>> symmetric_subtract(square, left_triangle) == right_triangle
+>>> symmetric_subtract_multipolygons(square, left_triangle) == right_triangle
 True
->>> symmetric_subtract(square, right_triangle) == left_triangle
+>>> symmetric_subtract_multipolygons(square, right_triangle) == left_triangle
 True
 
 ```

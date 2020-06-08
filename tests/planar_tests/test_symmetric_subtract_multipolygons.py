@@ -1,0 +1,165 @@
+from hypothesis import given
+
+from clipping.planar import (intersect_multipolygons,
+                             subtract_multipolygons,
+                             symmetric_subtract_multipolygons,
+                             unite_multipolygons)
+from tests.utils import (Multipolygon,
+                         MultipolygonsPair,
+                         MultipolygonsTriplet,
+                         are_multipolygons_similar,
+                         is_multipolygon,
+                         reverse_multipolygon,
+                         reverse_multipolygon_borders,
+                         reverse_multipolygon_holes,
+                         reverse_multipolygon_holes_contours)
+from . import strategies
+
+
+@given(strategies.multipolygons_pairs)
+def test_basic(multipolygons_pair: MultipolygonsPair) -> None:
+    left_multipolygon, right_multipolygon = multipolygons_pair
+
+    result = symmetric_subtract_multipolygons(left_multipolygon, right_multipolygon)
+
+    assert is_multipolygon(result)
+
+
+@given(strategies.multipolygons)
+def test_self_inverse(multipolygon: Multipolygon) -> None:
+    result = symmetric_subtract_multipolygons(multipolygon, multipolygon)
+
+    assert not result
+
+
+@given(strategies.empty_multipolygons_with_multipolygons)
+def test_left_neutral_element(
+        empty_multipolygon_with_multipolygon: MultipolygonsPair) -> None:
+    empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
+
+    result = symmetric_subtract_multipolygons(empty_multipolygon, multipolygon)
+
+    assert are_multipolygons_similar(result, multipolygon)
+
+
+@given(strategies.empty_multipolygons_with_multipolygons)
+def test_right_neutral_element(
+        empty_multipolygon_with_multipolygon: MultipolygonsPair) -> None:
+    empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
+
+    result = symmetric_subtract_multipolygons(multipolygon, empty_multipolygon)
+
+    assert are_multipolygons_similar(result, multipolygon)
+
+
+@given(strategies.multipolygons_pairs)
+def test_commutativity(multipolygons_pair: MultipolygonsPair) -> None:
+    left_multipolygon, right_multipolygon = multipolygons_pair
+
+    result = symmetric_subtract_multipolygons(left_multipolygon, right_multipolygon)
+
+    assert result == symmetric_subtract_multipolygons(right_multipolygon, left_multipolygon)
+
+
+@given(strategies.multipolygons_pairs)
+def test_equivalent_using_union_of_differences(
+        multipolygons_pair: MultipolygonsPair) -> None:
+    left_multipolygon, right_multipolygon = multipolygons_pair
+
+    result = symmetric_subtract_multipolygons(left_multipolygon, right_multipolygon)
+
+    assert result == unite_multipolygons(subtract_multipolygons(left_multipolygon, right_multipolygon),
+                                         subtract_multipolygons(right_multipolygon, left_multipolygon))
+
+
+@given(strategies.multipolygons_pairs)
+def test_equivalent_using_difference_of_union_and_intersection(
+        multipolygons_pair: MultipolygonsPair) -> None:
+    left_multipolygon, right_multipolygon = multipolygons_pair
+
+    result = symmetric_subtract_multipolygons(left_multipolygon, right_multipolygon)
+
+    assert result == subtract_multipolygons(unite_multipolygons(left_multipolygon, right_multipolygon),
+                                            intersect_multipolygons(right_multipolygon, left_multipolygon))
+
+
+@given(strategies.multipolygons_pairs)
+def test_expressing_union_as_symmetric_difference(
+        multipolygons_pair: MultipolygonsPair) -> None:
+    left_multipolygon, right_multipolygon = multipolygons_pair
+
+    result = symmetric_subtract_multipolygons(symmetric_subtract_multipolygons(left_multipolygon,
+                                                                               right_multipolygon),
+                                              intersect_multipolygons(left_multipolygon,
+                                                        right_multipolygon))
+
+    assert result == unite_multipolygons(left_multipolygon, right_multipolygon)
+
+
+@given(strategies.multipolygons_triplets)
+def test_associativity(multipolygons_triplet: MultipolygonsTriplet) -> None:
+    (left_multipolygon, mid_multipolygon,
+     right_multipolygon) = multipolygons_triplet
+
+    result = symmetric_subtract_multipolygons(symmetric_subtract_multipolygons(left_multipolygon,
+                                                                               mid_multipolygon),
+                                              right_multipolygon)
+
+    assert are_multipolygons_similar(
+            result, symmetric_subtract_multipolygons(left_multipolygon,
+                                                     symmetric_subtract_multipolygons(mid_multipolygon,
+                                                                                      right_multipolygon)))
+
+
+@given(strategies.multipolygons_triplets)
+def test_repeated(multipolygons_triplet: MultipolygonsTriplet) -> None:
+    (left_multipolygon, mid_multipolygon,
+     right_multipolygon) = multipolygons_triplet
+
+    result = symmetric_subtract_multipolygons(symmetric_subtract_multipolygons(left_multipolygon,
+                                                                               mid_multipolygon),
+                                              symmetric_subtract_multipolygons(mid_multipolygon,
+                                                                               right_multipolygon))
+
+    assert are_multipolygons_similar(result,
+                                     symmetric_subtract_multipolygons(left_multipolygon,
+                                                                      right_multipolygon))
+
+
+@given(strategies.multipolygons_pairs)
+def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
+    left_multipolygon, right_multipolygon = multipolygons_pair
+
+    result = symmetric_subtract_multipolygons(left_multipolygon, right_multipolygon)
+
+    assert are_multipolygons_similar(
+            result, symmetric_subtract_multipolygons(reverse_multipolygon(left_multipolygon),
+                                                     right_multipolygon))
+    assert are_multipolygons_similar(
+            result,
+            symmetric_subtract_multipolygons(left_multipolygon,
+                                             reverse_multipolygon(right_multipolygon)))
+    assert are_multipolygons_similar(
+            result,
+            symmetric_subtract_multipolygons(reverse_multipolygon_borders(left_multipolygon),
+                                             right_multipolygon))
+    assert are_multipolygons_similar(
+            result, symmetric_subtract_multipolygons(
+                    left_multipolygon,
+                    reverse_multipolygon_borders(right_multipolygon)))
+    assert are_multipolygons_similar(
+            result,
+            symmetric_subtract_multipolygons(reverse_multipolygon_holes(left_multipolygon),
+                                             right_multipolygon))
+    assert are_multipolygons_similar(
+            result, symmetric_subtract_multipolygons(
+                    left_multipolygon,
+                    reverse_multipolygon_holes(right_multipolygon)))
+    assert are_multipolygons_similar(
+            result, symmetric_subtract_multipolygons(
+                    reverse_multipolygon_holes_contours(left_multipolygon),
+                    right_multipolygon))
+    assert are_multipolygons_similar(
+            result, symmetric_subtract_multipolygons(
+                    left_multipolygon,
+                    reverse_multipolygon_holes_contours(right_multipolygon)))

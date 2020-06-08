@@ -24,7 +24,7 @@ from clipping.hints import (Contour,
                             Point,
                             Segment)
 from .enums import EdgeType
-from .event import Event
+from .event import ShapedEvent as Event
 from .events_queue import (EventsQueue,
                            EventsQueueKey)
 from .sweep_line import SweepLine
@@ -142,7 +142,7 @@ class Operation(ABC):
         elif (relationship is not SegmentsRelationship.NONE
               and event.start != below_event.start
               and event.end != below_event.end):
-            # segments do not intersect at endpoints
+            # segments do not intersect_multipolygons at endpoints
             point = segments_intersection(below_segment, segment)
             if point != below_event.start and point != below_event.end:
                 self.divide_segment(below_event, point)

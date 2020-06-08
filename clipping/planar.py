@@ -39,15 +39,15 @@ such that any pair of them do not cross/overlap each other.
 and multipolygon.
 """
 
-from .core import operation as _operation
+from .core import shaped as _shaped
 from .hints import (Mix,
                     Multipolygon)
 
 
-def complete_intersect(left: Multipolygon,
-                       right: Multipolygon,
-                       *,
-                       accurate: bool = True) -> Mix:
+def complete_intersect_multipolygons(left: Multipolygon,
+                                     right: Multipolygon,
+                                     *,
+                                     accurate: bool = True) -> Mix:
     """
     Returns intersection of multipolygons considering cases
     with polygons touching each other in points/segments.
@@ -59,29 +59,29 @@ def complete_intersect(left: Multipolygon,
         for floating point numbers.
     :returns: intersection of operands.
 
-    >>> complete_intersect([], [])
+    >>> complete_intersect_multipolygons([], [])
     ([], [], [])
-    >>> complete_intersect([([(0, 0), (1, 0), (0, 1)], [])], [])
+    >>> complete_intersect_multipolygons([([(0, 0), (1, 0), (0, 1)], [])], [])
     ([], [], [])
-    >>> complete_intersect([], [([(0, 0), (1, 0), (0, 1)], [])])
+    >>> complete_intersect_multipolygons([], [([(0, 0), (1, 0), (0, 1)], [])])
     ([], [], [])
-    >>> complete_intersect([([(0, 0), (1, 0), (0, 1)], [])],
-    ...                    [([(0, 0), (1, 0), (0, 1)], [])])
+    >>> complete_intersect_multipolygons([([(0, 0), (1, 0), (0, 1)], [])],
+    ...                                  [([(0, 0), (1, 0), (0, 1)], [])])
     ([], [], [([(0, 0), (1, 0), (0, 1)], [])])
-    >>> complete_intersect([([(0, 0), (1, 0), (0, 1)], [])],
-    ...                    [([(0, 1), (1, 0), (1, 1)], [])])
+    >>> complete_intersect_multipolygons([([(0, 0), (1, 0), (0, 1)], [])],
+    ...                                  [([(0, 1), (1, 0), (1, 1)], [])])
     ([], [((0, 1), (1, 0))], [])
-    >>> complete_intersect([([(0, 0), (1, 0), (0, 1)], [])],
-    ...                    [([(1, 0), (2, 0), (2, 1)], [])])
+    >>> complete_intersect_multipolygons([([(0, 0), (1, 0), (0, 1)], [])],
+    ...                                  [([(1, 0), (2, 0), (2, 1)], [])])
     ([(1, 0)], [], [])
     """
-    return _operation.CompleteIntersection(left, right, accurate).compute()
+    return _shaped.CompleteIntersection(left, right, accurate).compute()
 
 
-def intersect(left: Multipolygon,
-              right: Multipolygon,
-              *,
-              accurate: bool = True) -> Multipolygon:
+def intersect_multipolygons(left: Multipolygon,
+                            right: Multipolygon,
+                            *,
+                            accurate: bool = True) -> Multipolygon:
     """
     Returns intersection of multipolygons.
 
@@ -92,23 +92,23 @@ def intersect(left: Multipolygon,
         for floating point numbers.
     :returns: intersection of operands.
 
-    >>> intersect([], [])
+    >>> intersect_multipolygons([], [])
     []
-    >>> intersect([([(0, 0), (1, 0), (0, 1)], [])], [])
+    >>> intersect_multipolygons([([(0, 0), (1, 0), (0, 1)], [])], [])
     []
-    >>> intersect([], [([(0, 0), (1, 0), (0, 1)], [])])
+    >>> intersect_multipolygons([], [([(0, 0), (1, 0), (0, 1)], [])])
     []
-    >>> intersect([([(0, 0), (1, 0), (0, 1)], [])],
-    ...           [([(0, 0), (1, 0), (0, 1)], [])])
+    >>> intersect_multipolygons([([(0, 0), (1, 0), (0, 1)], [])],
+    ...                         [([(0, 0), (1, 0), (0, 1)], [])])
     [([(0, 0), (1, 0), (0, 1)], [])]
     """
-    return _operation.Intersection(left, right, accurate).compute()
+    return _shaped.Intersection(left, right, accurate).compute()
 
 
-def subtract(minuend: Multipolygon,
-             subtrahend: Multipolygon,
-             *,
-             accurate: bool = True) -> Multipolygon:
+def subtract_multipolygons(minuend: Multipolygon,
+                           subtrahend: Multipolygon,
+                           *,
+                           accurate: bool = True) -> Multipolygon:
     """
     Returns difference of multipolygons.
 
@@ -119,23 +119,23 @@ def subtract(minuend: Multipolygon,
         for floating point numbers.
     :returns: difference between minuend and subtrahend.
 
-    >>> subtract([], [])
+    >>> subtract_multipolygons([], [])
     []
-    >>> subtract([([(0, 0), (1, 0), (0, 1)], [])], [])
+    >>> subtract_multipolygons([([(0, 0), (1, 0), (0, 1)], [])], [])
     [([(0, 0), (1, 0), (0, 1)], [])]
-    >>> subtract([], [([(0, 0), (1, 0), (0, 1)], [])])
+    >>> subtract_multipolygons([], [([(0, 0), (1, 0), (0, 1)], [])])
     []
-    >>> subtract([([(0, 0), (1, 0), (0, 1)], [])],
-    ...          [([(0, 0), (1, 0), (0, 1)], [])])
+    >>> subtract_multipolygons([([(0, 0), (1, 0), (0, 1)], [])],
+    ...                        [([(0, 0), (1, 0), (0, 1)], [])])
     []
     """
-    return _operation.Difference(minuend, subtrahend, accurate).compute()
+    return _shaped.Difference(minuend, subtrahend, accurate).compute()
 
 
-def symmetric_subtract(left: Multipolygon,
-                       right: Multipolygon,
-                       *,
-                       accurate: bool = True) -> Multipolygon:
+def symmetric_subtract_multipolygons(left: Multipolygon,
+                                     right: Multipolygon,
+                                     *,
+                                     accurate: bool = True) -> Multipolygon:
     """
     Returns symmetric difference of multipolygons.
 
@@ -146,23 +146,23 @@ def symmetric_subtract(left: Multipolygon,
         for floating point numbers.
     :returns: symmetric difference of operands.
 
-    >>> symmetric_subtract([], [])
+    >>> symmetric_subtract_multipolygons([], [])
     []
-    >>> symmetric_subtract([([(0, 0), (1, 0), (0, 1)], [])], [])
+    >>> symmetric_subtract_multipolygons([([(0, 0), (1, 0), (0, 1)], [])], [])
     [([(0, 0), (1, 0), (0, 1)], [])]
-    >>> symmetric_subtract([], [([(0, 0), (1, 0), (0, 1)], [])])
+    >>> symmetric_subtract_multipolygons([], [([(0, 0), (1, 0), (0, 1)], [])])
     [([(0, 0), (1, 0), (0, 1)], [])]
-    >>> symmetric_subtract([([(0, 0), (1, 0), (0, 1)], [])],
-    ...                    [([(0, 0), (1, 0), (0, 1)], [])])
+    >>> symmetric_subtract_multipolygons([([(0, 0), (1, 0), (0, 1)], [])],
+    ...                                  [([(0, 0), (1, 0), (0, 1)], [])])
     []
     """
-    return _operation.SymmetricDifference(left, right, accurate).compute()
+    return _shaped.SymmetricDifference(left, right, accurate).compute()
 
 
-def unite(left: Multipolygon,
-          right: Multipolygon,
-          *,
-          accurate: bool = True) -> Multipolygon:
+def unite_multipolygons(left: Multipolygon,
+                        right: Multipolygon,
+                        *,
+                        accurate: bool = True) -> Multipolygon:
     """
     Returns union of multipolygons.
 
@@ -173,14 +173,14 @@ def unite(left: Multipolygon,
         for floating point numbers.
     :returns: union of operands.
 
-    >>> unite([], [])
+    >>> unite_multipolygons([], [])
     []
-    >>> unite([([(0, 0), (1, 0), (0, 1)], [])], [])
+    >>> unite_multipolygons([([(0, 0), (1, 0), (0, 1)], [])], [])
     [([(0, 0), (1, 0), (0, 1)], [])]
-    >>> unite([], [([(0, 0), (1, 0), (0, 1)], [])])
+    >>> unite_multipolygons([], [([(0, 0), (1, 0), (0, 1)], [])])
     [([(0, 0), (1, 0), (0, 1)], [])]
-    >>> unite([([(0, 0), (1, 0), (0, 1)], [])],
-    ...       [([(0, 0), (1, 0), (0, 1)], [])])
+    >>> unite_multipolygons([([(0, 0), (1, 0), (0, 1)], [])],
+    ...                     [([(0, 0), (1, 0), (0, 1)], [])])
     [([(0, 0), (1, 0), (0, 1)], [])]
     """
-    return _operation.Union(left, right, accurate).compute()
+    return _shaped.Union(left, right, accurate).compute()

@@ -1,5 +1,6 @@
 from functools import partial
 from typing import (Callable,
+                    Generic,
                     Optional,
                     cast)
 
@@ -12,12 +13,13 @@ from clipping.hints import Coordinate
 from .event import Event
 
 
-class SweepLine:
+class SweepLine(Generic[Event]):
     __slots__ = 'current_x', '_tree'
 
     def __init__(self, current_x: Optional[Coordinate] = None) -> None:
         self.current_x = current_x
-        self._tree = red_black.tree(key=cast(Callable[[Event], SweepLineKey],
+        self._tree = red_black.tree(key=cast(Callable[[Event],
+                                                      SweepLineKey],
                                              partial(SweepLineKey, self)))
 
     __repr__ = generate_repr(__init__)
