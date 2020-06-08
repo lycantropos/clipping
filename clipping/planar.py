@@ -73,9 +73,9 @@ def intersect_multipolygon_with_multisegment(multipolygon: Multipolygon,
     ...         [((0, 0), (1, 0)), ((0, 1), (1, 0))])
     ([], [((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
     >>> intersect_multipolygon_with_multisegment(
-    ...         [([(0, 0), (1, 0), (0, 1)], [])],
-    ...         [((0, 0), (1, 0)), ((0, 1), (1, 0))])
-    ([], [((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
+    ...         [([(0, 0), (1, 0), (1, 1), (0, 1)], [])],
+    ...         [((0, 0), (1, 0)), ((1, 1), (2, 2))])
+    ([(1, 1)], [((0, 0), (1, 0))], [])
     """
     return _mixed.Intersection(multisegment, multipolygon, accurate).compute()
 
