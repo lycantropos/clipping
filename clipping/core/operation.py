@@ -179,14 +179,6 @@ class Operation(ABC):
             self.left, self.right = (to_rational_multipolygon(left),
                                      to_rational_multipolygon(right))
 
-    def sweep(self) -> List[Event]:
-        self.fill_queue()
-        result = []
-        sweep_line = SweepLine()
-        while self._events_queue:
-            self.process_event(self._events_queue.pop(), result, sweep_line)
-        return result
-
     def process_event(self, event: Event, processed_events: List[Event],
                       sweep_line: SweepLine) -> None:
         start_x, _ = event.start
@@ -223,6 +215,14 @@ class Operation(ABC):
         start_event.complement = end_event
         self._events_queue.push(start_event)
         self._events_queue.push(end_event)
+
+    def sweep(self) -> List[Event]:
+        self.fill_queue()
+        result = []
+        sweep_line = SweepLine()
+        while self._events_queue:
+            self.process_event(self._events_queue.pop(), result, sweep_line)
+        return result
 
 
 class Difference(Operation):
