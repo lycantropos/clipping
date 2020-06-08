@@ -41,22 +41,18 @@ def test_properties(multipolygon_with_multisegment
     result_multipoint, result_multisegment, result_multipolygon = result
     rational_multisegment = to_rational_multisegment(multisegment)
     rational_multipolygon = to_rational_multipolygon(multipolygon)
-    assert (not result_multipoint
-            or all(point_in_multisegment(point, multisegment)
-                   is Relation.COMPONENT
-                   for point in result_multipoint))
-    assert (not result_multipoint
-            or all(point_in_multipolygon(point, multipolygon)
-                   is Relation.COMPONENT
-                   for point in result_multipoint))
-    assert (not result_multisegment
-            or all(segment_in_multisegment(segment, rational_multisegment)
-                   in (Relation.EQUAL, Relation.COMPONENT)
-                   for segment in result_multisegment))
-    assert (not result_multisegment
-            or all(segment_in_multipolygon(segment, rational_multipolygon)
-                   in (Relation.COMPONENT, Relation.ENCLOSED, Relation.WITHIN)
-                   for segment in result_multisegment))
+    assert all(point_in_multisegment(point, multisegment)
+               is Relation.COMPONENT
+               for point in result_multipoint)
+    assert all(point_in_multipolygon(point, multipolygon)
+               is Relation.COMPONENT
+               for point in result_multipoint)
+    assert all(segment_in_multisegment(segment, rational_multisegment)
+               in (Relation.EQUAL, Relation.COMPONENT)
+               for segment in result_multisegment)
+    assert all(segment_in_multipolygon(segment, rational_multipolygon)
+               in (Relation.COMPONENT, Relation.ENCLOSED, Relation.WITHIN)
+               for segment in result_multisegment)
     assert not result_multipolygon
 
 
@@ -90,19 +86,15 @@ def test_reversals(multipolygon_with_multisegment: MultipolygonWithMultisegment
     result = intersect_multisegment_with_multipolygon(multisegment,
                                                       multipolygon)
 
-    assert result == intersect_multisegment_with_multipolygon(multisegment,
-                                                              reverse_multipolygon(
-                                                                  multipolygon))
-    assert result == intersect_multisegment_with_multipolygon(multisegment,
-                                                              reverse_multipolygon_borders(
-                                                                  multipolygon))
-    assert result == intersect_multisegment_with_multipolygon(multisegment,
-                                                              reverse_multipolygon_holes(
-                                                                  multipolygon))
-    assert result == intersect_multisegment_with_multipolygon(multisegment,
-                                                              reverse_multipolygon_holes_contours(
-                                                                  multipolygon))
     assert result == intersect_multisegment_with_multipolygon(
-        reverse_multisegment(multisegment), multipolygon)
+            multisegment, reverse_multipolygon(multipolygon))
     assert result == intersect_multisegment_with_multipolygon(
-        reverse_multisegment_endpoints(multisegment), multipolygon)
+            multisegment, reverse_multipolygon_borders(multipolygon))
+    assert result == intersect_multisegment_with_multipolygon(
+            multisegment, reverse_multipolygon_holes(multipolygon))
+    assert result == intersect_multisegment_with_multipolygon(
+            multisegment, reverse_multipolygon_holes_contours(multipolygon))
+    assert result == intersect_multisegment_with_multipolygon(
+            reverse_multisegment(multisegment), multipolygon)
+    assert result == intersect_multisegment_with_multipolygon(
+            reverse_multisegment_endpoints(multisegment), multipolygon)
