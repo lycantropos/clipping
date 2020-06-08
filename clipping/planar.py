@@ -148,8 +148,8 @@ def subtract_multipolygons(minuend: Multipolygon,
     """
     Returns difference of multipolygons.
 
-    :param minuend: multipolygon from which to subtract.
-    :param subtrahend: multipolygon which to subtract.
+    :param minuend: multipolygon to subtract from.
+    :param subtrahend: multipolygon to subtract.
     :param accurate:
         flag that tells whether to use slow but more accurate arithmetic
         for floating point numbers.
