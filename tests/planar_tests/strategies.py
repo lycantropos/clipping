@@ -21,6 +21,8 @@ rational_multisegments_strategies = (rational_coordinates_strategies
                                      .map(planar.multisegments))
 rational_multisegments_pairs = (rational_multisegments_strategies
                                 .flatmap(to_pairs))
+rational_multisegments_triplets = (rational_multisegments_strategies
+                                   .flatmap(to_triplets))
 multisegments_strategies = coordinates_strategies.map(planar.multisegments)
 multisegments_pairs = multisegments_strategies.flatmap(to_pairs)
 multisegments_triplets = multisegments_strategies.flatmap(to_triplets)
