@@ -185,7 +185,8 @@ class Difference(Operation):
                 for segment, group in groupby(sorted(self.sweep(),
                                                      key=EventsQueueKey),
                                               key=attrgetter('segment'))
-                if all(event.from_left for event in group)]
+                if all(event.from_left and not event.is_right_endpoint
+                       for event in group)]
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
