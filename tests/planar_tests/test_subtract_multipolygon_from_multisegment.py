@@ -43,7 +43,7 @@ def test_properties(multipolygon_with_multisegment
                in (Relation.EQUAL, Relation.COMPONENT)
                for segment in result)
     assert all(segment_in_multipolygon(segment, rational_multipolygon)
-               is (Relation.DISJOINT, Relation.TOUCH)
+               in (Relation.DISJOINT, Relation.TOUCH)
                for segment in result)
 
 
