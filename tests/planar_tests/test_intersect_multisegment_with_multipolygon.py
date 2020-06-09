@@ -10,8 +10,6 @@ from robust.linear import (SegmentsRelationship,
 
 from clipping.core.utils import (sort_pair,
                                  to_multipolygon_contours,
-                                 to_rational_multipolygon,
-                                 to_rational_multisegment,
                                  to_segments)
 from clipping.planar import intersect_multisegment_with_multipolygon
 from tests.utils import (MultipolygonWithMultisegment,
@@ -36,7 +34,7 @@ def test_basic(multipolygon_with_multisegment: MultipolygonWithMultisegment
     assert is_mix(result)
 
 
-@given(strategies.multipolygons_with_multisegments)
+@given(strategies.rational_multipolygons_with_multisegments)
 def test_properties(multipolygon_with_multisegment
                     : MultipolygonWithMultisegment) -> None:
     multipolygon, multisegment = multipolygon_with_multisegment
@@ -45,8 +43,6 @@ def test_properties(multipolygon_with_multisegment
                                                       multipolygon)
 
     result_multipoint, result_multisegment, result_multipolygon = result
-    rational_multisegment = to_rational_multisegment(multisegment)
-    rational_multipolygon = to_rational_multipolygon(multipolygon)
     assert all(point_in_multisegment(point, multisegment)
                is Relation.COMPONENT
                for point in result_multipoint)
@@ -58,18 +54,18 @@ def test_properties(multipolygon_with_multisegment
                or any(endpoint in result_segment
                       for result_segment in result_multisegment
                       for endpoint in segment)
-               for segment in rational_multisegment
-               if (segment_in_multipolygon(segment, rational_multipolygon)
+               for segment in multisegment
+               if (segment_in_multipolygon(segment, multipolygon)
                    is Relation.TOUCH
                    and not any(
                     segments_relationship(segment, edge)
                     is SegmentsRelationship.OVERLAP
                     for contour in to_multipolygon_contours(multipolygon)
                     for edge in to_segments(contour))))
-    assert all(segment_in_multisegment(segment, rational_multisegment)
+    assert all(segment_in_multisegment(segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
                for segment in result_multisegment)
-    assert all(segment_in_multipolygon(segment, rational_multipolygon)
+    assert all(segment_in_multipolygon(segment, multipolygon)
                in (Relation.COMPONENT, Relation.ENCLOSED, Relation.WITHIN)
                for segment in result_multisegment)
     assert all(sort_pair(segment) in result_multisegment
@@ -77,8 +73,8 @@ def test_properties(multipolygon_with_multisegment
                or any(segment_in_segment(result_segment, segment)
                       is Relation.COMPONENT
                       for result_segment in result_multisegment)
-               for segment in rational_multisegment
-               if (segment_in_multipolygon(segment, rational_multipolygon)
+               for segment in multisegment
+               if (segment_in_multipolygon(segment, multipolygon)
                    in (Relation.CROSS, Relation.COMPONENT, Relation.ENCLOSED,
                        Relation.WITHIN)))
     assert not result_multipolygon

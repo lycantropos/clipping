@@ -6,7 +6,8 @@ from hypothesis_geometry import planar
 from clipping.hints import (Coordinate,
                             Multipolygon,
                             Multisegment)
-from tests.strategies import coordinates_strategies
+from tests.strategies import (coordinates_strategies,
+                              rational_coordinates_strategies)
 from tests.utils import (Strategy,
                          to_pairs,
                          to_triplets)
@@ -16,6 +17,10 @@ multipolygons = coordinates_strategies.flatmap(planar.multipolygons)
 multisegments = coordinates_strategies.flatmap(planar.multisegments)
 empty_multisegments_with_multisegments = strategies.tuples(empty_multisegments,
                                                            multisegments)
+rational_multisegments_strategies = (rational_coordinates_strategies
+                                     .map(planar.multisegments))
+rational_multisegments_pairs = (rational_multisegments_strategies
+                                .flatmap(to_pairs))
 multisegments_strategies = coordinates_strategies.map(planar.multisegments)
 multisegments_pairs = multisegments_strategies.flatmap(to_pairs)
 multisegments_triplets = multisegments_strategies.flatmap(to_triplets)

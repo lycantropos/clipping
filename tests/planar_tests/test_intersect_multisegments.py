@@ -48,7 +48,7 @@ def test_right_absorbing_element(empty_multisegment_with_multisegment
     assert not result
 
 
-@given(strategies.multisegments_pairs)
+@given(strategies.rational_multisegments_pairs)
 def test_absorption_identity(multisegments_pair: MultisegmentsPair) -> None:
     left_multisegment, right_multisegment = multisegments_pair
 

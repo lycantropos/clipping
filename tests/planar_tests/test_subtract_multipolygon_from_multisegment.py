@@ -4,8 +4,6 @@ from orient.planar import (Relation,
                            segment_in_multisegment,
                            segment_in_segment)
 
-from clipping.core.utils import (to_rational_multipolygon,
-                                 to_rational_multisegment)
 from clipping.planar import subtract_multipolygon_from_multisegment
 from tests.utils import (MultipolygonWithMultisegment,
                          are_multisegments_similar,
@@ -31,7 +29,7 @@ def test_basic(multipolygon_with_multisegment: MultipolygonWithMultisegment
     assert is_multisegment(result)
 
 
-@given(strategies.multipolygons_with_multisegments)
+@given(strategies.rational_multipolygons_with_multisegments)
 def test_properties(multipolygon_with_multisegment
                     : MultipolygonWithMultisegment) -> None:
     multipolygon, multisegment = multipolygon_with_multisegment
@@ -39,12 +37,10 @@ def test_properties(multipolygon_with_multisegment
     result = subtract_multipolygon_from_multisegment(multisegment,
                                                      multipolygon)
 
-    rational_multisegment = to_rational_multisegment(multisegment)
-    rational_multipolygon = to_rational_multipolygon(multipolygon)
-    assert all(segment_in_multisegment(segment, rational_multisegment)
+    assert all(segment_in_multisegment(segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
                for segment in result)
-    assert all(segment_in_multipolygon(segment, rational_multipolygon)
+    assert all(segment_in_multipolygon(segment, multipolygon)
                in (Relation.DISJOINT, Relation.TOUCH)
                for segment in result)
     assert all(segment in result or reverse_segment(segment) in result
@@ -52,8 +48,8 @@ def test_properties(multipolygon_with_multisegment
                or any(segment_in_segment(result_segment, segment)
                       is Relation.COMPONENT
                       for result_segment in result)
-               for segment in rational_multisegment
-               if (segment_in_multipolygon(segment, rational_multipolygon)
+               for segment in multisegment
+               if (segment_in_multipolygon(segment, multipolygon)
                    in (Relation.DISJOINT, Relation.CROSS)))
 
 
