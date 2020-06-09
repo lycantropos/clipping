@@ -100,6 +100,18 @@ def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
     """
     Returns difference of multisegment with multipolygon.
 
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = start_segments_count + intersections_count``,
+    ``start_segments_count = len(multisegment) + multipolygon_edges_count``,
+    ``multipolygon_edges_count = sum(len(border) + sum(map(len, holes))\
+ for border, holes in multipolygon)``,
+    ``intersections_count`` --- number of intersections between multisegment
+    and multipolygon edges.
+
     :param multisegment: multisegment to subtract from.
     :param multipolygon: multipolygon to subtract.
     :param accurate:
