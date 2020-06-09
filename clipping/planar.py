@@ -36,11 +36,54 @@ such that any pair of them do not cross/overlap each other.
 and multipolygon.
 """
 
-from .core import (mixed as _mixed,
+from .core import (linear as _linear,
+                   mixed as _mixed,
                    shaped as _shaped)
 from .hints import (Mix,
                     Multipolygon,
                     Multisegment)
+
+
+def complete_intersect_multisegments(left: Multisegment,
+                                     right: Multisegment,
+                                     *,
+                                     accurate: bool = True) -> Mix:
+    """
+    Returns intersection of multisegments considering cases
+    with segments touching each other in points.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = segments_count + intersections_count``,
+    ``segments_count = len(left) + len(right)``,
+    ``intersections_count`` --- number of intersections between multisegments.
+
+    :param left: left operand.
+    :param right: right operand.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: intersection of operands.
+
+    >>> complete_intersect_multisegments([], [])
+    ([], [], [])
+    >>> complete_intersect_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))],
+    ...                                  [])
+    ([], [], [])
+    >>> complete_intersect_multisegments([],
+    ...                                  [((0, 0), (1, 0)), ((0, 1), (1, 0))])
+    ([], [], [])
+    >>> complete_intersect_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))],
+    ...                                  [((0, 0), (1, 0)), ((0, 1), (1, 0))])
+    ([], [((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
+    >>> complete_intersect_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 1))],
+    ...                                  [((0, 0), (2, 0)), ((0, 0), (2, 2))])
+    ([(1, 1)], [((0, 0), (1, 0))], [])
+    """
+    return _linear.CompleteIntersection(left, right, accurate).compute()
 
 
 def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
