@@ -3,11 +3,6 @@ Boolean operations on polygons/multipolygons in the plane.
 
 Based on algorithm by F. Martinez et al.
 
-Time complexity:
-    ``O((len(left) + len(right) + len(intersections)) * log (len(left) \
-+ len(right)))``
-Memory complexity:
-    ``O(len(left) + len(right) + len(intersections))``
 Reference:
     https://doi.org/10.1016/j.advengsoft.2013.04.004
     http://www4.ujaen.es/~fmartin/bool_op.html
@@ -31,8 +26,10 @@ and possibly empty sequence of non-overlapping contours
 which lie within the border (called *polygon's holes*).
 
 **Multipoint** --- possibly empty sequence of distinct points.
+
 **Multisegment** --- possibly empty sequence of segments
 such that any pair of them do not cross/overlap each other.
+
 **Multipolygon** --- possibly empty sequence of non-overlapping polygons.
 
 **Mix** --- triplet of disjoint/touching multipoint, multisegment
