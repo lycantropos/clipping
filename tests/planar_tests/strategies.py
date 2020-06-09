@@ -37,6 +37,9 @@ def coordinates_to_multipolygons_with_multisegments(
                              planar.multisegments(coordinates))
 
 
+rational_multipolygons_with_multisegments = (
+    rational_coordinates_strategies.flatmap(
+            coordinates_to_multipolygons_with_multisegments))
 multipolygons_with_multisegments = coordinates_strategies.flatmap(
         coordinates_to_multipolygons_with_multisegments)
 empty_multipolygons_with_multipolygons = strategies.tuples(empty_multipolygons,
