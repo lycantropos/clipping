@@ -1,7 +1,8 @@
 from hypothesis import given
 from orient.planar import (Relation,
                            segment_in_multipolygon,
-                           segment_in_multisegment)
+                           segment_in_multisegment,
+                           segment_in_segment)
 
 from clipping.core.utils import (to_rational_multipolygon,
                                  to_rational_multisegment)
@@ -14,7 +15,8 @@ from tests.utils import (MultipolygonWithMultisegment,
                          reverse_multipolygon_holes,
                          reverse_multipolygon_holes_contours,
                          reverse_multisegment,
-                         reverse_multisegment_endpoints)
+                         reverse_multisegment_endpoints,
+                         reverse_segment)
 from . import strategies
 
 
@@ -45,6 +47,14 @@ def test_properties(multipolygon_with_multisegment
     assert all(segment_in_multipolygon(segment, rational_multipolygon)
                in (Relation.DISJOINT, Relation.TOUCH)
                for segment in result)
+    assert all(segment in result or reverse_segment(segment) in result
+               # in case of cross
+               or any(segment_in_segment(result_segment, segment)
+                      is Relation.COMPONENT
+                      for result_segment in result)
+               for segment in rational_multisegment
+               if (segment_in_multipolygon(segment, rational_multipolygon)
+                   in (Relation.DISJOINT, Relation.CROSS)))
 
 
 @given(strategies.empty_multipolygons_with_multisegments)

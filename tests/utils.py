@@ -19,7 +19,8 @@ from clipping.hints import (Contour,
                             Mix,
                             Multipoint,
                             Multipolygon,
-                            Multisegment)
+                            Multisegment,
+                            Segment)
 
 Strategy = SearchStrategy
 Domain = TypeVar('Domain')
@@ -194,4 +195,8 @@ def reverse_multisegment(multisegment: Multisegment) -> Multisegment:
 
 
 def reverse_multisegment_endpoints(multisegment: Multisegment) -> Multisegment:
-    return [(end, start) for start, end in multisegment]
+    return [reverse_segment(segment) for segment in multisegment]
+
+
+def reverse_segment(segment: Segment) -> Segment:
+    return segment[::-1]
