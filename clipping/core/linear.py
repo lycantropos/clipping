@@ -13,7 +13,6 @@ from robust.linear import (SegmentsRelationship,
 
 from clipping.hints import (Mix,
                             Multipoint,
-                            Multipolygon,
                             Multisegment,
                             Point,
                             Segment)
@@ -59,7 +58,7 @@ class Operation(ABC):
                 to_bounding_box(flatten(self.right)))
 
     @abstractmethod
-    def compute(self) -> Union_[Multipolygon, Mix]:
+    def compute(self) -> Union_[Multisegment, Mix]:
         """
         Computes result of the operation.
         """
@@ -206,7 +205,7 @@ class Difference(Operation):
 class Intersection(Operation):
     __slots__ = ()
 
-    def compute(self) -> Multipolygon:
+    def compute(self) -> Multisegment:
         if (not (self.left and self.right)
                 or self.are_operands_bounding_boxes_disjoint()):
             return []
