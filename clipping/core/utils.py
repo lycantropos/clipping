@@ -9,7 +9,9 @@ from typing import (Any,
                     Iterable,
                     List,
                     Sequence,
-                    Type)
+                    Tuple,
+                    Type,
+                    TypeVar)
 
 from clipping.hints import (Base,
                             BoundingBox,
@@ -25,6 +27,14 @@ from clipping.hints import (Base,
 def all_equal(iterable: Iterable[Any]) -> bool:
     groups = groupby(iterable)
     return next(groups, True) and not next(groups, False)
+
+
+Domain = TypeVar('Domain')
+
+
+def sort_pair(pair: Tuple[Domain, Domain]) -> Tuple[Domain, Domain]:
+    first, second = pair
+    return (first, second) if first < second else (second, first)
 
 
 def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:

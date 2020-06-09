@@ -25,6 +25,7 @@ from .sweep_line import SweepLine
 from .utils import (all_equal,
                     are_bounding_boxes_disjoint,
                     flatten,
+                    sort_pair,
                     to_bounding_box,
                     to_mixed_base,
                     to_multipolygon_contours,
@@ -198,7 +199,7 @@ class Operation(ABC):
                 self.compute_fields(event, below_event)
 
     def register_segment(self, segment: Segment, from_left: bool) -> None:
-        start, end = sorted(segment)
+        start, end = sort_pair(segment)
         start_event = Event(False, start, None, from_left)
         end_event = Event(True, end, start_event, from_left)
         start_event.complement = end_event
