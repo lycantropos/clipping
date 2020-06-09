@@ -3,7 +3,8 @@ from abc import (ABC,
 from itertools import groupby
 from numbers import Rational
 from operator import attrgetter
-from typing import (List,
+from typing import (Iterator,
+                    List,
                     Union as Union_)
 
 from reprit.base import generate_repr
@@ -181,12 +182,18 @@ class Difference(Operation):
                 or self.are_operands_bounding_boxes_disjoint()):
             return self.left
         self.normalize_operands()
+
+        def events_in_result(events: Iterator[Event]) -> bool:
+            first_event = next(events)
+            return (not first_event.is_right_endpoint
+                    and first_event.from_left and all(event.from_left
+                                                      for event in events))
+
         return [segment
-                for segment, group in groupby(sorted(self.sweep(),
-                                                     key=EventsQueueKey),
-                                              key=attrgetter('segment'))
-                if all(event.from_left and not event.is_right_endpoint
-                       for event in group)]
+                for segment, events in groupby(sorted(self.sweep(),
+                                                      key=EventsQueueKey),
+                                               key=attrgetter('segment'))
+                if events_in_result(events)]
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -211,12 +218,18 @@ class Intersection(Operation):
                 or self.are_operands_bounding_boxes_disjoint()):
             return []
         self.normalize_operands()
-        events = sorted(self.sweep(),
-                        key=EventsQueueKey)
+
+        def events_in_result(events: Iterator[Event]) -> bool:
+            first_event = next(events)
+            return (not first_event.is_right_endpoint
+                    and any(event.from_left is not first_event.from_left
+                            for event in events))
+
         return [segment
-                for segment, group in groupby(events,
-                                              key=attrgetter('segment'))
-                if not all_equal(event.from_left for event in group)]
+                for segment, events in groupby(sorted(self.sweep(),
+                                                      key=EventsQueueKey),
+                                               key=attrgetter('segment'))
+                if events_in_result(events)]
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -274,11 +287,18 @@ class SymmetricDifference(Operation):
             result.sort()
             return result
         self.normalize_operands()
+
+        def events_in_result(events: Iterator[Event]) -> bool:
+            first_event = next(events)
+            return (not first_event.is_right_endpoint
+                    and all(event.from_left is first_event.from_left
+                            for event in events))
+
         return [segment
-                for segment, group in groupby(sorted(self.sweep(),
-                                                     key=EventsQueueKey),
-                                              key=attrgetter('segment'))
-                if all_equal(event.from_left for event in group)]
+                for segment, events in groupby(sorted(self.sweep(),
+                                                      key=EventsQueueKey),
+                                               key=attrgetter('segment'))
+                if events_in_result(events)]
 
 
 class Union(Operation):
@@ -292,7 +312,12 @@ class Union(Operation):
             result.sort()
             return result
         self.normalize_operands()
+
+        def events_in_result(events: Iterator[Event]) -> bool:
+            return not next(events).is_right_endpoint
+
         return [segment
-                for segment, _ in groupby(sorted(self.sweep(),
-                                                 key=EventsQueueKey),
-                                          key=attrgetter('segment'))]
+                for segment, events in groupby(sorted(self.sweep(),
+                                                      key=EventsQueueKey),
+                                               key=attrgetter('segment'))
+                if events_in_result(events)]
