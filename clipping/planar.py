@@ -317,6 +317,20 @@ def unite_multipolygons(left: Multipolygon,
     """
     Returns union of multipolygons.
 
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = edges_count + intersections_count``,
+    ``edges_count = left_edges_count + right_edges_count``,
+    ``left_edges_count = sum(len(border) + sum(map(len, holes))\
+ for border, holes in left)``,
+    ``right_edges_count = sum(len(border) + sum(map(len, holes))\
+ for border, holes in right)``,
+    ``intersections_count`` --- number of intersections between multipolygons
+    edges.
+
     :param left: left operand.
     :param right: right operand.
     :param accurate:
