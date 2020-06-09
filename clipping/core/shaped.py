@@ -312,7 +312,10 @@ class CompleteIntersection(Intersection):
                         no_segment_found = False
                         if not event.is_right_endpoint:
                             multisegment.append(next_event.segment)
-                if no_segment_found:
+                if no_segment_found and all(not event.complement.in_result
+                                            if event.is_right_endpoint
+                                            else not event.in_result
+                                            for event in same_start_events):
                     multipoint.append(start)
         multipolygon = events_to_multipolygon(events)
         return multipoint, multisegment, multipolygon
