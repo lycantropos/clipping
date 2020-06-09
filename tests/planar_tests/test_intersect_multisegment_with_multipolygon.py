@@ -3,9 +3,11 @@ from orient.planar import (Relation,
                            point_in_multipolygon,
                            point_in_multisegment,
                            segment_in_multipolygon,
-                           segment_in_multisegment)
+                           segment_in_multisegment,
+                           segment_in_segment)
 
-from clipping.core.utils import (to_rational_multipolygon,
+from clipping.core.utils import (sort_pair,
+                                 to_rational_multipolygon,
                                  to_rational_multisegment)
 from clipping.planar import intersect_multisegment_with_multipolygon
 from tests.utils import (MultipolygonWithMultisegment,
@@ -54,6 +56,15 @@ def test_properties(multipolygon_with_multisegment
                in (Relation.COMPONENT, Relation.ENCLOSED, Relation.WITHIN)
                for segment in result_multisegment)
     assert not result_multipolygon
+    assert all(sort_pair(segment) in result_multisegment
+               # in case of cross
+               or any(segment_in_segment(result_segment, segment)
+                      is Relation.COMPONENT
+                      for result_segment in result_multisegment)
+               for segment in rational_multisegment
+               if (segment_in_multipolygon(segment, rational_multipolygon)
+                   in (Relation.CROSS, Relation.COMPONENT, Relation.ENCLOSED,
+                       Relation.WITHIN)))
 
 
 @given(strategies.empty_multipolygons_with_multisegments)
