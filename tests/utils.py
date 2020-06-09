@@ -10,6 +10,8 @@ from typing import (Any,
 
 from hypothesis import strategies
 from hypothesis.strategies import SearchStrategy
+from orient.planar import (Relation,
+                           multisegment_in_multisegment)
 from robust.angular import (Orientation,
                             orientation)
 
@@ -25,6 +27,8 @@ from clipping.hints import (Contour,
 Strategy = SearchStrategy
 Domain = TypeVar('Domain')
 Key = Callable[[Domain], Any]
+MultisegmentsPair = Tuple[Multisegment, Multisegment]
+MultisegmentsTriplet = Tuple[Multisegment, Multisegment, Multisegment]
 MultipolygonWithMultisegment = Tuple[Multipolygon, Multisegment]
 MultipolygonsPair = Tuple[Multipolygon, Multipolygon]
 MultipolygonsTriplet = Tuple[Multipolygon, Multipolygon, Multipolygon]
@@ -75,6 +79,12 @@ def are_multisegments_similar(left: Multisegment, right: Multisegment) -> bool:
     return (len(left) == len(right)
             and (frozenset(map(frozenset, left))
                  == frozenset(map(frozenset, right))))
+
+
+def are_multisegments_equivalent(left: Multisegment,
+                                 right: Multisegment) -> bool:
+    return (not (left or right)
+            or multisegment_in_multisegment(left, right) is Relation.EQUAL)
 
 
 def are_multipolygons_similar(left: Multipolygon, right: Multipolygon) -> bool:
