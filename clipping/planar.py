@@ -53,6 +53,18 @@ def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
     """
     Returns intersection of multisegment with multipolygon.
 
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = start_segments_count + intersections_count``,
+    ``start_segments_count = len(multisegment) + multipolygon_edges_count``,
+    ``multipolygon_edges_count = sum(len(border) + sum(map(len, holes))\
+ for border, holes in multipolygon)``,
+    ``intersections_count`` --- number of intersections between multisegment
+    and multipolygon edges.
+
     :param multisegment: multisegment to intersect with.
     :param multipolygon: multipolygon to intersect with.
     :param accurate:
