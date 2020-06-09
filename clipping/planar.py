@@ -164,6 +164,46 @@ def subtract_multisegments(minuend: Multisegment,
     return _linear.Difference(minuend, subtrahend, accurate).compute()
 
 
+def unite_multisegments(left: Multisegment,
+                        right: Multisegment,
+                        *,
+                        accurate: bool = True) -> Multisegment:
+    """
+    Returns union of multisegments.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = segments_count + intersections_count``,
+    ``segments_count = len(left) + len(right)``,
+    ``intersections_count`` --- number of intersections between multisegments.
+
+    :param left: left operand.
+    :param right: right operand.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: union of operands.
+
+    >>> unite_multisegments([], [])
+    []
+    >>> unite_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
+    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
+    >>> unite_multisegments([], [((0, 0), (1, 0)), ((0, 1), (1, 0))])
+    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
+    >>> unite_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))],
+    ...                     [((0, 0), (1, 0)), ((0, 1), (1, 0))])
+    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
+    >>> unite_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 1))],
+    ...                     [((0, 0), (2, 0)), ((0, 0), (2, 2))])
+    [((0, 0), (1, 0)), ((0, 0), (1, 1)), ((0, 1), (1, 1)), ((1, 0), (2, 0)),\
+ ((1, 1), (2, 2))]
+    """
+    return _linear.Union(left, right, accurate).compute()
+
+
 def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
                                              multipolygon: Multipolygon,
                                              *,
