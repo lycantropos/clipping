@@ -86,6 +86,45 @@ def complete_intersect_multisegments(left: Multisegment,
     return _linear.CompleteIntersection(left, right, accurate).compute()
 
 
+def intersect_multisegments(left: Multisegment,
+                            right: Multisegment,
+                            *,
+                            accurate: bool = True) -> Multisegment:
+    """
+    Returns intersection of multisegments.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = segments_count + intersections_count``,
+    ``segments_count = len(left) + len(right)``,
+    ``intersections_count`` --- number of intersections between multisegments.
+
+    :param left: left operand.
+    :param right: right operand.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: intersection of operands.
+
+    >>> intersect_multisegments([], [])
+    []
+    >>> intersect_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
+    []
+    >>> intersect_multisegments([], [((0, 0), (1, 0)), ((0, 1), (1, 0))])
+    []
+    >>> intersect_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))],
+    ...                         [((0, 0), (1, 0)), ((0, 1), (1, 0))])
+    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
+    >>> intersect_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 1))],
+    ...                         [((0, 0), (2, 0)), ((0, 0), (2, 2))])
+    [((0, 0), (1, 0))]
+    """
+    return _linear.Intersection(left, right, accurate).compute()
+
+
 def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
                                              multipolygon: Multipolygon,
                                              *,
