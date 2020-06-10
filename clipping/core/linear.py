@@ -212,17 +212,10 @@ class Intersection(Operation):
                 or self.are_operands_bounding_boxes_disjoint()):
             return []
         self.normalize_operands()
-
-        def events_in_result(events: Iterator[Event]) -> bool:
-            first_event = next(events)
-            return (not first_event.is_right_endpoint
-                    and any(event.from_left is not first_event.from_left
-                            for event in events))
-
         return [segment
                 for segment, events in groupby(self.sweep(),
                                                key=event_to_segment)
-                if events_in_result(events)]
+                if not all_equal(event.from_left for event in events)]
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
