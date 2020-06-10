@@ -32,8 +32,8 @@ def test_idempotence(multipolygon: Multipolygon) -> None:
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)
-def test_left_neutral_element(
-        empty_multipolygon_with_multipolygon: MultipolygonsPair) -> None:
+def test_left_neutral_element(empty_multipolygon_with_multipolygon
+                              : MultipolygonsPair) -> None:
     empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
 
     result = unite_multipolygons(empty_multipolygon, multipolygon)
@@ -42,8 +42,8 @@ def test_left_neutral_element(
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)
-def test_right_neutral_element(
-        empty_multipolygon_with_multipolygon: MultipolygonsPair) -> None:
+def test_right_neutral_element(empty_multipolygon_with_multipolygon
+                               : MultipolygonsPair) -> None:
     empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
 
     result = unite_multipolygons(multipolygon, empty_multipolygon)
@@ -55,8 +55,9 @@ def test_right_neutral_element(
 def test_absorption_identity(multipolygons_pair: MultipolygonsPair) -> None:
     left_multipolygon, right_multipolygon = multipolygons_pair
 
-    result = unite_multipolygons(left_multipolygon, intersect_multipolygons(left_multipolygon,
-                                                                            right_multipolygon))
+    result = unite_multipolygons(left_multipolygon,
+                                 intersect_multipolygons(left_multipolygon,
+                                                         right_multipolygon))
 
     assert are_multipolygons_similar(result, left_multipolygon)
 
@@ -75,13 +76,15 @@ def test_associativity(multipolygons_triplet: MultipolygonsTriplet) -> None:
     (left_multipolygon, mid_multipolygon,
      right_multipolygon) = multipolygons_triplet
 
-    result = unite_multipolygons(unite_multipolygons(left_multipolygon, mid_multipolygon),
+    result = unite_multipolygons(unite_multipolygons(left_multipolygon,
+                                                     mid_multipolygon),
                                  right_multipolygon)
 
-    assert are_multipolygons_similar(result,
-                                     unite_multipolygons(left_multipolygon,
-                                                         unite_multipolygons(mid_multipolygon,
-                                                                             right_multipolygon)))
+    assert are_multipolygons_similar(
+            result,
+            unite_multipolygons(left_multipolygon,
+                                unite_multipolygons(mid_multipolygon,
+                                                    right_multipolygon)))
 
 
 @given(strategies.multipolygons_triplets)
@@ -90,30 +93,34 @@ def test_difference_operand(multipolygons_triplet: MultipolygonsTriplet
     (left_multipolygon, mid_multipolygon,
      right_multipolygon) = multipolygons_triplet
 
-    result = unite_multipolygons(subtract_multipolygons(left_multipolygon, mid_multipolygon),
+    result = unite_multipolygons(subtract_multipolygons(left_multipolygon,
+                                                        mid_multipolygon),
                                  right_multipolygon)
 
-    assert are_multipolygons_similar(result,
-                                     subtract_multipolygons(unite_multipolygons(left_multipolygon,
-                                                                                right_multipolygon),
-                                                            subtract_multipolygons(mid_multipolygon,
-                                                                                   right_multipolygon)))
+    assert are_multipolygons_similar(
+            result,
+            subtract_multipolygons(unite_multipolygons(left_multipolygon,
+                                                       right_multipolygon),
+                                   subtract_multipolygons(mid_multipolygon,
+                                                          right_multipolygon)))
 
 
 @given(strategies.multipolygons_triplets)
-def test_distribution_over_intersection(
-        multipolygons_triplet: MultipolygonsTriplet) -> None:
+def test_distribution_over_intersection(multipolygons_triplet
+                                        : MultipolygonsTriplet) -> None:
     (left_multipolygon, mid_multipolygon,
      right_multipolygon) = multipolygons_triplet
 
-    result = unite_multipolygons(left_multipolygon, intersect_multipolygons(mid_multipolygon,
-                                                                            right_multipolygon))
+    result = unite_multipolygons(left_multipolygon,
+                                 intersect_multipolygons(mid_multipolygon,
+                                                         right_multipolygon))
 
-    assert are_multipolygons_similar(result,
-                                     intersect_multipolygons(unite_multipolygons(left_multipolygon,
-                                                                                 mid_multipolygon),
-                                                             unite_multipolygons(left_multipolygon,
-                                                                                 right_multipolygon)))
+    assert are_multipolygons_similar(
+            result,
+            intersect_multipolygons(unite_multipolygons(left_multipolygon,
+                                                        mid_multipolygon),
+                                    unite_multipolygons(left_multipolygon,
+                                                        right_multipolygon)))
 
 
 @given(strategies.multipolygons_pairs)
@@ -123,25 +130,29 @@ def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
     result = unite_multipolygons(left_multipolygon, right_multipolygon)
 
     assert are_multipolygons_similar(
-            result, unite_multipolygons(reverse_multipolygon(left_multipolygon),
-                                        right_multipolygon))
-    assert are_multipolygons_similar(
-            result, unite_multipolygons(left_multipolygon,
-                                        reverse_multipolygon(right_multipolygon)))
+            result,
+            unite_multipolygons(reverse_multipolygon(left_multipolygon),
+                                right_multipolygon))
     assert are_multipolygons_similar(
             result,
-            unite_multipolygons(reverse_multipolygon_borders(left_multipolygon),
-                                right_multipolygon))
+            unite_multipolygons(left_multipolygon,
+                                reverse_multipolygon(right_multipolygon)))
+    assert are_multipolygons_similar(
+            result, unite_multipolygons(
+                    reverse_multipolygon_borders(left_multipolygon),
+                    right_multipolygon))
     assert are_multipolygons_similar(
             result, unite_multipolygons(
                     left_multipolygon,
                     reverse_multipolygon_borders(right_multipolygon)))
     assert are_multipolygons_similar(
-            result, unite_multipolygons(reverse_multipolygon_holes(left_multipolygon),
-                                        right_multipolygon))
+            result,
+            unite_multipolygons(reverse_multipolygon_holes(left_multipolygon),
+                                right_multipolygon))
     assert are_multipolygons_similar(
             result, unite_multipolygons(left_multipolygon,
-                                        reverse_multipolygon_holes(right_multipolygon)))
+                                        reverse_multipolygon_holes(
+                                                right_multipolygon)))
     assert are_multipolygons_similar(
             result, unite_multipolygons(
                     reverse_multipolygon_holes_contours(left_multipolygon),
