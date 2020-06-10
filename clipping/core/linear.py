@@ -23,6 +23,7 @@ from .sweep_line import SweepLine
 from .utils import (all_equal,
                     are_bounding_boxes_disjoint,
                     flatten,
+                    sort_pair,
                     to_bounding_box,
                     to_multisegment_base,
                     to_multisegment_x_max,
@@ -155,7 +156,7 @@ class Operation(ABC):
                 self.detect_intersection(below_event, event)
 
     def register_segment(self, segment: Segment, from_left: bool) -> None:
-        start, end = sorted(segment)
+        start, end = sort_pair(segment)
         start_event = Event(False, start, None, from_left)
         end_event = Event(True, end, start_event, from_left)
         start_event.complement = end_event
