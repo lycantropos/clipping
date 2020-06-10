@@ -206,13 +206,11 @@ class Operation(ABC):
         self._events_queue.push(start_event)
         self._events_queue.push(end_event)
 
+    @abstractmethod
     def sweep(self) -> List[Event]:
-        self.fill_queue()
-        result = []
-        sweep_line = SweepLine()
-        while self._events_queue:
-            self.process_event(self._events_queue.pop(), result, sweep_line)
-        return result
+        """
+        Sweeps through plane returning processed events.
+        """
 
 
 class Difference(Operation):
