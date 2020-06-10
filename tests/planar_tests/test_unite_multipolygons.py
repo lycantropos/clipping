@@ -3,6 +3,7 @@ from hypothesis import given
 from clipping.hints import Multipolygon
 from clipping.planar import (intersect_multipolygons,
                              subtract_multipolygons,
+                             symmetric_subtract_multipolygons,
                              unite_multipolygons)
 from tests.utils import (MultipolygonsPair,
                          MultipolygonsTriplet,
@@ -121,6 +122,18 @@ def test_distribution_over_intersection(multipolygons_triplet
                                                         mid_multipolygon),
                                     unite_multipolygons(left_multipolygon,
                                                         right_multipolygon)))
+
+
+@given(strategies.multipolygons_pairs)
+def test_equivalents(multipolygons_pair: MultipolygonsPair) -> None:
+    left_multipolygon, right_multipolygon = multipolygons_pair
+
+    result = unite_multipolygons(left_multipolygon, right_multipolygon)
+
+    assert result == symmetric_subtract_multipolygons(
+            symmetric_subtract_multipolygons(left_multipolygon,
+                                             right_multipolygon),
+            intersect_multipolygons(left_multipolygon, right_multipolygon))
 
 
 @given(strategies.multipolygons_pairs)
