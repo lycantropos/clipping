@@ -3,8 +3,7 @@ from abc import (ABC,
 from itertools import groupby
 from numbers import Rational
 from operator import attrgetter
-from typing import (Iterator,
-                    List,
+from typing import (List,
                     Union as Union_)
 
 from reprit.base import generate_repr
