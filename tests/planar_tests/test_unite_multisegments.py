@@ -3,6 +3,7 @@ from hypothesis import given
 from clipping.hints import Multisegment
 from clipping.planar import (intersect_multisegments,
                              subtract_multisegments,
+                             symmetric_subtract_multisegments,
                              unite_multisegments)
 from tests.utils import (MultisegmentsPair,
                          MultisegmentsTriplet,
@@ -119,6 +120,18 @@ def test_distribution_over_intersection(multisegments_triplet
                                                         mid_multisegment),
                                     unite_multisegments(left_multisegment,
                                                         right_multisegment)))
+
+
+@given(strategies.multisegments_pairs)
+def test_equivalents(multisegments_pair: MultisegmentsPair) -> None:
+    left_multisegment, right_multisegment = multisegments_pair
+
+    result = unite_multisegments(left_multisegment, right_multisegment)
+
+    assert result == symmetric_subtract_multisegments(
+            symmetric_subtract_multisegments(left_multisegment,
+                                             right_multisegment),
+            intersect_multisegments(left_multisegment, right_multisegment))
 
 
 @given(strategies.multisegments_pairs)
