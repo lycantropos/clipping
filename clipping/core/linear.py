@@ -170,7 +170,8 @@ class Operation(ABC):
         while self._events_queue:
             event = self._events_queue.pop()
             self.process_event(event, sweep_line)
-            result.append(event)
+            if event.is_right_endpoint:
+                result.append(event.complement)
         return result
 
 
@@ -182,18 +183,10 @@ class Difference(Operation):
                 or self.are_operands_bounding_boxes_disjoint()):
             return self.left
         self.normalize_operands()
-
-        def events_in_result(events: Iterator[Event]) -> bool:
-            first_event = next(events)
-            return (not first_event.is_right_endpoint
-                    and first_event.from_left and all(event.from_left
-                                                      for event in events))
-
         return [segment
-                for segment, events in groupby(sorted(self.sweep(),
-                                                      key=EventsQueueKey),
-                                               key=attrgetter('segment'))
-                if events_in_result(events)]
+                for segment, events in groupby(self.sweep(),
+                                               key=event_to_segment)
+                if all(event.from_left for event in events)]
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -206,7 +199,8 @@ class Difference(Operation):
             if start_x > left_x_max:
                 break
             self.process_event(event, sweep_line)
-            result.append(event)
+            if event.is_right_endpoint:
+                result.append(event.complement)
         return result
 
 
@@ -226,9 +220,8 @@ class Intersection(Operation):
                             for event in events))
 
         return [segment
-                for segment, events in groupby(sorted(self.sweep(),
-                                                      key=EventsQueueKey),
-                                               key=attrgetter('segment'))
+                for segment, events in groupby(self.sweep(),
+                                               key=event_to_segment)
                 if events_in_result(events)]
 
     def sweep(self) -> List[Event]:
@@ -243,7 +236,8 @@ class Intersection(Operation):
             if start_x > min_max_x:
                 break
             self.process_event(event, sweep_line)
-            result.append(event)
+            if event.is_right_endpoint:
+                result.append(event.complement)
         return result
 
 
@@ -255,11 +249,9 @@ class CompleteIntersection(Intersection):
                 or self.are_operands_bounding_boxes_disjoint()):
             return [], [], []
         self.normalize_operands()
-        events = sorted(self.sweep(),
-                        key=EventsQueueKey)
         multipoint = []  # type: Multipoint
         multisegment = []  # type: Multisegment
-        for start, same_start_events in groupby(events,
+        for start, same_start_events in groupby(self.sweep(),
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
             if not all_equal(event.from_left for event in same_start_events):
@@ -287,18 +279,10 @@ class SymmetricDifference(Operation):
             result.sort()
             return result
         self.normalize_operands()
-
-        def events_in_result(events: Iterator[Event]) -> bool:
-            first_event = next(events)
-            return (not first_event.is_right_endpoint
-                    and all(event.from_left is first_event.from_left
-                            for event in events))
-
         return [segment
-                for segment, events in groupby(sorted(self.sweep(),
-                                                      key=EventsQueueKey),
-                                               key=attrgetter('segment'))
-                if events_in_result(events)]
+                for segment, events in groupby(self.sweep(),
+                                               key=event_to_segment)
+                if all_equal(event.from_left for event in events)]
 
 
 class Union(Operation):
@@ -312,12 +296,9 @@ class Union(Operation):
             result.sort()
             return result
         self.normalize_operands()
-
-        def events_in_result(events: Iterator[Event]) -> bool:
-            return not next(events).is_right_endpoint
-
         return [segment
-                for segment, events in groupby(sorted(self.sweep(),
-                                                      key=EventsQueueKey),
-                                               key=attrgetter('segment'))
-                if events_in_result(events)]
+                for segment, _ in groupby(self.sweep(),
+                                          key=event_to_segment)]
+
+
+event_to_segment = attrgetter('segment')
