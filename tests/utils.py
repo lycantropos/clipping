@@ -55,6 +55,12 @@ def to_index_min(values: Iterable[Domain],
                **kwargs)[1]
 
 
+def mix_equivalent_to_multisegment(mix: Mix, other: Multisegment) -> bool:
+    multipoint, multisegment, multipolygon = mix
+    return (not multipoint and not multipolygon
+            and are_multisegments_equivalent(multisegment, other))
+
+
 def mix_similar_to_multipolygon(mix: Mix, other: Multipolygon) -> bool:
     multipoint, multisegment, multipolygon = mix
     return (not multipoint and not multisegment
