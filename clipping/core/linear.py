@@ -212,10 +212,10 @@ class Intersection(Operation):
                 or self.are_operands_bounding_boxes_disjoint()):
             return []
         self.normalize_operands()
-        return [segment
-                for segment, events in groupby(self.sweep(),
-                                               key=event_to_segment)
-                if not all_equal(event.from_left for event in events)]
+        return sorted(segment
+                      for segment, events in groupby(self.sweep(),
+                                                     key=event_to_segment)
+                      if not all_equal(event.from_left for event in events))
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -234,7 +234,7 @@ class Intersection(Operation):
         return result
 
 
-class CompleteIntersection(Intersection):
+class CompleteIntersection(Operation):
     __slots__ = ()
 
     def compute(self) -> Mix:
@@ -260,6 +260,21 @@ class CompleteIntersection(Intersection):
                     multipoint.append(start)
         return multipoint, multisegment, []
 
+    def sweep(self) -> List[Event]:
+        self.fill_queue()
+        result = []
+        sweep_line = SweepLine()
+        min_max_x = min(to_multisegment_x_max(self.left),
+                        to_multisegment_x_max(self.right))
+        while self._events_queue:
+            event = self._events_queue.pop()
+            start_x, _ = event.start
+            if start_x > min_max_x:
+                break
+            self.process_event(event, sweep_line)
+            result.append(event)
+        return result
+
 
 class SymmetricDifference(Operation):
     __slots__ = ()
@@ -272,10 +287,10 @@ class SymmetricDifference(Operation):
             result.sort()
             return result
         self.normalize_operands()
-        return [segment
-                for segment, events in groupby(self.sweep(),
-                                               key=event_to_segment)
-                if all_equal(event.from_left for event in events)]
+        return sorted(segment
+                      for segment, events in groupby(self.sweep(),
+                                                     key=event_to_segment)
+                      if all_equal(event.from_left for event in events))
 
 
 class Union(Operation):
@@ -289,9 +304,9 @@ class Union(Operation):
             result.sort()
             return result
         self.normalize_operands()
-        return [segment
-                for segment, _ in groupby(self.sweep(),
-                                          key=event_to_segment)]
+        return sorted(segment
+                      for segment, _ in groupby(self.sweep(),
+                                                key=event_to_segment))
 
 
 event_to_segment = attrgetter('segment')
