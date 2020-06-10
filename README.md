@@ -74,22 +74,29 @@ Usage
 >>> right_triangle = [([(0, 1), (1, 0), (1, 1)], [])]
 >>> square = [([(0, 0), (1, 0), (1, 1), (0, 1)], [])]
 >>> from clipping.planar import intersect_multipolygons
->>> all(intersect_multipolygons(square, triangle) == intersect_multipolygons(triangle, square) == triangle
+>>> all(intersect_multipolygons(square, triangle)
+...     == intersect_multipolygons(triangle, square) == triangle
 ...     for triangle in (left_triangle, right_triangle))
 True
 >>> intersect_multipolygons(left_triangle, right_triangle) == []
 True
 >>> from clipping.planar import complete_intersect_multipolygons
->>> all(complete_intersect_multipolygons(square, triangle) == ([], [], intersect_multipolygons(square, triangle))
+>>> all(complete_intersect_multipolygons(square, triangle)
+...     == ([], [], intersect_multipolygons(square, triangle))
 ...     for triangle in (left_triangle, right_triangle))
 True
->>> complete_intersect_multipolygons(left_triangle, right_triangle) == ([], [((0, 1), (1, 0))], [])
+>>> (complete_intersect_multipolygons(left_triangle, right_triangle)
+...  == ([], [((0, 1), (1, 0))], []))
 True
 >>> from clipping.planar import unite_multipolygons
->>> all(unite_multipolygons(square, triangle) == unite_multipolygons(triangle, square) == square
+>>> all(unite_multipolygons(square, triangle)
+...     == unite_multipolygons(triangle, square)
+...     == square
 ...     for triangle in (left_triangle, right_triangle))
 True
->>> unite_multipolygons(left_triangle, right_triangle) == unite_multipolygons(right_triangle, left_triangle) == square
+>>> (unite_multipolygons(left_triangle, right_triangle)
+...  == unite_multipolygons(right_triangle, left_triangle)
+...  == square)
 True
 >>> from clipping.planar import subtract_multipolygons
 >>> all(subtract_multipolygons(triangle, square) == []
