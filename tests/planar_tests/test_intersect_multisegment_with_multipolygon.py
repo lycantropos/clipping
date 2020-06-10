@@ -2,6 +2,7 @@ from hypothesis import given
 from orient.planar import (Relation,
                            point_in_multipolygon,
                            point_in_multisegment,
+                           point_in_segment,
                            segment_in_multipolygon,
                            segment_in_multisegment,
                            segment_in_segment)
@@ -49,11 +50,11 @@ def test_properties(multipolygon_with_multisegment
     assert all(point_in_multipolygon(point, multipolygon)
                is Relation.COMPONENT
                for point in result_multipoint)
-    assert all(any(endpoint in result_multipoint
-                   for endpoint in segment)
-               or any(endpoint in result_segment
-                      for result_segment in result_multisegment
-                      for endpoint in segment)
+    assert all(any(point_in_segment(point, segment) is Relation.COMPONENT
+                   for point in result_multipoint)
+               or any(segments_relationship(segment, result_segment)
+                      is SegmentsRelationship.TOUCH
+                      for result_segment in result_multisegment)
                for segment in multisegment
                if (segment_in_multipolygon(segment, multipolygon)
                    is Relation.TOUCH
