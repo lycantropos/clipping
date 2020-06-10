@@ -244,7 +244,8 @@ class CompleteIntersection(Operation):
         self.normalize_operands()
         multipoint = []  # type: Multipoint
         multisegment = []  # type: Multisegment
-        for start, same_start_events in groupby(self.sweep(),
+        for start, same_start_events in groupby(sorted(self.sweep(),
+                                                       key=EventsQueueKey),
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
             if not all_equal(event.from_left for event in same_start_events):
