@@ -109,9 +109,12 @@ def test_distribution_over_union(multisegments_triplet: MultisegmentsTriplet
                                      unite_multisegments(mid_multisegment,
                                                          right_multisegment))
 
-    assert result == unite_multisegments(
-            intersect_multisegments(left_multisegment, mid_multisegment),
-            intersect_multisegments(left_multisegment, right_multisegment))
+    assert are_multisegments_equivalent(
+            result,
+            unite_multisegments(intersect_multisegments(left_multisegment,
+                                                        mid_multisegment),
+                                intersect_multisegments(left_multisegment,
+                                                        right_multisegment)))
 
 
 @given(strategies.multisegments_pairs)
