@@ -1,5 +1,14 @@
 from hypothesis import given
+from orient.planar import (Relation,
+                           multisegment_in_multisegment,
+                           point_in_multisegment,
+                           segment_in_multisegment,
+                           segment_in_segment)
+from robust.linear import (SegmentsRelationship,
+                           segments_intersections,
+                           segments_relationship)
 
+from clipping.core.utils import sort_pair
 from clipping.hints import Multisegment
 from clipping.planar import (complete_intersect_multisegments,
                              intersect_multisegments,
@@ -19,6 +28,47 @@ def test_basic(multisegments_pair: MultisegmentsPair) -> None:
                                               right_multisegment)
 
     assert is_mix(result)
+
+
+@given(strategies.rational_multisegments_pairs)
+def test_properties(multisegments_pair: MultisegmentsPair) -> None:
+    left_multisegment, right_multisegment = multisegments_pair
+
+    result = complete_intersect_multisegments(left_multisegment,
+                                              right_multisegment)
+
+    result_multipoint, result_multisegment, result_multipolygon = result
+    assert all(point_in_multisegment(point, left_multisegment)
+               is point_in_multisegment(point, right_multisegment)
+               is Relation.COMPONENT
+               for point in result_multipoint)
+    assert (multisegment_in_multisegment(left_multisegment, right_multisegment)
+            is not Relation.TOUCH
+            or bool(result_multipoint))
+    assert all(all(point in result_multipoint
+                   or any(point in segment
+                          for segment in result_multisegment)
+                   for right_segment in right_multisegment
+                   for point in segments_intersections(left_segment,
+                                                       right_segment))
+               for left_segment in left_multisegment
+               if (segment_in_multisegment(left_segment, right_multisegment)
+                   in (Relation.TOUCH, Relation.CROSS)))
+    assert all(segment_in_multisegment(segment, left_multisegment)
+               in (Relation.EQUAL, Relation.COMPONENT)
+               for segment in result_multisegment)
+    assert all(segment_in_multisegment(segment, right_multisegment)
+               in (Relation.EQUAL, Relation.COMPONENT)
+               for segment in result_multisegment)
+    assert all(sort_pair(left_segment) in result_multisegment
+               or any(segment_in_segment(segment, left_segment)
+                      is Relation.COMPONENT
+                      for segment in result_multisegment)
+               for left_segment in left_multisegment
+               if any(segments_relationship(left_segment, right_segment)
+                      is SegmentsRelationship.OVERLAP
+                      for right_segment in right_multisegment))
+    assert not result_multipolygon
 
 
 @given(strategies.multisegments)
