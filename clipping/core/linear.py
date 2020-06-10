@@ -182,10 +182,10 @@ class Difference(Operation):
                 or self.are_operands_bounding_boxes_disjoint()):
             return self.left
         self.normalize_operands()
-        return [segment
-                for segment, events in groupby(self.sweep(),
-                                               key=event_to_segment)
-                if all(event.from_left for event in events)]
+        return sorted(segment
+                      for segment, events in groupby(self.sweep(),
+                                                     key=event_to_segment)
+                      if all(event.from_left for event in events))
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
