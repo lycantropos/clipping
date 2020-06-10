@@ -70,6 +70,38 @@ Install:
 Usage
 -----
 ```python
+>>> left_edge = ((0, 0), (0, 1))
+>>> right_edge = ((1, 0), (1, 1))
+>>> bottom_edge = ((0, 0), (1, 0))
+>>> top_edge = ((0, 1), (1, 1))
+>>> main_diagonal = ((0, 0), (1, 1))
+>>> trident = [left_edge, main_diagonal, bottom_edge]
+>>> square_edges = [bottom_edge, right_edge, top_edge, left_edge]
+>>> from clipping.planar import intersect_multisegments
+>>> (intersect_multisegments(trident, square_edges)
+...  == intersect_multisegments(square_edges, trident)
+...  == [left_edge, bottom_edge])
+True
+>>> from clipping.planar import complete_intersect_multisegments
+>>> (complete_intersect_multisegments(trident, square_edges)
+...  == complete_intersect_multisegments(square_edges, trident)
+...  == ([(1, 1)], intersect_multisegments(trident, square_edges), []))
+True
+>>> from clipping.planar import unite_multisegments
+>>> (unite_multisegments(trident, square_edges)
+...  == unite_multisegments(square_edges, trident)
+...  == [left_edge, bottom_edge, main_diagonal, top_edge, right_edge])
+True
+>>> from clipping.planar import subtract_multisegments
+>>> subtract_multisegments(trident, square_edges) == [main_diagonal]
+True
+>>> subtract_multisegments(square_edges, trident) == [top_edge, right_edge]
+True
+>>> from clipping.planar import symmetric_subtract_multisegments
+>>> (symmetric_subtract_multisegments(trident, square_edges)
+...  == symmetric_subtract_multisegments(square_edges, trident)
+...  == [main_diagonal, top_edge, right_edge])
+True
 >>> left_triangle = [([(0, 0), (1, 0), (0, 1)], [])]
 >>> right_triangle = [([(0, 1), (1, 0), (1, 1)], [])]
 >>> square = [([(0, 0), (1, 0), (1, 1), (0, 1)], [])]
