@@ -50,7 +50,7 @@ def test_right_neutral_element(empty_multisegment_with_multisegment
     assert are_multisegments_similar(result, multisegment)
 
 
-@given(strategies.rational_multisegments_pairs)
+@given(strategies.multisegments_pairs)
 def test_absorption_identity(multisegments_pair: MultisegmentsPair) -> None:
     left_multisegment, right_multisegment = multisegments_pair
 
