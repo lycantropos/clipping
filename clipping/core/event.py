@@ -84,7 +84,7 @@ class MixedEvent(LinearEvent):
 
 
 class ShapedEvent(LinearEvent):
-    __slots__ = ('in_out', 'other_in_out', 'in_result', 'edge_type',
+    __slots__ = ('edge_type', 'in_out', 'other_in_out', 'in_result',
                  'result_in_out', 'position', 'contour_id',
                  'below_in_result_event')
 
@@ -93,7 +93,7 @@ class ShapedEvent(LinearEvent):
                  start: Point,
                  complement: Optional['ShapedEvent'],
                  from_left: bool,
-                 edge_type: EdgeType,
+                 edge_type: EdgeType = EdgeType.NORMAL,
                  in_out: bool = False,
                  other_in_out: bool = False,
                  in_result: bool = False,

@@ -152,10 +152,8 @@ class Operation(ABC):
         return False
 
     def divide_segment(self, event: Event, point: Point) -> None:
-        left_event = Event(False, point, event.complement, event.from_left,
-                           EdgeType.NORMAL)
-        right_event = Event(True, point, event, event.from_left,
-                            EdgeType.NORMAL)
+        left_event = Event(False, point, event.complement, event.from_left)
+        right_event = Event(True, point, event, event.from_left)
         event.complement.complement, event.complement = left_event, right_event
         self._events_queue.push(left_event)
         self._events_queue.push(right_event)
@@ -211,8 +209,8 @@ class Operation(ABC):
 
     def register_segment(self, segment: Segment, from_left: bool) -> None:
         start, end = sort_pair(segment)
-        start_event = Event(False, start, None, from_left, EdgeType.NORMAL)
-        end_event = Event(True, end, start_event, from_left, EdgeType.NORMAL)
+        start_event = Event(False, start, None, from_left)
+        end_event = Event(True, end, start_event, from_left)
         start_event.complement = end_event
         self._events_queue.push(start_event)
         self._events_queue.push(end_event)
