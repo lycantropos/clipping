@@ -3,6 +3,7 @@ from typing import Iterable
 from robust.linear import (SegmentsRelationship,
                            segments_relationship)
 
+from clipping.core.utils import flatten
 from clipping.hints import (BoundingBox,
                             Multisegment,
                             Point,
@@ -19,6 +20,13 @@ def from_points(points: Iterable[Point]) -> BoundingBox:
         x_min, x_max = min(x_min, x), max(x_max, x)
         y_min, y_max = min(y_min, y), max(y_max, y)
     return x_min, x_max, y_min, y_max
+
+
+def from_multisegment(multisegment: Multisegment) -> BoundingBox:
+    """
+    Builds bounding box from multisegment.
+    """
+    return from_points(flatten(multisegment))
 
 
 def disjoint_with(left: BoundingBox, right: BoundingBox) -> bool:

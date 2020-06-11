@@ -22,7 +22,6 @@ from .events_queue import (EventsQueue,
                            EventsQueueKey)
 from .sweep_line import SweepLine
 from .utils import (all_equal,
-                    flatten,
                     sort_pair,
                     to_multisegment_base,
                     to_multisegment_x_max,
@@ -175,8 +174,8 @@ class Difference(Operation):
     def compute(self) -> Multisegment:
         if not (self.left and self.right):
             return self.left
-        left_bounding_box = bounding_box.from_points(flatten(self.left))
-        right_bounding_box = bounding_box.from_points(flatten(self.right))
+        left_bounding_box = bounding_box.from_multisegment(self.left)
+        right_bounding_box = bounding_box.from_multisegment(self.right)
         if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
             return self.left
         self.right = bounding_box.to_overlapping_segments(left_bounding_box,
@@ -211,8 +210,8 @@ class Intersection(Operation):
     def compute(self) -> Multisegment:
         if not (self.left and self.right):
             return []
-        left_bounding_box = bounding_box.from_points(flatten(self.left))
-        right_bounding_box = bounding_box.from_points(flatten(self.right))
+        left_bounding_box = bounding_box.from_multisegment(self.left)
+        right_bounding_box = bounding_box.from_multisegment(self.right)
         if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
             return []
         self.left = bounding_box.to_overlapping_segments(right_bounding_box,
@@ -250,8 +249,8 @@ class CompleteIntersection(Operation):
     def compute(self) -> Mix:
         if not (self.left and self.right):
             return [], [], []
-        left_bounding_box = bounding_box.from_points(flatten(self.left))
-        right_bounding_box = bounding_box.from_points(flatten(self.right))
+        left_bounding_box = bounding_box.from_multisegment(self.left)
+        right_bounding_box = bounding_box.from_multisegment(self.right)
         if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
             return [], [], []
         self.left = bounding_box.to_intersecting_segments(right_bounding_box,
@@ -303,8 +302,8 @@ class SymmetricDifference(Operation):
         if not (self.left and self.right):
             return self.left or self.right
         elif bounding_box.disjoint_with(
-                bounding_box.from_points(flatten(self.left)),
-                bounding_box.from_points(flatten(self.right))):
+                bounding_box.from_multisegment(self.left),
+                bounding_box.from_multisegment(self.right)):
             result = self.left + self.right
             result.sort()
             return result
@@ -322,8 +321,8 @@ class Union(Operation):
         if not (self.left and self.right):
             return self.left or self.right
         elif bounding_box.disjoint_with(
-                bounding_box.from_points(flatten(self.left)),
-                bounding_box.from_points(flatten(self.right))):
+                bounding_box.from_multisegment(self.left),
+                bounding_box.from_multisegment(self.right)):
             result = self.left + self.right
             result.sort()
             return result
