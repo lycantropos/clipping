@@ -1,3 +1,5 @@
+from enum import (IntEnum,
+                  unique)
 from fractions import Fraction
 from itertools import (chain,
                        groupby)
@@ -12,6 +14,10 @@ from typing import (Any,
                     Tuple,
                     Type,
                     TypeVar)
+
+from robust.angular import (Orientation,
+                            orientation)
+from robust.linear import segment_contains
 
 from clipping.hints import (Base,
                             Contour,
@@ -120,3 +126,33 @@ def to_multipolygon_x_max(multipolygon: Multipolygon) -> Coordinate:
 
 def to_multisegment_x_max(multisegment: Multisegment) -> Coordinate:
     return max(x for x, _ in flatten(multisegment))
+
+
+@unique
+class Location(IntEnum):
+    """
+    Represents kinds of locations in which point can be relative to geometry.
+    """
+    #: point lies in the exterior of the geometry
+    EXTERIOR = 0
+    #: point lies on the boundary of the geometry
+    BOUNDARY = 1
+    #: point lies in the interior of the geometry
+    INTERIOR = 2
+
+
+def point_in_region(point: Point, border: Contour) -> Location:
+    result = False
+    _, point_y = point
+    for edge in contour_to_segments(border):
+        if segment_contains(edge, point):
+            return Location.BOUNDARY
+        start, end = edge
+        (_, start_y), (_, end_y) = start, end
+        if ((start_y > point_y) is not (end_y > point_y)
+                and ((end_y > start_y) is (orientation(end, start, point)
+                                           is Orientation.COUNTERCLOCKWISE))):
+            result = not result
+    return (Location.INTERIOR
+            if result
+            else Location.EXTERIOR)

@@ -25,7 +25,6 @@ from .events_queue import (EventsQueue,
 from .sweep_line import SweepLine
 from .utils import (all_equal,
                     contour_to_segments,
-                    flatten,
                     sort_pair,
                     to_mixed_base,
                     to_multipolygon_contours,
@@ -57,12 +56,6 @@ class Operation(ABC):
         self._events_queue = EventsQueue()
 
     __repr__ = generate_repr(__init__)
-
-    def are_operands_bounding_boxes_disjoint(self) -> bool:
-        return bounding_box.disjoint_with(
-                bounding_box.from_points(flatten(self.multisegment)),
-                bounding_box.from_points(
-                        flatten(border for border, _ in self.multipolygon)))
 
     @abstractmethod
     def compute(self) -> Union[Multipolygon, Mix]:
@@ -216,9 +209,17 @@ class Difference(Operation):
     __slots__ = ()
 
     def compute(self) -> Multisegment:
-        if (not (self.multisegment and self.multipolygon)
-                or self.are_operands_bounding_boxes_disjoint()):
-            # at least one of the arguments is empty
+        if not (self.multisegment and self.multipolygon):
+            return self.multisegment
+        multisegment_bounding_box = (bounding_box
+                                     .from_multisegment(self.multisegment))
+        if bounding_box.disjoint_with(
+                multisegment_bounding_box,
+                bounding_box.from_multipolygon(self.multipolygon)):
+            return self.multisegment
+        self.multipolygon = bounding_box.to_overlapping_polygons(
+                multisegment_bounding_box, self.multipolygon)
+        if not self.multipolygon:
             return self.multisegment
         self.normalize_operands()
         return [event.segment for event in self.sweep() if event.in_result]
@@ -244,8 +245,20 @@ class Intersection(Operation):
     __slots__ = ()
 
     def compute(self) -> Mix:
-        if (not (self.multisegment and self.multipolygon)
-                or self.are_operands_bounding_boxes_disjoint()):
+        if not (self.multisegment and self.multipolygon):
+            return [], [], []
+        multisegment_bounding_box = (bounding_box
+                                     .from_multisegment(self.multisegment))
+        multipolygon_bounding_box = (bounding_box
+                                     .from_multipolygon(self.multipolygon))
+        if bounding_box.disjoint_with(multisegment_bounding_box,
+                                      multipolygon_bounding_box):
+            return [], [], []
+        self.multisegment = bounding_box.to_intersecting_segments(
+                multipolygon_bounding_box, self.multisegment)
+        self.multipolygon = bounding_box.to_intersecting_polygons(
+                multisegment_bounding_box, self.multipolygon)
+        if not self.multisegment:
             return [], [], []
         self.normalize_operands()
         events = sorted(self.sweep(),

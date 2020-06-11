@@ -3,11 +3,17 @@ from typing import Iterable
 from robust.linear import (SegmentsRelationship,
                            segments_relationship)
 
-from clipping.core.utils import flatten
 from clipping.hints import (BoundingBox,
+                            Contour,
+                            Multipolygon,
                             Multisegment,
                             Point,
+                            Polygon,
                             Segment)
+from .utils import (Location,
+                    contour_to_segments,
+                    flatten,
+                    point_in_region)
 
 
 def from_points(points: Iterable[Point]) -> BoundingBox:
@@ -27,6 +33,21 @@ def from_multisegment(multisegment: Multisegment) -> BoundingBox:
     Builds bounding box from multisegment.
     """
     return from_points(flatten(multisegment))
+
+
+def from_multipolygon(multipolygon: Multipolygon) -> BoundingBox:
+    """
+    Builds bounding box from multipolygon.
+    """
+    return from_points(flatten(border for border, _ in multipolygon))
+
+
+def from_polygon(polygon: Polygon) -> BoundingBox:
+    """
+    Builds bounding box from polygon.
+    """
+    border, _ = polygon
+    return from_points(border)
 
 
 def disjoint_with(left: BoundingBox, right: BoundingBox) -> bool:
@@ -170,6 +191,73 @@ def overlaps_with_segment(bounding_box: BoundingBox,
                         for edge in to_segments(bounding_box))))
 
 
+def intersects_with_polygon(bounding_box: BoundingBox,
+                            polygon: Polygon) -> bool:
+    """
+    Checks if the bounding box intersects the polygon.
+    """
+    border, holes = polygon
+    polygon_bounding_box = from_points(border)
+    return (intersects_with(polygon_bounding_box, bounding_box)
+            and (is_subset_of(polygon_bounding_box, bounding_box)
+                 or any(contains_point(bounding_box, vertex)
+                        for vertex in border)
+                 or within_of_region(bounding_box, border)
+                 and not any(within_of_region(bounding_box, hole)
+                             for hole in holes)
+                 or any(point_in_region(vertex, border)
+                        is not Location.EXTERIOR
+                        for vertex in to_vertices(bounding_box))
+                 or any(intersects_with_segment(bounding_box, border_edge)
+                        for border_edge in contour_to_segments(border))))
+
+
+def overlaps_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
+    """
+    Checks if the bounding box intersects the polygon in some region.
+    """
+    border, holes = polygon
+    polygon_bounding_box = from_points(border)
+    return (intersects_with(polygon_bounding_box, bounding_box)
+            and (is_subset_of(polygon_bounding_box, bounding_box)
+                 or any(covers_point(bounding_box, vertex)
+                        for vertex in border)
+                 or within_of_region(bounding_box, border)
+                 and not any(within_of_region(bounding_box, hole)
+                             for hole in holes)
+                 or any(point_in_region(vertex, border) is Location.INTERIOR
+                        for vertex in to_vertices(bounding_box))
+                 or any(overlaps_with_segment(bounding_box, border_edge)
+                        for border_edge in contour_to_segments(border))))
+
+
+def contains_point(bounding_box: BoundingBox, point: Point) -> bool:
+    x_min, x_max, y_min, y_max = bounding_box
+    x, y = point
+    return x_min <= x <= x_max and y_min <= y <= y_max
+
+
+def covers_point(bounding_box: BoundingBox, point: Point) -> bool:
+    x_min, x_max, y_min, y_max = bounding_box
+    x, y = point
+    return x_min < x < x_max and y_min < y < y_max
+
+
+def within_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
+    return (within_of(bounding_box, from_points(border))
+            and all(point_in_region(vertex, border) is Location.INTERIOR
+                    for vertex in to_vertices(bounding_box))
+            and all(segments_relationship(edge, border_edge)
+                    is SegmentsRelationship.NONE
+                    for edge in to_segments(bounding_box)
+                    for border_edge in contour_to_segments(border)))
+
+
+def to_vertices(bounding_box: BoundingBox) -> Iterable[Point]:
+    x_min, x_max, y_min, y_max = bounding_box
+    return (x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max)
+
+
 def to_segments(bounding_box: BoundingBox) -> Iterable[Segment]:
     x_min, x_max, y_min, y_max = bounding_box
     return (((x_min, y_min), (x_max, y_min)),
@@ -190,3 +278,17 @@ def to_overlapping_segments(bounding_box: BoundingBox,
     return [segment
             for segment in multisegment
             if overlaps_with_segment(bounding_box, segment)]
+
+
+def to_intersecting_polygons(bounding_box: BoundingBox,
+                             multipolygon: Multipolygon) -> Multipolygon:
+    return [polygon
+            for polygon in multipolygon
+            if intersects_with_polygon(bounding_box, polygon)]
+
+
+def to_overlapping_polygons(bounding_box: BoundingBox,
+                            multipolygon: Multipolygon) -> Multipolygon:
+    return [polygon
+            for polygon in multipolygon
+            if overlaps_with_polygon(bounding_box, polygon)]
