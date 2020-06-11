@@ -17,7 +17,8 @@ from robust.angular import (Orientation,
 
 from clipping.core.utils import (to_contour_base,
                                  to_first_boundary_vertex)
-from clipping.hints import (Contour,
+from clipping.hints import (BoundingBox,
+                            Contour,
                             Mix,
                             Multipoint,
                             Multipolygon,
@@ -27,6 +28,7 @@ from clipping.hints import (Contour,
 Strategy = SearchStrategy
 Domain = TypeVar('Domain')
 Key = Callable[[Domain], Any]
+BoundingBoxesPair = Tuple[BoundingBox, BoundingBox]
 MultisegmentsPair = Tuple[Multisegment, Multisegment]
 MultisegmentsTriplet = Tuple[Multisegment, Multisegment, Multisegment]
 MultipolygonWithMultisegment = Tuple[Multipolygon, Multisegment]
