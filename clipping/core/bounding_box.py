@@ -10,10 +10,10 @@ from clipping.hints import (BoundingBox,
                             Point,
                             Polygon,
                             Segment)
-from .utils import (Location,
-                    contour_to_segments,
+from .utils import (contour_to_segments,
                     flatten,
                     point_in_region)
+from .enums import Location
 
 
 def from_points(points: Iterable[Point]) -> BoundingBox:

@@ -1,5 +1,3 @@
-from enum import (IntEnum,
-                  unique)
 from fractions import Fraction
 from itertools import (chain,
                        groupby)
@@ -27,6 +25,7 @@ from clipping.hints import (Base,
                             Point,
                             Polygon,
                             Segment)
+from .enums import Location
 
 
 def all_equal(iterable: Iterable[Any]) -> bool:
@@ -126,19 +125,6 @@ def to_multipolygon_x_max(multipolygon: Multipolygon) -> Coordinate:
 
 def to_multisegment_x_max(multisegment: Multisegment) -> Coordinate:
     return max(x for x, _ in flatten(multisegment))
-
-
-@unique
-class Location(IntEnum):
-    """
-    Represents kinds of locations in which point can be relative to geometry.
-    """
-    #: point lies in the exterior of the geometry
-    EXTERIOR = 0
-    #: point lies on the boundary of the geometry
-    BOUNDARY = 1
-    #: point lies in the interior of the geometry
-    INTERIOR = 2
 
 
 def point_in_region(point: Point, border: Contour) -> Location:
