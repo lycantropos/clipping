@@ -98,14 +98,14 @@ def to_segments(bounding_box: BoundingBox) -> Iterable[Segment]:
             ((x_min, y_min), (x_min, y_max))]
 
 
-def to_intersecting_segments(bounding_box,
+def to_intersecting_segments(bounding_box: BoundingBox,
                              multisegment: Multisegment) -> Multisegment:
     return [segment
             for segment in multisegment
             if intersects_with_segment(bounding_box, segment)]
 
 
-def to_overlapping_segments(bounding_box,
+def to_overlapping_segments(bounding_box: BoundingBox,
                             multisegment: Multisegment) -> Multisegment:
     return [segment
             for segment in multisegment
