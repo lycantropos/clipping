@@ -172,10 +172,10 @@ def overlaps_with_segment(bounding_box: BoundingBox,
 
 def to_segments(bounding_box: BoundingBox) -> Iterable[Segment]:
     x_min, x_max, y_min, y_max = bounding_box
-    return [((x_min, y_min), (x_max, y_min)),
+    return (((x_min, y_min), (x_max, y_min)),
             ((x_max, y_min), (x_max, y_max)),
             ((x_min, y_max), (x_max, y_max)),
-            ((x_min, y_min), (x_min, y_max))]
+            ((x_min, y_min), (x_min, y_max)))
 
 
 def to_intersecting_segments(bounding_box: BoundingBox,
