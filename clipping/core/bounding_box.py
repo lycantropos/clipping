@@ -42,6 +42,17 @@ def disjoint_with(left: BoundingBox, right: BoundingBox) -> bool:
 def intersects_with(left: BoundingBox, right: BoundingBox) -> bool:
     """
     Checks if bounding boxes intersect.
+
+    >>> intersects_with((0, 2, 0, 2), (0, 2, 0, 2))
+    True
+    >>> intersects_with((0, 2, 0, 2), (1, 3, 1, 3))
+    True
+    >>> intersects_with((0, 2, 0, 2), (2, 4, 0, 2))
+    True
+    >>> intersects_with((0, 2, 0, 2), (2, 4, 2, 4))
+    True
+    >>> intersects_with((0, 2, 0, 2), (2, 4, 3, 5))
+    False
     """
     left_x_min, left_x_max, left_y_min, left_y_max = left
     right_x_min, right_x_max, right_y_min, right_y_max = right
