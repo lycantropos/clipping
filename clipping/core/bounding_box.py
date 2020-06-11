@@ -158,6 +158,17 @@ def is_subset_of(test: BoundingBox, goal: BoundingBox) -> bool:
 def within_of(test: BoundingBox, goal: BoundingBox) -> bool:
     """
     Checks if the bounding box is contained in an interior of the other.
+
+    >>> within_of((0, 2, 0, 2), (0, 2, 0, 2))
+    False
+    >>> within_of((0, 2, 0, 2), (1, 3, 1, 3))
+    False
+    >>> within_of((0, 2, 0, 2), (2, 4, 0, 2))
+    False
+    >>> within_of((0, 2, 0, 2), (2, 4, 2, 4))
+    False
+    >>> within_of((0, 2, 0, 2), (2, 4, 3, 5))
+    False
     """
     test_x_min, test_x_max, test_y_min, test_y_max = test
     goal_x_min, goal_x_max, goal_y_min, goal_y_max = goal
