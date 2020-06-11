@@ -258,7 +258,7 @@ class Intersection(Operation):
                 multipolygon_bounding_box, self.multisegment)
         self.multipolygon = bounding_box.to_intersecting_polygons(
                 multisegment_bounding_box, self.multipolygon)
-        if not self.multisegment:
+        if not (self.multisegment and self.multipolygon):
             return [], [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
