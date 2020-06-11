@@ -3,7 +3,7 @@ from functools import partial
 
 from hypothesis import strategies
 
-MAX_NUMBER = 10 ** 2
+MAX_NUMBER = 10 ** 10
 MIN_NUMBER = -MAX_NUMBER
 rational_coordinates_strategies_factories = {
     Fraction: partial(strategies.fractions,
