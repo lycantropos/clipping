@@ -7,7 +7,7 @@ from numbers import (Integral,
                      Real)
 from typing import (Any,
                     Iterable,
-                    List,
+                    Optional,
                     Sequence,
                     Tuple,
                     Type,
@@ -127,18 +127,31 @@ def to_multisegment_x_max(multisegment: Multisegment) -> Coordinate:
     return max(x for x, _ in flatten(multisegment))
 
 
+def contour_orientation(contour: Contour) -> Orientation:
+    index = min(range(len(contour)),
+                key=contour.__getitem__)
+    return orientation(contour[index], contour[index - 1],
+                       contour[(index + 1) % len(contour)])
+
+
 def point_in_region(point: Point, border: Contour) -> Location:
+    _, location = indexed_point_in_region(point, border)
+    return location
+
+
+def indexed_point_in_region(point: Point,
+                            border: Contour) -> Tuple[Optional[int], Location]:
     result = False
     _, point_y = point
-    for edge in contour_to_segments(border):
+    for edge_index, edge in enumerate(contour_to_segments(border)):
         if segment_contains(edge, point):
-            return Location.BOUNDARY
+            return edge_index, Location.BOUNDARY
         start, end = edge
         (_, start_y), (_, end_y) = start, end
         if ((start_y > point_y) is not (end_y > point_y)
                 and ((end_y > start_y) is (orientation(end, start, point)
                                            is Orientation.COUNTERCLOCKWISE))):
             result = not result
-    return (Location.INTERIOR
+    return ((None, Location.INTERIOR)
             if result
-            else Location.EXTERIOR)
+            else (None, Location.EXTERIOR))

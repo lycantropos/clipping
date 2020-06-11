@@ -1,7 +1,10 @@
 from typing import (Iterable,
                     Sequence)
 
+from robust.angular import (Orientation,
+                            orientation)
 from robust.linear import (SegmentsRelationship,
+                           segment_contains,
                            segments_relationship)
 
 from clipping.hints import (BoundingBox,
@@ -12,8 +15,10 @@ from clipping.hints import (BoundingBox,
                             Polygon,
                             Segment)
 from .enums import Location
-from .utils import (contour_to_segments,
+from .utils import (contour_orientation,
+                    contour_to_segments,
                     flatten,
+                    indexed_point_in_region,
                     point_in_region)
 
 
@@ -232,19 +237,40 @@ def overlaps_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
     """
     border, holes = polygon
     polygon_bounding_box = from_points(border)
-    return (intersects_with(polygon_bounding_box, bounding_box)
-            and (is_subset_of(polygon_bounding_box, bounding_box)
-                 or any(covers_point(bounding_box, vertex)
-                        for vertex in border)
-                 or within_of(bounding_box, polygon_bounding_box)
-                 and within_of_region(bounding_box, border)
-                 and not any(within_of(bounding_box, from_points(hole))
-                             and within_of_region(bounding_box, hole)
-                             for hole in holes)
-                 or any(point_in_region(vertex, border) is Location.INTERIOR
-                        for vertex in to_vertices(bounding_box))
-                 or any(overlaps_with_segment(bounding_box, border_edge)
-                        for border_edge in contour_to_segments(border))))
+    if not overlaps_with(polygon_bounding_box, bounding_box):
+        return False
+    elif (is_subset_of(polygon_bounding_box, bounding_box)
+          or any(covers_point(bounding_box, vertex)
+                 for vertex in border)):
+        return True
+    elif (any(point_in_region(vertex, border) is Location.INTERIOR
+              for vertex in to_vertices(bounding_box))
+          or is_subset_of(bounding_box, polygon_bounding_box)
+          and is_subset_of_region(bounding_box, border)):
+        return not any(is_subset_of(bounding_box, from_points(hole))
+                       and is_subset_of_region(bounding_box, hole)
+                       for hole in holes)
+    else:
+        return (any(segments_relationship(edge, border_edge)
+                    is SegmentsRelationship.CROSS
+                    for edge in to_segments(bounding_box)
+                    for border_edge in contour_to_segments(border))
+                or _any_segment_in_region(to_segments(bounding_box), border))
+
+
+def _any_segment_in_region(segments: Iterable[Segment],
+                           border: Contour) -> bool:
+    border_orientation = contour_orientation(border)
+    return any(_segment_orientation_with_point(edge, end) is border_orientation
+               for start, end in segments
+               for edge in contour_to_segments(border)
+               if segment_contains(edge, start))
+
+
+def _segment_orientation_with_point(segment: Segment,
+                                    point: Point) -> Orientation:
+    start, end = segment
+    return orientation(end, start, point)
 
 
 def contains_point(bounding_box: BoundingBox, point: Point) -> bool:
@@ -257,6 +283,38 @@ def covers_point(bounding_box: BoundingBox, point: Point) -> bool:
     x_min, x_max, y_min, y_max = bounding_box
     x, y = point
     return x_min < x < x_max and y_min < y < y_max
+
+
+def is_subset_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
+    bounding_box_vertices = to_vertices(bounding_box)
+    indexed_locations = [indexed_point_in_region(vertex, border)
+                         for vertex in bounding_box_vertices]
+    if not all(location for _, location in indexed_locations):
+        return False
+    elif all(location is Location.INTERIOR
+             for _, location in indexed_locations):
+        return all(segments_relationship(edge, border_edge)
+                   is SegmentsRelationship.NONE
+                   for edge in to_segments(bounding_box)
+                   for border_edge in contour_to_segments(border))
+    else:
+        border_orientation = contour_orientation(border)
+        for index, (border_index, location) in enumerate(indexed_locations):
+            if location is Location.BOUNDARY:
+                prior_vertex, next_vertex = (bounding_box_vertices[index - 1],
+                                             bounding_box_vertices[(index + 1)
+                                                                   % 4])
+                border_edge_start, border_edge_end = (border[border_index - 1],
+                                                      border[border_index])
+                if (orientation(border_edge_end, border_edge_start,
+                                prior_vertex) * border_orientation < 0
+                        or orientation(border_edge_end, border_edge_start,
+                                       next_vertex) * border_orientation < 0):
+                    return False
+        return all(segments_relationship(edge, border_edge)
+                   is not SegmentsRelationship.CROSS
+                   for edge in to_segments(bounding_box)
+                   for border_edge in contour_to_segments(border))
 
 
 def within_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
