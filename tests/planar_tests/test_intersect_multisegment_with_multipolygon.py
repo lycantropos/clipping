@@ -9,9 +9,9 @@ from orient.planar import (Relation,
 from robust.linear import (SegmentsRelationship,
                            segments_relationship)
 
-from clipping.core.utils import (sort_pair,
-                                 to_multipolygon_contours,
-                                 to_segments)
+from clipping.core.utils import (contour_to_segments,
+                                 sort_pair,
+                                 to_multipolygon_contours)
 from clipping.planar import intersect_multisegment_with_multipolygon
 from tests.utils import (MultipolygonWithMultisegment,
                          is_mix,
@@ -62,7 +62,7 @@ def test_properties(multipolygon_with_multisegment
                     segments_relationship(segment, edge)
                     is SegmentsRelationship.OVERLAP
                     for contour in to_multipolygon_contours(multipolygon)
-                    for edge in to_segments(contour))))
+                    for edge in contour_to_segments(contour))))
     assert all(segment_in_multisegment(segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
                for segment in result_multisegment)
