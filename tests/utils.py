@@ -3,8 +3,7 @@ from numbers import (Number,
 from operator import itemgetter
 from typing import (Any,
                     Callable,
-                    Iterable,
-                    Optional,
+                    Sequence,
                     Tuple,
                     TypeVar)
 
@@ -40,21 +39,9 @@ def equivalence(left_statement: bool, right_statement: bool) -> bool:
     return left_statement is right_statement
 
 
-_sentinel = object()
-
-
-def to_index_min(values: Iterable[Domain],
-                 *,
-                 key: Optional[Key] = None,
-                 default: Any = _sentinel) -> int:
-    kwargs = {}
-    if key is not None:
-        kwargs['key'] = lambda value_with_index: key(value_with_index[0])
-    if default is not _sentinel:
-        kwargs['default'] = default
-    return min(((value, index)
-                for index, value in enumerate(values)),
-               **kwargs)[1]
+def arg_min(values: Sequence[Domain]) -> int:
+    return min(range(len(values)),
+               key=values.__getitem__)
 
 
 def mix_equivalent_to_multisegment(mix: Mix, other: Multisegment) -> bool:
@@ -110,7 +97,7 @@ def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
 
 def normalize_contour(contour: Contour) -> Contour:
     return to_counterclockwise_contour(rotate_sequence(contour,
-                                                       to_index_min(contour)))
+                                                       arg_min(contour)))
 
 
 def to_counterclockwise_contour(contour: Contour) -> Contour:
