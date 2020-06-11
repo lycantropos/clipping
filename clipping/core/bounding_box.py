@@ -52,6 +52,17 @@ def intersects_with(left: BoundingBox, right: BoundingBox) -> bool:
 def overlaps_with(left: BoundingBox, right: BoundingBox) -> bool:
     """
     Checks if bounding boxes intersect in some region.
+
+    >>> overlaps_with((0, 2, 0, 2), (0, 2, 0, 2))
+    True
+    >>> overlaps_with((0, 2, 0, 2), (1, 3, 1, 3))
+    True
+    >>> overlaps_with((0, 2, 0, 2), (2, 4, 0, 2))
+    False
+    >>> overlaps_with((0, 2, 0, 2), (2, 4, 2, 4))
+    False
+    >>> overlaps_with((0, 2, 0, 2), (2, 4, 3, 5))
+    False
     """
     return intersects_with(left, right) and not touches_with(left, right)
 
