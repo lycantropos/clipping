@@ -1,4 +1,5 @@
-from typing import Iterable
+from typing import (Iterable,
+                    Sequence)
 
 from robust.linear import (SegmentsRelationship,
                            segments_relationship)
@@ -10,10 +11,10 @@ from clipping.hints import (BoundingBox,
                             Point,
                             Polygon,
                             Segment)
+from .enums import Location
 from .utils import (contour_to_segments,
                     flatten,
                     point_in_region)
-from .enums import Location
 
 
 def from_points(points: Iterable[Point]) -> BoundingBox:
@@ -253,12 +254,12 @@ def within_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
                     for border_edge in contour_to_segments(border)))
 
 
-def to_vertices(bounding_box: BoundingBox) -> Iterable[Point]:
+def to_vertices(bounding_box: BoundingBox) -> Sequence[Point]:
     x_min, x_max, y_min, y_max = bounding_box
     return (x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max)
 
 
-def to_segments(bounding_box: BoundingBox) -> Iterable[Segment]:
+def to_segments(bounding_box: BoundingBox) -> Sequence[Segment]:
     x_min, x_max, y_min, y_max = bounding_box
     return (((x_min, y_min), (x_max, y_min)),
             ((x_max, y_min), (x_max, y_max)),
