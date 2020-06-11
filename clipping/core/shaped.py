@@ -23,16 +23,15 @@ from clipping.hints import (Contour,
                             Multisegment,
                             Point,
                             Segment)
+from . import bounding_box
 from .enums import EdgeType
 from .event import ShapedEvent as Event
 from .events_queue import (EventsQueue,
                            EventsQueueKey)
 from .sweep_line import SweepLine
 from .utils import (all_equal,
-                    are_bounding_boxes_disjoint,
                     flatten,
                     sort_pair,
-                    to_bounding_box,
                     to_first_boundary_vertex,
                     to_multipolygon_base,
                     to_multipolygon_contours,
@@ -65,9 +64,11 @@ class Operation(ABC):
     __repr__ = generate_repr(__init__)
 
     def are_operands_bounding_boxes_disjoint(self) -> bool:
-        return are_bounding_boxes_disjoint(
-                to_bounding_box(flatten(border for border, _ in self.left)),
-                to_bounding_box(flatten(border for border, _ in self.right)))
+        return bounding_box.are_disjoint(
+                bounding_box.from_points(flatten(border
+                                                 for border, _ in self.left)),
+                bounding_box.from_points(flatten(border
+                                                 for border, _ in self.right)))
 
     @abstractmethod
     def compute(self) -> Union_[Multipolygon, Mix]:

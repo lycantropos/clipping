@@ -16,15 +16,14 @@ from clipping.hints import (Mix,
                             Multisegment,
                             Point,
                             Segment)
+from . import bounding_box
 from .event import LinearEvent as Event
 from .events_queue import (EventsQueue,
                            EventsQueueKey)
 from .sweep_line import SweepLine
 from .utils import (all_equal,
-                    are_bounding_boxes_disjoint,
                     flatten,
                     sort_pair,
-                    to_bounding_box,
                     to_multisegment_base,
                     to_multisegment_x_max,
                     to_rational_multisegment)
@@ -54,9 +53,9 @@ class Operation(ABC):
     __repr__ = generate_repr(__init__)
 
     def are_operands_bounding_boxes_disjoint(self) -> bool:
-        return are_bounding_boxes_disjoint(
-                to_bounding_box(flatten(self.left)),
-                to_bounding_box(flatten(self.right)))
+        return bounding_box.are_disjoint(
+                bounding_box.from_points(flatten(self.left)),
+                bounding_box.from_points(flatten(self.right)))
 
     @abstractmethod
     def compute(self) -> Union_[Multisegment, Mix]:

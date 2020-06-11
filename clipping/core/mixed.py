@@ -18,15 +18,14 @@ from clipping.hints import (Mix,
                             Multisegment,
                             Point,
                             Segment)
+from . import bounding_box
 from .event import MixedEvent as Event
 from .events_queue import (EventsQueue,
                            EventsQueueKey)
 from .sweep_line import SweepLine
 from .utils import (all_equal,
-                    are_bounding_boxes_disjoint,
                     flatten,
                     sort_pair,
-                    to_bounding_box,
                     to_mixed_base,
                     to_multipolygon_contours,
                     to_multipolygon_x_max,
@@ -60,10 +59,10 @@ class Operation(ABC):
     __repr__ = generate_repr(__init__)
 
     def are_operands_bounding_boxes_disjoint(self) -> bool:
-        return are_bounding_boxes_disjoint(
-                to_bounding_box(flatten(self.multisegment)),
-                to_bounding_box(flatten(border
-                                        for border, _ in self.multipolygon)))
+        return bounding_box.are_disjoint(
+                bounding_box.from_points(flatten(self.multisegment)),
+                bounding_box.from_points(
+                        flatten(border for border, _ in self.multipolygon)))
 
     @abstractmethod
     def compute(self) -> Union[Multipolygon, Mix]:
