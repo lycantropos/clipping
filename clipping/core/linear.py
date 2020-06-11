@@ -53,7 +53,7 @@ class Operation(ABC):
     __repr__ = generate_repr(__init__)
 
     def are_operands_bounding_boxes_disjoint(self) -> bool:
-        return bounding_box.are_disjoint(
+        return bounding_box.disjoint_with(
                 bounding_box.from_points(flatten(self.left)),
                 bounding_box.from_points(flatten(self.right)))
 

@@ -13,7 +13,7 @@ def from_points(points: Iterable[Point]) -> BoundingBox:
     return x_min, x_max, y_min, y_max
 
 
-def are_disjoint(left: BoundingBox, right: BoundingBox) -> bool:
+def disjoint_with(left: BoundingBox, right: BoundingBox) -> bool:
     left_x_min, left_x_max, left_y_min, left_y_max = left
     right_x_min, right_x_max, right_y_min, right_y_max = right
     return (left_x_min > right_x_max or left_x_max < right_x_min
