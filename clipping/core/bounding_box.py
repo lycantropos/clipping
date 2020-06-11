@@ -59,6 +59,15 @@ def overlaps_with(left: BoundingBox, right: BoundingBox) -> bool:
 def touches_with(left: BoundingBox, right: BoundingBox) -> bool:
     """
     Checks if bounding boxes intersect at point or by the edge.
+
+    >>> touches_with((0, 2, 0, 2), (0, 2, 0, 2))
+    False
+    >>> touches_with((0, 2, 0, 2), (1, 3, 1, 3))
+    False
+    >>> touches_with((0, 2, 0, 2), (2, 4, 0, 2))
+    True
+    >>> touches_with((0, 2, 0, 2), (2, 4, 2, 4))
+    True
     """
     left_x_min, left_x_max, left_y_min, left_y_max = left
     right_x_min, right_x_max, right_y_min, right_y_max = right
