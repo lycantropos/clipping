@@ -47,9 +47,9 @@ def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:
         yield from holes
 
 
-def contour_to_segments(contour: Contour) -> List[Segment]:
-    return [(contour[index], contour[(index + 1) % len(contour)])
-            for index in range(len(contour))]
+def contour_to_segments(contour: Contour) -> Iterable[Segment]:
+    return ((contour[index - 1], contour[index])
+            for index in range(len(contour)))
 
 
 def to_mixed_base(multisegment: Multisegment,
