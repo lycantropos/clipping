@@ -214,8 +214,10 @@ def intersects_with_polygon(bounding_box: BoundingBox,
             and (is_subset_of(polygon_bounding_box, bounding_box)
                  or any(contains_point(bounding_box, vertex)
                         for vertex in border)
-                 or within_of_region(bounding_box, border)
-                 and not any(within_of_region(bounding_box, hole)
+                 or within_of(bounding_box, polygon_bounding_box)
+                 and within_of_region(bounding_box, border)
+                 and not any(within_of(bounding_box, from_points(hole))
+                             and within_of_region(bounding_box, hole)
                              for hole in holes)
                  or any(point_in_region(vertex, border)
                         is not Location.EXTERIOR
@@ -234,8 +236,10 @@ def overlaps_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
             and (is_subset_of(polygon_bounding_box, bounding_box)
                  or any(covers_point(bounding_box, vertex)
                         for vertex in border)
-                 or within_of_region(bounding_box, border)
-                 and not any(within_of_region(bounding_box, hole)
+                 or within_of(bounding_box, polygon_bounding_box)
+                 and within_of_region(bounding_box, border)
+                 and not any(within_of(bounding_box, from_points(hole))
+                             and within_of_region(bounding_box, hole)
                              for hole in holes)
                  or any(point_in_region(vertex, border) is Location.INTERIOR
                         for vertex in to_vertices(bounding_box))
@@ -256,9 +260,8 @@ def covers_point(bounding_box: BoundingBox, point: Point) -> bool:
 
 
 def within_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
-    return (within_of(bounding_box, from_points(border))
-            and all(point_in_region(vertex, border) is Location.INTERIOR
-                    for vertex in to_vertices(bounding_box))
+    return (all(point_in_region(vertex, border) is Location.INTERIOR
+                for vertex in to_vertices(bounding_box))
             and all(segments_relationship(edge, border_edge)
                     is SegmentsRelationship.NONE
                     for edge in to_segments(bounding_box)
