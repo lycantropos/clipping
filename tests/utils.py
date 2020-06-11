@@ -28,6 +28,7 @@ Strategy = SearchStrategy
 Domain = TypeVar('Domain')
 Key = Callable[[Domain], Any]
 BoundingBoxesPair = Tuple[BoundingBox, BoundingBox]
+BoundingBoxesTriplet = Tuple[BoundingBox, BoundingBox, BoundingBox]
 MultisegmentsPair = Tuple[Multisegment, Multisegment]
 MultisegmentsTriplet = Tuple[Multisegment, Multisegment, Multisegment]
 MultipolygonWithMultisegment = Tuple[Multipolygon, Multisegment]
@@ -37,6 +38,10 @@ MultipolygonsTriplet = Tuple[Multipolygon, Multipolygon, Multipolygon]
 
 def equivalence(left_statement: bool, right_statement: bool) -> bool:
     return left_statement is right_statement
+
+
+def implication(antecedent: bool, consequent: bool) -> bool:
+    return not antecedent or consequent
 
 
 def arg_min(values: Sequence[Domain]) -> int:
