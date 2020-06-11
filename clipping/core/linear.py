@@ -52,11 +52,6 @@ class Operation(ABC):
 
     __repr__ = generate_repr(__init__)
 
-    def are_operands_bounding_boxes_disjoint(self) -> bool:
-        return bounding_box.disjoint_with(
-                bounding_box.from_points(flatten(self.left)),
-                bounding_box.from_points(flatten(self.right)))
-
     @abstractmethod
     def compute(self) -> Union_[Multisegment, Mix]:
         """
@@ -178,8 +173,15 @@ class Difference(Operation):
     __slots__ = ()
 
     def compute(self) -> Multisegment:
-        if (not (self.left and self.right)
-                or self.are_operands_bounding_boxes_disjoint()):
+        if not (self.left and self.right):
+            return self.left
+        left_bounding_box = bounding_box.from_points(flatten(self.left))
+        right_bounding_box = bounding_box.from_points(flatten(self.right))
+        if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
+            return self.left
+        self.right = bounding_box.to_overlapping_segments(left_bounding_box,
+                                                          self.right)
+        if not self.right:
             return self.left
         self.normalize_operands()
         return sorted(segment
@@ -207,8 +209,17 @@ class Intersection(Operation):
     __slots__ = ()
 
     def compute(self) -> Multisegment:
-        if (not (self.left and self.right)
-                or self.are_operands_bounding_boxes_disjoint()):
+        if not (self.left and self.right):
+            return []
+        left_bounding_box = bounding_box.from_points(flatten(self.left))
+        right_bounding_box = bounding_box.from_points(flatten(self.right))
+        if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
+            return []
+        self.left = bounding_box.to_overlapping_segments(right_bounding_box,
+                                                         self.left)
+        self.right = bounding_box.to_overlapping_segments(left_bounding_box,
+                                                          self.right)
+        if not (self.left and self.right):
             return []
         self.normalize_operands()
         return sorted(segment
@@ -237,8 +248,17 @@ class CompleteIntersection(Operation):
     __slots__ = ()
 
     def compute(self) -> Mix:
-        if (not (self.left and self.right)
-                or self.are_operands_bounding_boxes_disjoint()):
+        if not (self.left and self.right):
+            return [], [], []
+        left_bounding_box = bounding_box.from_points(flatten(self.left))
+        right_bounding_box = bounding_box.from_points(flatten(self.right))
+        if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
+            return [], [], []
+        self.left = bounding_box.to_intersecting_segments(right_bounding_box,
+                                                          self.left)
+        self.right = bounding_box.to_intersecting_segments(left_bounding_box,
+                                                           self.right)
+        if not (self.left and self.right):
             return [], [], []
         self.normalize_operands()
         multipoint = []  # type: Multipoint
@@ -282,7 +302,9 @@ class SymmetricDifference(Operation):
     def compute(self) -> Multisegment:
         if not (self.left and self.right):
             return self.left or self.right
-        elif self.are_operands_bounding_boxes_disjoint():
+        elif bounding_box.disjoint_with(
+                bounding_box.from_points(flatten(self.left)),
+                bounding_box.from_points(flatten(self.right))):
             result = self.left + self.right
             result.sort()
             return result
@@ -299,7 +321,9 @@ class Union(Operation):
     def compute(self) -> Multisegment:
         if not (self.left and self.right):
             return self.left or self.right
-        elif self.are_operands_bounding_boxes_disjoint():
+        elif bounding_box.disjoint_with(
+                bounding_box.from_points(flatten(self.left)),
+                bounding_box.from_points(flatten(self.right))):
             result = self.left + self.right
             result.sort()
             return result
