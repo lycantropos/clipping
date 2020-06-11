@@ -81,7 +81,12 @@ def intersects_with_segment(bounding_box: BoundingBox,
     """
     Checks if the bounding box intersects the segment.
     """
-    return intersects_with(bounding_box, from_points(segment))
+    segment_bounding_box = from_points(segment)
+    return (intersects_with(segment_bounding_box, bounding_box)
+            and (is_subset_of(segment_bounding_box, bounding_box)
+                 or any(segments_relationship(edge, segment)
+                        is not SegmentsRelationship.NONE
+                        for edge in to_segments(bounding_box))))
 
 
 def overlaps_with_segment(bounding_box: BoundingBox,
