@@ -24,6 +24,7 @@ from .events_queue import (EventsQueue,
                            EventsQueueKey)
 from .sweep_line import SweepLine
 from .utils import (all_equal,
+                    contour_to_segments,
                     flatten,
                     sort_pair,
                     to_mixed_base,
@@ -31,8 +32,7 @@ from .utils import (all_equal,
                     to_multipolygon_x_max,
                     to_multisegment_x_max,
                     to_rational_multipolygon,
-                    to_rational_multisegment,
-                    to_segments)
+                    to_rational_multisegment)
 
 
 class Operation(ABC):
@@ -152,7 +152,7 @@ class Operation(ABC):
         for segment in self.multisegment:
             self.register_segment(segment, True)
         for contour in to_multipolygon_contours(self.multipolygon):
-            for segment in to_segments(contour):
+            for segment in contour_to_segments(contour):
                 self.register_segment(segment, False)
 
     @abstractmethod

@@ -42,7 +42,7 @@ def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:
         yield from holes
 
 
-def to_segments(contour: Contour) -> List[Segment]:
+def contour_to_segments(contour: Contour) -> List[Segment]:
     return [(contour[index], contour[(index + 1) % len(contour)])
             for index in range(len(contour))]
 

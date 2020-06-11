@@ -30,14 +30,14 @@ from .events_queue import (EventsQueue,
                            EventsQueueKey)
 from .sweep_line import SweepLine
 from .utils import (all_equal,
+                    contour_to_segments,
                     flatten,
                     sort_pair,
                     to_first_boundary_vertex,
                     to_multipolygon_base,
                     to_multipolygon_contours,
                     to_multipolygon_x_max,
-                    to_rational_multipolygon,
-                    to_segments)
+                    to_rational_multipolygon)
 
 
 class Operation(ABC):
@@ -161,10 +161,10 @@ class Operation(ABC):
 
     def fill_queue(self) -> None:
         for contour in to_multipolygon_contours(self.left):
-            for segment in to_segments(contour):
+            for segment in contour_to_segments(contour):
                 self.register_segment(segment, True)
         for contour in to_multipolygon_contours(self.right):
-            for segment in to_segments(contour):
+            for segment in contour_to_segments(contour):
                 self.register_segment(segment, False)
 
     @abstractmethod
