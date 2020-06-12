@@ -291,12 +291,6 @@ def is_subset_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
                          for vertex in bounding_box_vertices]
     if not all(location for _, location in indexed_locations):
         return False
-    elif all(location is Location.INTERIOR
-             for _, location in indexed_locations):
-        return all(segments_relationship(edge, border_edge)
-                   is SegmentsRelationship.NONE
-                   for edge in to_segments(bounding_box)
-                   for border_edge in contour_to_segments(border))
     else:
         border_orientation = contour_orientation(border)
         for index, (border_index, location) in enumerate(indexed_locations):
@@ -306,10 +300,32 @@ def is_subset_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
                                                                    % 4])
                 border_edge_start, border_edge_end = (border[border_index - 1],
                                                       border[border_index])
-                if (orientation(border_edge_end, border_edge_start,
-                                prior_vertex) * border_orientation < 0
-                        or orientation(border_edge_end, border_edge_start,
-                                       next_vertex) * border_orientation < 0):
+                vertex = bounding_box_vertices[index]
+                if vertex == border_edge_start:
+                    candidate = border[border_index - 2]
+                    base_orientation = orientation(
+                            candidate, border_edge_start, border_edge_end)
+                    if (orientation(border_edge_start, candidate, prior_vertex)
+                            not in (Orientation.COLLINEAR, base_orientation)
+                            or orientation(border_edge_end, border_edge_start,
+                                           next_vertex)
+                            not in (Orientation.COLLINEAR, base_orientation)):
+                        return False
+                elif vertex == border_edge_end:
+                    candidate = border[(border_index + 1) % len(border)]
+                    base_orientation = orientation(
+                            border_edge_start, border_edge_end, candidate)
+                    if (orientation(border_edge_end, border_edge_start,
+                                    prior_vertex)
+                            not in (Orientation.COLLINEAR, base_orientation)
+                            or orientation(candidate, border_edge_end,
+                                           next_vertex)
+                            not in (Orientation.COLLINEAR, base_orientation)):
+                        return False
+                elif (orientation(border_edge_end, border_edge_start,
+                                  prior_vertex) * border_orientation < 0
+                      or orientation(border_edge_end, border_edge_start,
+                                     next_vertex) * border_orientation < 0):
                     return False
         return all(segments_relationship(edge, border_edge)
                    is not SegmentsRelationship.CROSS
