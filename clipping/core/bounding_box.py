@@ -4,8 +4,6 @@ from typing import (Iterable,
 from orient.planar import (Relation,
                            point_in_region,
                            segment_in_region)
-from robust.angular import (Orientation,
-                            orientation)
 from robust.linear import (SegmentsRelationship,
                            segments_relationship)
 
@@ -44,14 +42,6 @@ def from_multipolygon(multipolygon: Multipolygon) -> BoundingBox:
     Builds bounding box from multipolygon.
     """
     return from_points(flatten(border for border, _ in multipolygon))
-
-
-def from_polygon(polygon: Polygon) -> BoundingBox:
-    """
-    Builds bounding box from polygon.
-    """
-    border, _ = polygon
-    return from_points(border)
 
 
 def disjoint_with(left: BoundingBox, right: BoundingBox) -> bool:
@@ -254,12 +244,6 @@ def overlaps_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
                 or any(segment_in_region(segment, border)
                        in (Relation.ENCLOSED, Relation.CROSS)
                        for segment in to_segments(bounding_box)))
-
-
-def _segment_orientation_with_point(segment: Segment,
-                                    point: Point) -> Orientation:
-    start, end = segment
-    return orientation(end, start, point)
 
 
 def contains_point(bounding_box: BoundingBox, point: Point) -> bool:
