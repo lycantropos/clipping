@@ -241,7 +241,47 @@ class Difference(Operation):
         return result
 
 
-class CompleteIntersection(Operation):
+class Intersection(Operation):
+    __slots__ = ()
+
+    def compute(self) -> Multisegment:
+        if not (self.multisegment and self.multipolygon):
+            return []
+        multisegment_bounding_box = (bounding_box
+                                     .from_multisegment(self.multisegment))
+        multipolygon_bounding_box = (bounding_box
+                                     .from_multipolygon(self.multipolygon))
+        if bounding_box.disjoint_with(multisegment_bounding_box,
+                                      multipolygon_bounding_box):
+            return []
+        self.multisegment = bounding_box.to_intersecting_segments(
+                multipolygon_bounding_box, self.multisegment)
+        self.multipolygon = bounding_box.to_intersecting_polygons(
+                multisegment_bounding_box, self.multipolygon)
+        if not (self.multisegment and self.multipolygon):
+            return []
+        self.normalize_operands()
+        return [event.segment for event in self.sweep() if event.in_result]
+
+    def in_result(self, event: Event) -> bool:
+        return event.from_left and not event.other_in_out
+
+    def sweep(self) -> List[Event]:
+        self.fill_queue()
+        result = []
+        sweep_line = SweepLine()
+        min_max_x = min(to_multisegment_x_max(self.multisegment),
+                        to_multipolygon_x_max(self.multipolygon))
+        while self._events_queue:
+            event = self._events_queue.pop()
+            start_x, _ = event.start
+            if start_x > min_max_x:
+                break
+            self.process_event(event, result, sweep_line)
+        return result
+
+
+class CompleteIntersection(Intersection):
     __slots__ = ()
 
     def compute(self) -> Mix:
@@ -292,20 +332,3 @@ class CompleteIntersection(Operation):
                                for event in events
                                if event.in_result]
         return multipoint, border_multisegment + inside_multisegment, []
-
-    def in_result(self, event: Event) -> bool:
-        return event.from_left and not event.other_in_out
-
-    def sweep(self) -> List[Event]:
-        self.fill_queue()
-        result = []
-        sweep_line = SweepLine()
-        min_max_x = min(to_multisegment_x_max(self.multisegment),
-                        to_multipolygon_x_max(self.multipolygon))
-        while self._events_queue:
-            event = self._events_queue.pop()
-            start_x, _ = event.start
-            if start_x > min_max_x:
-                break
-            self.process_event(event, result, sweep_line)
-        return result
