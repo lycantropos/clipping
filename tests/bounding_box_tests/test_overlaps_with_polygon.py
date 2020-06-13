@@ -20,6 +20,12 @@ def test_basic(polygon_with_bounding_box: Tuple[Polygon, BoundingBox]) -> None:
     assert isinstance(result, bool)
 
 
+@given(strategies.bounding_boxes)
+def test_self(bounding_box: BoundingBox) -> None:
+    assert overlaps_with_polygon(bounding_box,
+                                 (list(to_vertices(bounding_box)), []))
+
+
 @given(strategies.polygons_with_bounding_boxes)
 def test_equivalents(polygon_with_bounding_box: Tuple[Polygon, BoundingBox]
                      ) -> None:
