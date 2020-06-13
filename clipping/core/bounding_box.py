@@ -208,6 +208,9 @@ def is_subset_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
 
 
 def within_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
+    """
+    Checks if the bounding box is contained in an interior of the region.
+    """
     return (all(point_in_region(vertex, border) is Relation.WITHIN
                 for vertex in to_vertices(bounding_box))
             and all(segments_relationship(edge, border_edge)
