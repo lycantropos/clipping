@@ -221,6 +221,9 @@ def within_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
 
 def is_subset_of_multiregion(bounding_box: BoundingBox,
                              borders: List[Contour]) -> bool:
+    """
+    Checks if the bounding box is the subset of the multiregion.
+    """
     return any(is_subset_of(bounding_box, from_points(border))
                and is_subset_of_region(bounding_box, border)
                for border in borders)
