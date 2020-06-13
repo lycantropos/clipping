@@ -197,6 +197,29 @@ def overlaps_with_segment(bounding_box: BoundingBox,
                         for edge in to_segments(bounding_box))))
 
 
+def is_subset_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
+    return all(segment_in_region(segment, border) in (Relation.COMPONENT,
+                                                      Relation.ENCLOSED,
+                                                      Relation.WITHIN)
+               for segment in to_segments(bounding_box))
+
+
+def within_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
+    return (all(point_in_region(vertex, border) is Relation.WITHIN
+                for vertex in to_vertices(bounding_box))
+            and all(segments_relationship(edge, border_edge)
+                    is SegmentsRelationship.NONE
+                    for edge in to_segments(bounding_box)
+                    for border_edge in contour_to_segments(border)))
+
+
+def is_subset_of_multiregion(bounding_box: BoundingBox,
+                             borders: List[Contour]) -> bool:
+    return any(is_subset_of(bounding_box, from_points(border))
+               and is_subset_of_region(bounding_box, border)
+               for border in borders)
+
+
 def intersects_with_polygon(bounding_box: BoundingBox,
                             polygon: Polygon) -> bool:
     """
@@ -243,23 +266,16 @@ def overlaps_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
     relations = [point_in_region(vertex, border)
                  for vertex in to_vertices(bounding_box)]
     if all(relation is Relation.WITHIN for relation in relations):
-        return not subset_of_multiregion(bounding_box, holes)
+        return not is_subset_of_multiregion(bounding_box, holes)
     elif any(relation is Relation.WITHIN for relation in relations):
         return True
     elif (is_subset_of(bounding_box, polygon_bounding_box)
           and is_subset_of_region(bounding_box, border)):
-        return not subset_of_multiregion(bounding_box, holes)
+        return not is_subset_of_multiregion(bounding_box, holes)
     else:
         return any(segment_in_region(segment, border)
                    in (Relation.ENCLOSED, Relation.CROSS)
                    for segment in to_segments(bounding_box))
-
-
-def subset_of_multiregion(bounding_box: BoundingBox,
-                          borders: List[Contour]) -> bool:
-    return any(is_subset_of(bounding_box, from_points(border))
-               and is_subset_of_region(bounding_box, border)
-               for border in borders)
 
 
 def contains_point(bounding_box: BoundingBox, point: Point) -> bool:
@@ -272,22 +288,6 @@ def covers_point(bounding_box: BoundingBox, point: Point) -> bool:
     x_min, x_max, y_min, y_max = bounding_box
     x, y = point
     return x_min < x < x_max and y_min < y < y_max
-
-
-def is_subset_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
-    return all(segment_in_region(segment, border) in (Relation.COMPONENT,
-                                                      Relation.ENCLOSED,
-                                                      Relation.WITHIN)
-               for segment in to_segments(bounding_box))
-
-
-def within_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
-    return (all(point_in_region(vertex, border) is Relation.WITHIN
-                for vertex in to_vertices(bounding_box))
-            and all(segments_relationship(edge, border_edge)
-                    is SegmentsRelationship.NONE
-                    for edge in to_segments(bounding_box)
-                    for border_edge in contour_to_segments(border)))
 
 
 def to_vertices(bounding_box: BoundingBox) -> Sequence[Point]:
