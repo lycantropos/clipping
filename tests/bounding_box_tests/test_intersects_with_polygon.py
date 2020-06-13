@@ -4,7 +4,8 @@ from hypothesis import given
 from orient.planar import (Relation,
                            region_in_polygon)
 
-from clipping.core.bounding_box import (intersects_with_polygon,
+from clipping.core.bounding_box import (from_points,
+                                        intersects_with_polygon,
                                         to_vertices)
 from clipping.hints import (BoundingBox,
                             Polygon)
@@ -20,10 +21,16 @@ def test_basic(polygon_with_bounding_box: Tuple[Polygon, BoundingBox]) -> None:
     assert isinstance(result, bool)
 
 
-@given(strategies.bounding_boxes)
-def test_self(bounding_box: BoundingBox) -> None:
+@given(strategies.polygons_with_bounding_boxes)
+def test_self(polygon_with_bounding_box: Tuple[Polygon, BoundingBox]) -> None:
+    polygon, bounding_box = polygon_with_bounding_box
+
+    border, holes = polygon
     assert intersects_with_polygon(bounding_box,
                                    (list(to_vertices(bounding_box)), []))
+    assert intersects_with_polygon(from_points(border), polygon)
+    assert all(intersects_with_polygon(from_points(hole), polygon)
+               for hole in holes)
 
 
 @given(strategies.polygons_with_bounding_boxes)
