@@ -1,4 +1,5 @@
 from typing import (Iterable,
+                    List,
                     Sequence)
 
 from orient.planar import (Relation,
@@ -241,17 +242,24 @@ def overlaps_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
         return True
     relations = [point_in_region(vertex, border)
                  for vertex in to_vertices(bounding_box)]
-    if (all(location is Relation.WITHIN for location in relations)
-            or is_subset_of(bounding_box, polygon_bounding_box)
-            and is_subset_of_region(bounding_box, border)):
-        return not any(is_subset_of(bounding_box, from_points(hole))
-                       and is_subset_of_region(bounding_box, hole)
-                       for hole in holes)
+    if all(relation is Relation.WITHIN for relation in relations):
+        return not subset_of_multiregion(bounding_box, holes)
+    elif any(relation is Relation.WITHIN for relation in relations):
+        return True
+    elif (is_subset_of(bounding_box, polygon_bounding_box)
+          and is_subset_of_region(bounding_box, border)):
+        return not subset_of_multiregion(bounding_box, holes)
     else:
-        return (any(location is Relation.WITHIN for location in relations)
-                or any(segment_in_region(segment, border)
-                       in (Relation.ENCLOSED, Relation.CROSS)
-                       for segment in to_segments(bounding_box)))
+        return any(segment_in_region(segment, border)
+                   in (Relation.ENCLOSED, Relation.CROSS)
+                   for segment in to_segments(bounding_box))
+
+
+def subset_of_multiregion(bounding_box: BoundingBox,
+                          borders: List[Contour]) -> bool:
+    return any(is_subset_of(bounding_box, from_points(border))
+               and is_subset_of_region(bounding_box, border)
+               for border in borders)
 
 
 def contains_point(bounding_box: BoundingBox, point: Point) -> bool:
