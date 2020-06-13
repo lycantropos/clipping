@@ -198,6 +198,9 @@ def overlaps_with_segment(bounding_box: BoundingBox,
 
 
 def is_subset_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
+    """
+    Checks if the bounding box is the subset of the region.
+    """
     return all(segment_in_region(segment, border) in (Relation.COMPONENT,
                                                       Relation.ENCLOSED,
                                                       Relation.WITHIN)
