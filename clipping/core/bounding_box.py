@@ -203,20 +203,28 @@ def intersects_with_polygon(bounding_box: BoundingBox,
     """
     border, holes = polygon
     polygon_bounding_box = from_points(border)
-    return (intersects_with(polygon_bounding_box, bounding_box)
-            and (is_subset_of(polygon_bounding_box, bounding_box)
-                 or any(contains_point(bounding_box, vertex)
-                        for vertex in border)
-                 or within_of(bounding_box, polygon_bounding_box)
-                 and within_of_region(bounding_box, border)
-                 and not any(within_of(bounding_box, from_points(hole))
-                             and within_of_region(bounding_box, hole)
-                             for hole in holes)
-                 or any(point_in_region(vertex, border)
-                        is not Relation.DISJOINT
-                        for vertex in to_vertices(bounding_box))
-                 or any(intersects_with_segment(bounding_box, border_edge)
-                        for border_edge in contour_to_segments(border))))
+    if not intersects_with(polygon_bounding_box, bounding_box):
+        return False
+    elif (is_subset_of(polygon_bounding_box, bounding_box)
+          or any(contains_point(bounding_box, vertex)
+                 for vertex in border)):
+        return True
+    relations = [point_in_region(vertex, border)
+                 for vertex in to_vertices(bounding_box)]
+    if (within_of(bounding_box, polygon_bounding_box)
+            and all(relation is Relation.WITHIN for relation in relations)
+            and all(segments_relationship(edge, border_edge)
+                    is SegmentsRelationship.NONE
+                    for edge in to_segments(bounding_box)
+                    for border_edge in contour_to_segments(border))):
+        return not any(within_of(bounding_box, from_points(hole))
+                       and within_of_region(bounding_box, hole)
+                       for hole in holes)
+    else:
+        return (any(relation is not Relation.DISJOINT
+                    for relation in relations)
+                or any(intersects_with_segment(bounding_box, border_edge)
+                       for border_edge in contour_to_segments(border)))
 
 
 def overlaps_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
