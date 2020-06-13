@@ -58,7 +58,7 @@ class Operation(ABC):
     __repr__ = generate_repr(__init__)
 
     @abstractmethod
-    def compute(self) -> Union[Multipolygon, Mix]:
+    def compute(self) -> Union[Multisegment, Mix]:
         """
         Computes result of the operation.
         """
