@@ -161,12 +161,10 @@ class Operation(ABC):
                 to_rational_multisegment(multisegment),
                 to_rational_multipolygon(multipolygon))
 
-    def process_event(self, event: Event, processed_events: List[Event],
-                      sweep_line: SweepLine) -> None:
+    def process_event(self, event: Event, sweep_line: SweepLine) -> None:
         start_x, _ = event.start
         sweep_line.move_to(start_x)
         if event.is_right_endpoint:
-            processed_events.append(event)
             event = event.complement
             if event in sweep_line:
                 above_event, below_event = (sweep_line.above(event),
@@ -175,7 +173,6 @@ class Operation(ABC):
                 if above_event is not None and below_event is not None:
                     self.detect_intersection(below_event, above_event)
         elif event not in sweep_line:
-            processed_events.append(event)
             sweep_line.add(event)
             above_event, below_event = (sweep_line.above(event),
                                         sweep_line.below(event))
@@ -237,7 +234,9 @@ class Difference(Operation):
             start_x, _ = event.start
             if start_x > left_x_max:
                 break
-            self.process_event(event, result, sweep_line)
+            self.process_event(event, sweep_line)
+            if event.is_right_endpoint:
+                result.append(event.complement)
         return result
 
 
@@ -264,7 +263,7 @@ class Intersection(Operation):
         return [event.segment for event in self.sweep() if event.in_result]
 
     def in_result(self, event: Event) -> bool:
-        return event.from_left and not event.other_in_out
+        return event.from_left and (not event.other_in_out or event.overlaps)
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -277,11 +276,13 @@ class Intersection(Operation):
             start_x, _ = event.start
             if start_x > min_max_x:
                 break
-            self.process_event(event, result, sweep_line)
+            self.process_event(event, sweep_line)
+            if not event.is_right_endpoint:
+                result.append(event)
         return result
 
 
-class CompleteIntersection(Intersection):
+class CompleteIntersection(Operation):
     __slots__ = ()
 
     def compute(self) -> Mix:
@@ -308,27 +309,31 @@ class CompleteIntersection(Intersection):
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
-            if (any(event.from_left and not (event.in_result
-                                             or event.is_right_endpoint
-                                             and event.complement.in_result)
+            if (all(not (event.in_result or event.is_right_endpoint
+                         and event.complement.in_result)
                     for event in same_start_events)
                     and not all_equal(event.from_left
                                       for event in same_start_events)):
-                no_segment_found = True
-                for event, next_event in zip(same_start_events,
-                                             same_start_events[1:]):
-                    if (event.from_left is not next_event.from_left
-                            and event.segment == next_event.segment):
-                        no_segment_found = False
-                        if not event.is_right_endpoint:
-                            border_multisegment.append(next_event.segment)
-                if (no_segment_found
-                        and all(not (event.in_result
-                                     or event.is_right_endpoint
-                                     and event.complement.in_result)
-                                for event in same_start_events)):
-                    multipoint.append(start)
+                multipoint.append(start)
         inside_multisegment = [event.segment
                                for event in events
                                if event.in_result]
         return multipoint, border_multisegment + inside_multisegment, []
+
+    def in_result(self, event: Event) -> bool:
+        return event.from_left and (not event.other_in_out or event.overlaps)
+
+    def sweep(self) -> List[Event]:
+        self.fill_queue()
+        result = []
+        sweep_line = SweepLine()
+        min_max_x = min(to_multisegment_x_max(self.multisegment),
+                        to_multipolygon_x_max(self.multipolygon))
+        while self._events_queue:
+            event = self._events_queue.pop()
+            start_x, _ = event.start
+            if start_x > min_max_x:
+                break
+            self.process_event(event, sweep_line)
+            result.append(event)
+        return result
