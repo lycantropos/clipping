@@ -12,7 +12,8 @@ from robust.linear import (SegmentsRelationship,
 from clipping.core.utils import (contour_to_segments,
                                  sort_pair,
                                  to_multipolygon_contours)
-from clipping.planar import complete_intersect_multisegment_with_multipolygon
+from clipping.planar import (complete_intersect_multisegment_with_multipolygon,
+                             intersect_multisegment_with_multipolygon)
 from tests.utils import (MultipolygonWithMultisegment,
                          is_mix,
                          reverse_multipolygon,
@@ -101,6 +102,19 @@ def test_right_absorbing_element(multipolygon_with_empty_multisegment
             empty_multisegment, multipolygon)
 
     assert not any(result)
+
+
+@given(strategies.multipolygons_with_multisegments)
+def test_connection_with_intersect(multipolygon_with_multisegment
+                                   : MultipolygonWithMultisegment) -> None:
+    multipolygon, multisegment = multipolygon_with_multisegment
+
+    result = complete_intersect_multisegment_with_multipolygon(multisegment,
+                                                               multipolygon)
+
+    _, multisegment, _ = result
+    assert multisegment == intersect_multisegment_with_multipolygon(
+            multisegment, multipolygon)
 
 
 @given(strategies.multipolygons_with_multisegments)
