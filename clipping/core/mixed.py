@@ -241,7 +241,7 @@ class Difference(Operation):
         return result
 
 
-class Intersection(Operation):
+class CompleteIntersection(Operation):
     __slots__ = ()
 
     def compute(self) -> Mix:

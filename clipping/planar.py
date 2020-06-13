@@ -245,12 +245,14 @@ def unite_multisegments(left: Multisegment,
     return _linear.Union(left, right, accurate).compute()
 
 
-def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
-                                             multipolygon: Multipolygon,
-                                             *,
-                                             accurate: bool = True) -> Mix:
+def complete_intersect_multisegment_with_multipolygon(
+        multisegment: Multisegment,
+        multipolygon: Multipolygon,
+        *,
+        accurate: bool = True) -> Mix:
     """
-    Returns intersection of multisegment with multipolygon.
+    Returns intersection of multisegment with multipolygon considering cases
+    with geometries touching each other in points/segments.
 
     Time complexity:
         ``O(segments_count * log segments_count)``
@@ -271,24 +273,25 @@ def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
         for floating point numbers.
     :returns: intersection of multisegment with multipolygon.
 
-    >>> intersect_multisegment_with_multipolygon([], [])
+    >>> complete_intersect_multisegment_with_multipolygon([], [])
     ([], [], [])
-    >>> intersect_multisegment_with_multipolygon(
+    >>> complete_intersect_multisegment_with_multipolygon(
     ...         [], [([(0, 0), (1, 0), (0, 1)], [])])
     ([], [], [])
-    >>> intersect_multisegment_with_multipolygon(
+    >>> complete_intersect_multisegment_with_multipolygon(
     ...         [((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
     ([], [], [])
-    >>> intersect_multisegment_with_multipolygon(
+    >>> complete_intersect_multisegment_with_multipolygon(
     ...         [((0, 0), (1, 0)), ((0, 1), (1, 0))],
     ...         [([(0, 0), (1, 0), (0, 1)], [])])
     ([], [((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
-    >>> intersect_multisegment_with_multipolygon(
+    >>> complete_intersect_multisegment_with_multipolygon(
     ...         [((0, 0), (1, 0)), ((1, 1), (2, 2))],
     ...         [([(0, 0), (1, 0), (1, 1), (0, 1)], [])])
     ([(1, 1)], [((0, 0), (1, 0))], [])
     """
-    return _mixed.Intersection(multisegment, multipolygon, accurate).compute()
+    return _mixed.CompleteIntersection(multisegment, multipolygon,
+                                       accurate).compute()
 
 
 def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
