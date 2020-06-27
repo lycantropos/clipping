@@ -4,6 +4,7 @@ from typing import (Iterable,
 
 from orient.planar import (Relation,
                            point_in_region,
+                           segment_in_contour,
                            segment_in_region)
 from robust.linear import (SegmentsRelationship,
                            segments_relationship)
@@ -102,7 +103,15 @@ def overlaps_with(left: BoundingBox, right: BoundingBox) -> bool:
     >>> overlaps_with((0, 2, 0, 2), (2, 4, 3, 5))
     False
     """
-    return intersects_with(left, right) and not touches_with(left, right)
+    return (intersects_with(left, right)
+            and (edges_overlap_with(left, right)
+                 if is_degenerate(left) or is_degenerate(right)
+                 else not touches_with(left, right)))
+
+
+def is_degenerate(box: BoundingBox) -> bool:
+    x_min, x_max, y_min, y_max = box
+    return x_min == x_max or y_min == y_max
 
 
 def touches_with(left: BoundingBox, right: BoundingBox) -> bool:
@@ -125,6 +134,29 @@ def touches_with(left: BoundingBox, right: BoundingBox) -> bool:
     return ((left_x_min == right_x_max or left_x_max == right_x_min)
             and (left_y_min <= right_y_max and right_y_min <= left_y_max)
             or (left_x_min <= right_x_max and right_x_min <= left_x_max)
+            and (left_y_min == right_y_max or right_y_min == left_y_max))
+
+
+def edges_overlap_with(left: BoundingBox, right: BoundingBox) -> bool:
+    """
+    Checks if bounding boxes intersect by the edge.
+
+    >>> edges_overlap_with((0, 2, 0, 2), (0, 2, 0, 2))
+    False
+    >>> edges_overlap_with((0, 2, 0, 2), (1, 3, 1, 3))
+    False
+    >>> edges_overlap_with((0, 2, 0, 2), (2, 4, 0, 2))
+    True
+    >>> edges_overlap_with((0, 2, 0, 2), (2, 4, 2, 4))
+    False
+    >>> edges_overlap_with((0, 2, 0, 2), (2, 4, 3, 5))
+    False
+    """
+    left_x_min, left_x_max, left_y_min, left_y_max = left
+    right_x_min, right_x_max, right_y_min, right_y_max = right
+    return ((left_x_min == right_x_max or left_x_max == right_x_min)
+            and (left_y_min < right_y_max and right_y_min < left_y_max)
+            or (left_x_min < right_x_max and right_x_min < left_x_max)
             and (left_y_min == right_y_max or right_y_min == left_y_max))
 
 
@@ -282,9 +314,15 @@ def overlaps_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
           and is_subset_of_region(bounding_box, border)):
         return not is_subset_of_multiregion(bounding_box, holes)
     else:
-        return any(segment_in_region(segment, border)
-                   in (Relation.ENCLOSED, Relation.CROSS)
-                   for segment in to_segments(bounding_box))
+        return (any(segment_in_region(segment, border)
+                    in (Relation.ENCLOSED, Relation.CROSS)
+                    or segment_in_contour(segment, border)
+                    in (Relation.OVERLAP, Relation.COMPONENT)
+                    for segment in to_segments(bounding_box))
+                if is_degenerate(bounding_box)
+                else any(segment_in_region(segment, border)
+                         in (Relation.ENCLOSED, Relation.CROSS)
+                         for segment in to_segments(bounding_box)))
 
 
 def contains_point(bounding_box: BoundingBox, point: Point) -> bool:
