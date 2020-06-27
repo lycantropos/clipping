@@ -1,3 +1,4 @@
+from itertools import repeat
 from typing import (Iterable,
                     List,
                     Sequence)
@@ -104,9 +105,27 @@ def overlaps_with(left: BoundingBox, right: BoundingBox) -> bool:
     False
     """
     return (intersects_with(left, right)
-            and (edges_overlap_with(left, right)
-                 if is_degenerate(left) or is_degenerate(right)
-                 else not touches_with(left, right)))
+            and (is_subset_of(left, right)
+                 or any(segments_relationship(diagonal, edge)
+                        in (SegmentsRelationship.CROSS,
+                            SegmentsRelationship.OVERLAP)
+                        for diagonal, edge in zip(repeat(to_diagonal(left)),
+                                                  to_segments(right)))
+                 if is_degenerate(left)
+                 else
+                 (is_subset_of(right, left)
+                  or any(segments_relationship(diagonal, edge)
+                         in (SegmentsRelationship.CROSS,
+                             SegmentsRelationship.OVERLAP)
+                         for diagonal, edge in zip(repeat(to_diagonal(right)),
+                                                   to_segments(left)))
+                  if is_degenerate(right)
+                  else not touches_with(left, right))))
+
+
+def to_diagonal(bounding_box: BoundingBox) -> Segment:
+    x_min, x_max, y_min, y_max = bounding_box
+    return (x_min, y_min), (x_max, y_max)
 
 
 def is_degenerate(box: BoundingBox) -> bool:
@@ -142,29 +161,6 @@ def touches_with(left: BoundingBox, right: BoundingBox) -> bool:
     return ((left_x_min == right_x_max or left_x_max == right_x_min)
             and (left_y_min <= right_y_max and right_y_min <= left_y_max)
             or (left_x_min <= right_x_max and right_x_min <= left_x_max)
-            and (left_y_min == right_y_max or right_y_min == left_y_max))
-
-
-def edges_overlap_with(left: BoundingBox, right: BoundingBox) -> bool:
-    """
-    Checks if bounding boxes intersect by the edge.
-
-    >>> edges_overlap_with((0, 2, 0, 2), (0, 2, 0, 2))
-    False
-    >>> edges_overlap_with((0, 2, 0, 2), (1, 3, 1, 3))
-    False
-    >>> edges_overlap_with((0, 2, 0, 2), (2, 4, 0, 2))
-    True
-    >>> edges_overlap_with((0, 2, 0, 2), (2, 4, 2, 4))
-    False
-    >>> edges_overlap_with((0, 2, 0, 2), (2, 4, 3, 5))
-    False
-    """
-    left_x_min, left_x_max, left_y_min, left_y_max = left
-    right_x_min, right_x_max, right_y_min, right_y_max = right
-    return ((left_x_min == right_x_max or left_x_max == right_x_min)
-            and (left_y_min < right_y_max and right_y_min < left_y_max)
-            or (left_x_min < right_x_max and right_x_min < left_x_max)
             and (left_y_min == right_y_max or right_y_min == left_y_max))
 
 
