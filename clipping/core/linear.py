@@ -178,8 +178,8 @@ class Difference(Operation):
         right_bounding_box = bounding_box.from_multisegment(self.right)
         if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
             return self.left
-        self.right = bounding_box.to_overlapping_segments(left_bounding_box,
-                                                          self.right)
+        self.right = bounding_box.to_coupled_segments(left_bounding_box,
+                                                      self.right)
         if not self.right:
             return self.left
         self.normalize_operands()
@@ -214,10 +214,10 @@ class Intersection(Operation):
         right_bounding_box = bounding_box.from_multisegment(self.right)
         if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
             return []
-        self.left = bounding_box.to_overlapping_segments(right_bounding_box,
-                                                         self.left)
-        self.right = bounding_box.to_overlapping_segments(left_bounding_box,
-                                                          self.right)
+        self.left = bounding_box.to_coupled_segments(right_bounding_box,
+                                                     self.left)
+        self.right = bounding_box.to_coupled_segments(left_bounding_box,
+                                                      self.right)
         if not (self.left and self.right):
             return []
         self.normalize_operands()

@@ -214,7 +214,7 @@ class Difference(Operation):
                 multisegment_bounding_box,
                 bounding_box.from_multipolygon(self.multipolygon)):
             return self.multisegment
-        self.multipolygon = bounding_box.to_overlapping_polygons(
+        self.multipolygon = bounding_box.to_coupled_polygons(
                 multisegment_bounding_box, self.multipolygon)
         if not self.multipolygon:
             return self.multisegment

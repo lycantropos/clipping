@@ -227,8 +227,8 @@ class Difference(Operation):
         if bounding_box.disjoint_with(
                 left_bounding_box, bounding_box.from_multipolygon(self.right)):
             return self.left
-        self.right = bounding_box.to_overlapping_polygons(left_bounding_box,
-                                                          self.right)
+        self.right = bounding_box.to_coupled_polygons(left_bounding_box,
+                                                      self.right)
         if not self.right:
             return self.left
         self.normalize_operands()
@@ -264,10 +264,10 @@ class Intersection(Operation):
         right_bounding_box = bounding_box.from_multipolygon(self.right)
         if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
             return []
-        self.left = bounding_box.to_overlapping_polygons(right_bounding_box,
-                                                         self.left)
-        self.right = bounding_box.to_overlapping_polygons(left_bounding_box,
-                                                          self.right)
+        self.left = bounding_box.to_coupled_polygons(right_bounding_box,
+                                                     self.left)
+        self.right = bounding_box.to_coupled_polygons(left_bounding_box,
+                                                      self.right)
         if not (self.left and self.right):
             return []
         self.normalize_operands()

@@ -89,38 +89,24 @@ def intersects_with(left: BoundingBox, right: BoundingBox) -> bool:
             and right_y_min <= left_y_max and left_y_min <= right_y_max)
 
 
-def overlaps_with(left: BoundingBox, right: BoundingBox) -> bool:
+def coupled_with(left: BoundingBox, right: BoundingBox) -> bool:
     """
-    Checks if bounding boxes intersect in some region.
+    Checks if bounding boxes intersect in some region or by the edge.
 
-    >>> overlaps_with((0, 2, 0, 2), (0, 2, 0, 2))
+    >>> coupled_with((0, 2, 0, 2), (0, 2, 0, 2))
     True
-    >>> overlaps_with((0, 2, 0, 2), (1, 3, 1, 3))
+    >>> coupled_with((0, 2, 0, 2), (1, 3, 1, 3))
     True
-    >>> overlaps_with((0, 2, 0, 2), (2, 4, 0, 2))
+    >>> coupled_with((0, 2, 0, 2), (2, 4, 0, 2))
+    True
+    >>> coupled_with((0, 2, 0, 2), (2, 4, 2, 4))
     False
-    >>> overlaps_with((0, 2, 0, 2), (2, 4, 2, 4))
-    False
-    >>> overlaps_with((0, 2, 0, 2), (2, 4, 3, 5))
+    >>> coupled_with((0, 2, 0, 2), (2, 4, 3, 5))
     False
     """
     return (intersects_with(left, right)
-            and (is_subset_of(left, right)
-                 or any(segments_relationship(diagonal, edge)
-                        in (SegmentsRelationship.CROSS,
-                            SegmentsRelationship.OVERLAP)
-                        for diagonal, edge in zip(repeat(to_diagonal(left)),
-                                                  to_segments(right)))
-                 if is_degenerate(left)
-                 else
-                 (is_subset_of(right, left)
-                  or any(segments_relationship(diagonal, edge)
-                         in (SegmentsRelationship.CROSS,
-                             SegmentsRelationship.OVERLAP)
-                         for diagonal, edge in zip(repeat(to_diagonal(right)),
-                                                   to_segments(left)))
-                  if is_degenerate(right)
-                  else not touches_with(left, right))))
+            and (not touches_with(left, right)
+                 or edges_overlap_with(left, right)))
 
 
 def to_diagonal(bounding_box: BoundingBox) -> Segment:
@@ -161,6 +147,29 @@ def touches_with(left: BoundingBox, right: BoundingBox) -> bool:
     return ((left_x_min == right_x_max or left_x_max == right_x_min)
             and (left_y_min <= right_y_max and right_y_min <= left_y_max)
             or (left_x_min <= right_x_max and right_x_min <= left_x_max)
+            and (left_y_min == right_y_max or right_y_min == left_y_max))
+
+
+def edges_overlap_with(left: BoundingBox, right: BoundingBox) -> bool:
+    """
+    Checks if bounding boxes intersect by the edge.
+
+    >>> edges_overlap_with((0, 2, 0, 2), (0, 2, 0, 2))
+    False
+    >>> edges_overlap_with((0, 2, 0, 2), (1, 3, 1, 3))
+    False
+    >>> edges_overlap_with((0, 2, 0, 2), (2, 4, 0, 2))
+    True
+    >>> edges_overlap_with((0, 2, 0, 2), (2, 4, 2, 4))
+    False
+    >>> edges_overlap_with((0, 2, 0, 2), (2, 4, 3, 5))
+    False
+    """
+    left_x_min, left_x_max, left_y_min, left_y_max = left
+    right_x_min, right_x_max, right_y_min, right_y_max = right
+    return ((left_x_min == right_x_max or left_x_max == right_x_min)
+            and (left_y_min < right_y_max and right_y_min < left_y_max)
+            or (left_x_min < right_x_max and right_x_min < left_x_max)
             and (left_y_min == right_y_max or right_y_min == left_y_max))
 
 
@@ -219,13 +228,13 @@ def intersects_with_segment(bounding_box: BoundingBox,
                         for edge in to_segments(bounding_box))))
 
 
-def overlaps_with_segment(bounding_box: BoundingBox,
-                          segment: Segment) -> bool:
+def coupled_with_segment(bounding_box: BoundingBox,
+                         segment: Segment) -> bool:
     """
     Checks if the bounding box intersects the segment at more than one point.
     """
     segment_bounding_box = from_points(segment)
-    return (intersects_with(segment_bounding_box, bounding_box)
+    return (coupled_with(segment_bounding_box, bounding_box)
             and (is_subset_of(segment_bounding_box, bounding_box)
                  or any(segments_relationship(edge, segment)
                         not in (SegmentsRelationship.TOUCH,
@@ -296,13 +305,14 @@ def intersects_with_polygon(bounding_box: BoundingBox,
                        for border_edge in contour_to_segments(border)))
 
 
-def overlaps_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
+def coupled_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
     """
-    Checks if the bounding box intersects the polygon in some region.
+    Checks if the bounding box intersects the polygon in some region
+    or by the edge.
     """
     border, holes = polygon
     polygon_bounding_box = from_points(border)
-    if not overlaps_with(polygon_bounding_box, bounding_box):
+    if not coupled_with(polygon_bounding_box, bounding_box):
         return False
     elif (is_subset_of(polygon_bounding_box, bounding_box)
           or any(covers_point(bounding_box, vertex)
@@ -318,15 +328,10 @@ def overlaps_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
           and is_subset_of_region(bounding_box, border)):
         return not is_subset_of_multiregion(bounding_box, holes)
     else:
-        return (any(segment_in_region(segment, border)
-                    in (Relation.ENCLOSED, Relation.CROSS)
-                    or segment_in_contour(segment, border)
-                    in (Relation.OVERLAP, Relation.COMPONENT)
-                    for segment in to_segments(bounding_box))
-                if is_degenerate(bounding_box)
-                else any(segment_in_region(segment, border)
-                         in (Relation.ENCLOSED, Relation.CROSS)
-                         for segment in to_segments(bounding_box)))
+        return any(segment_in_contour(segment, border) is Relation.OVERLAP
+                   or segment_in_region(segment, border)
+                   in (Relation.CROSS, Relation.COMPONENT, Relation.ENCLOSED)
+                   for segment in to_segments(bounding_box))
 
 
 def contains_point(bounding_box: BoundingBox, point: Point) -> bool:
@@ -361,11 +366,11 @@ def to_intersecting_segments(bounding_box: BoundingBox,
             if intersects_with_segment(bounding_box, segment)]
 
 
-def to_overlapping_segments(bounding_box: BoundingBox,
-                            multisegment: Multisegment) -> Multisegment:
+def to_coupled_segments(bounding_box: BoundingBox,
+                        multisegment: Multisegment) -> Multisegment:
     return [segment
             for segment in multisegment
-            if overlaps_with_segment(bounding_box, segment)]
+            if coupled_with_segment(bounding_box, segment)]
 
 
 def to_intersecting_polygons(bounding_box: BoundingBox,
@@ -375,8 +380,8 @@ def to_intersecting_polygons(bounding_box: BoundingBox,
             if intersects_with_polygon(bounding_box, polygon)]
 
 
-def to_overlapping_polygons(bounding_box: BoundingBox,
-                            multipolygon: Multipolygon) -> Multipolygon:
+def to_coupled_polygons(bounding_box: BoundingBox,
+                        multipolygon: Multipolygon) -> Multipolygon:
     return [polygon
             for polygon in multipolygon
-            if overlaps_with_polygon(bounding_box, polygon)]
+            if coupled_with_polygon(bounding_box, polygon)]
