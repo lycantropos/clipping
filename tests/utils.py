@@ -15,7 +15,8 @@ from robust.angular import (Orientation,
                             orientation)
 
 from clipping.core.hints import BoundingBox
-from clipping.core.utils import (to_contour_base,
+from clipping.core.utils import (sort_pair,
+                                 to_contour_base,
                                  to_first_boundary_vertex)
 from clipping.hints import (Contour,
                             Mix,
@@ -84,6 +85,7 @@ def are_multisegments_similar(left: Multisegment, right: Multisegment) -> bool:
 def are_multisegments_equivalent(left: Multisegment,
                                  right: Multisegment) -> bool:
     return (not (left or right)
+            or sorted(map(sort_pair, left)) == sorted(map(sort_pair, right))
             or multisegment_in_multisegment(left, right) is Relation.EQUAL)
 
 
