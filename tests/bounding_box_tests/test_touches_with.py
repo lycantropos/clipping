@@ -18,7 +18,7 @@ def test_basic(bounding_boxes_pair: BoundingBoxesPair) -> None:
     assert isinstance(result, bool)
 
 
-@given(strategies.bounding_boxes)
+@given(strategies.non_degenerate_bounding_boxes)
 def test_irreflexivity(bounding_box: BoundingBox) -> None:
     assert not touches_with(bounding_box, bounding_box)
 

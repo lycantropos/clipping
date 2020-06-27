@@ -35,8 +35,11 @@ def to_degenerate_bounding_boxes(coordinates: Strategy[Coordinate]
                                 unique_coordinates_pairs, coordinates))
 
 
-bounding_boxes = (coordinates_strategies.flatmap(to_degenerate_bounding_boxes)
-                  | coordinates_strategies.flatmap(planar.bounding_boxes))
+non_degenerate_bounding_boxes = (coordinates_strategies
+                                 .flatmap(planar.bounding_boxes))
+degenerate_bounding_boxes = (coordinates_strategies
+                             .flatmap(to_degenerate_bounding_boxes))
+bounding_boxes = degenerate_bounding_boxes | non_degenerate_bounding_boxes
 
 
 def to_contours_with_bounding_boxes(coordinates: Strategy[Coordinate]
