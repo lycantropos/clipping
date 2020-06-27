@@ -110,6 +110,14 @@ def overlaps_with(left: BoundingBox, right: BoundingBox) -> bool:
 
 
 def is_degenerate(box: BoundingBox) -> bool:
+    """
+    Checks if bounding box is degenerate.
+
+    >>> is_degenerate((0, 2, 0, 2))
+    False
+    >>> is_degenerate((0, 0, 0, 2))
+    True
+    """
     x_min, x_max, y_min, y_max = box
     return x_min == x_max or y_min == y_max
 
