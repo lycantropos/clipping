@@ -6,7 +6,6 @@ from typing import (List,
 Coordinate = Real
 Base = Type[Coordinate]
 Point = Tuple[Coordinate, Coordinate]
-BoundingBox = Tuple[Coordinate, Coordinate, Coordinate, Coordinate]
 Segment = Tuple[Point, Point]
 Contour = List[Point]
 Polygon = Tuple[Contour, List[Contour]]

@@ -6,8 +6,8 @@ from orient.planar import (Relation,
 
 from clipping.core.bounding_box import (is_subset_of_region,
                                         to_vertices)
-from clipping.hints import (BoundingBox,
-                            Contour)
+from clipping.core.hints import BoundingBox
+from clipping.hints import Contour
 from . import strategies
 
 

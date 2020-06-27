@@ -9,13 +9,13 @@ from orient.planar import (Relation,
 from robust.linear import (SegmentsRelationship,
                            segments_relationship)
 
-from clipping.hints import (BoundingBox,
-                            Contour,
+from clipping.hints import (Contour,
                             Multipolygon,
                             Multisegment,
                             Point,
                             Polygon,
                             Segment)
+from .hints import BoundingBox
 from .utils import (contour_to_segments,
                     flatten)
 

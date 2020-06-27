@@ -3,8 +3,8 @@ from typing import Tuple
 from hypothesis import strategies
 from hypothesis_geometry import planar
 
-from clipping.hints import (BoundingBox,
-                            Contour,
+from clipping.core.hints import BoundingBox
+from clipping.hints import (Contour,
                             Coordinate,
                             Polygon)
 from tests.strategies import coordinates_strategies

@@ -14,10 +14,10 @@ from orient.planar import (Relation,
 from robust.angular import (Orientation,
                             orientation)
 
+from clipping.core.hints import BoundingBox
 from clipping.core.utils import (to_contour_base,
                                  to_first_boundary_vertex)
-from clipping.hints import (BoundingBox,
-                            Contour,
+from clipping.hints import (Contour,
                             Mix,
                             Multipoint,
                             Multipolygon,

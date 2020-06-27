@@ -4,7 +4,7 @@ from orient.planar import (Relation,
 
 from clipping.core.bounding_box import (to_vertices,
                                         touches_with)
-from clipping.hints import BoundingBox
+from clipping.core.hints import BoundingBox
 from tests.utils import BoundingBoxesPair
 from . import strategies
 

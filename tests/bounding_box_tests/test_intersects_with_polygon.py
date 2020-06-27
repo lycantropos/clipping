@@ -7,8 +7,8 @@ from orient.planar import (Relation,
 from clipping.core.bounding_box import (from_points,
                                         intersects_with_polygon,
                                         to_vertices)
-from clipping.hints import (BoundingBox,
-                            Polygon)
+from clipping.core.hints import BoundingBox
+from clipping.hints import Polygon
 from . import strategies
 
 
