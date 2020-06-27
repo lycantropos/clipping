@@ -4,6 +4,7 @@ from hypothesis import strategies
 from hypothesis_geometry import planar
 
 from clipping.core.hints import BoundingBox
+from clipping.core.utils import sort_pair
 from clipping.hints import (Contour,
                             Coordinate,
                             Polygon)
@@ -16,19 +17,22 @@ from tests.utils import (Strategy,
 def to_degenerate_bounding_boxes(coordinates: Strategy[Coordinate]
                                  ) -> Strategy[BoundingBox]:
     def to_x_degenerate_bounding_box(x: Coordinate,
-                                     y_min: Coordinate,
-                                     y_max: Coordinate) -> BoundingBox:
-        return x, x, y_min, y_max
+                                     ys: Tuple[Coordinate, Coordinate]
+                                     ) -> BoundingBox:
+        return (x, x, *sort_pair(ys))
 
-    def to_y_degenerate_bounding_box(x_min: Coordinate,
-                                     x_max: Coordinate,
+    def to_y_degenerate_bounding_box(xs: Tuple[Coordinate, Coordinate],
                                      y: Coordinate) -> BoundingBox:
-        return y, y, x_min, x_max
+        return (y, y, *sort_pair(xs))
 
+    unique_coordinates_pairs = strategies.lists(coordinates,
+                                                min_size=2,
+                                                max_size=2,
+                                                unique=True)
     return (strategies.builds(to_x_degenerate_bounding_box, coordinates,
-                              coordinates, coordinates)
-            | strategies.builds(to_y_degenerate_bounding_box, coordinates,
-                                coordinates, coordinates))
+                              unique_coordinates_pairs)
+            | strategies.builds(to_y_degenerate_bounding_box,
+                                unique_coordinates_pairs, coordinates))
 
 
 bounding_boxes = (coordinates_strategies.flatmap(to_degenerate_bounding_boxes)
