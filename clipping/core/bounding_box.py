@@ -1,4 +1,3 @@
-from itertools import repeat
 from typing import (Iterable,
                     List,
                     Sequence)

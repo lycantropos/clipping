@@ -1,5 +1,3 @@
-from fractions import Fraction
-
 from hypothesis import given
 
 from clipping.planar import (intersect_multisegments,
