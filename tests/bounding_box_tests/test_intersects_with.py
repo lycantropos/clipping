@@ -2,9 +2,9 @@ from hypothesis import given
 from orient.planar import (Relation,
                            region_in_region)
 
-from clipping.core.bounding_box import (disjoint_with,
+from clipping.core.bounding_box import (coupled_with,
+                                        disjoint_with,
                                         intersects_with,
-                                        overlaps_with,
                                         to_vertices,
                                         touches_with)
 from clipping.core.hints import BoundingBox
@@ -42,7 +42,7 @@ def test_equivalents(bounding_boxes_pair: BoundingBoxesPair) -> None:
 
     assert result is not disjoint_with(left_bounding_box, right_bounding_box)
     assert result is (touches_with(left_bounding_box, right_bounding_box)
-                      or overlaps_with(left_bounding_box, right_bounding_box))
+                      or coupled_with(left_bounding_box, right_bounding_box))
     assert result is (region_in_region(to_vertices(left_bounding_box),
                                        to_vertices(right_bounding_box))
                       is not Relation.DISJOINT)
