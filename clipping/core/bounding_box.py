@@ -301,18 +301,19 @@ def coupled_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
         return True
     relations = [point_in_region(vertex, border)
                  for vertex in to_vertices(bounding_box)]
-    if all(relation is Relation.WITHIN for relation in relations):
-        return not is_subset_of_multiregion(bounding_box, holes)
-    elif any(relation is Relation.WITHIN for relation in relations):
-        return True
-    elif (is_subset_of(bounding_box, polygon_bounding_box)
-          and is_subset_of_region(bounding_box, border)):
-        return not is_subset_of_multiregion(bounding_box, holes)
+    if any(relation is Relation.WITHIN for relation in relations):
+        return (not all(relation is Relation.WITHIN for relation in relations)
+                or not is_subset_of_multiregion(bounding_box, holes))
     else:
-        return any(segment_in_contour(segment, border) is Relation.OVERLAP
-                   or segment_in_region(segment, border)
-                   in (Relation.CROSS, Relation.COMPONENT, Relation.ENCLOSED)
-                   for segment in to_segments(bounding_box))
+        return (not is_subset_of_multiregion(bounding_box, holes)
+                if (is_subset_of(bounding_box, polygon_bounding_box)
+                    and is_subset_of_region(bounding_box, border))
+                else any(segment_in_contour(segment, border)
+                         is Relation.OVERLAP
+                         or segment_in_region(segment, border)
+                         in (Relation.CROSS, Relation.COMPONENT,
+                             Relation.ENCLOSED)
+                         for segment in to_segments(bounding_box)))
 
 
 def contains_point(bounding_box: BoundingBox, point: Point) -> bool:
