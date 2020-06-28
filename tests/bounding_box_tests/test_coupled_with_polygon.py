@@ -2,6 +2,7 @@ from typing import Tuple
 
 from hypothesis import given
 from orient.planar import (Relation,
+                           contour_in_contour,
                            region_in_polygon)
 
 from clipping.core.bounding_box import (coupled_with_polygon,
@@ -10,6 +11,7 @@ from clipping.core.bounding_box import (coupled_with_polygon,
                                         to_vertices)
 from clipping.core.hints import BoundingBox
 from clipping.hints import Polygon
+from tests.utils import equivalence
 from . import strategies
 
 
@@ -42,10 +44,19 @@ def test_equivalents(polygon_with_bounding_box: Tuple[Polygon, BoundingBox]
 
     result = coupled_with_polygon(bounding_box, polygon)
 
-    assert result is (region_in_polygon(to_vertices(bounding_box), polygon)
-                      in (Relation.OVERLAP,
-                          Relation.COVER,
-                          Relation.ENCLOSES,
-                          Relation.EQUAL,
-                          Relation.ENCLOSED,
-                          Relation.WITHIN))
+    border, holes = polygon
+    bounding_box_vertices = to_vertices(bounding_box)
+    relation = region_in_polygon(bounding_box_vertices, polygon)
+    assert equivalence(result,
+                       relation in (Relation.OVERLAP,
+                                    Relation.COVER,
+                                    Relation.ENCLOSES,
+                                    Relation.EQUAL,
+                                    Relation.ENCLOSED,
+                                    Relation.WITHIN)
+                       or relation is Relation.TOUCH
+                       and (contour_in_contour(bounding_box_vertices, border)
+                            is Relation.OVERLAP
+                            or any(contour_in_contour(bounding_box_vertices,
+                                                      hole) is Relation.OVERLAP
+                                   for hole in holes)))
