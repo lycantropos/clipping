@@ -36,6 +36,7 @@ def symmetric_subtract_multipolygons(left: Multipolygon,
 
 def unite_multipolygons(subject: Multipolygon,
                         clip: Multipolygon,
+                        *,
                         left_fill: Fill = Fill.EVEN_ODD,
                         right_fill: Fill = Fill.EVEN_ODD,
                         accurate: bool = True) -> Multipolygon:
