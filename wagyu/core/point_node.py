@@ -5,7 +5,8 @@ from typing import (Iterator,
 
 from reprit.base import generate_repr
 
-from wagyu.hints import Coordinate, Point
+from wagyu.hints import (Coordinate,
+                         Point)
 from .bounding_box import BoundingBox
 from .edge import Edge
 from .enums import PointInPolygonResult
