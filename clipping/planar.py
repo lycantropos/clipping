@@ -35,13 +35,49 @@ such that any pair of them do not cross/overlap each other.
 **Mix** --- triplet of disjoint/touching multipoint, multisegment
 and multipolygon.
 """
+from itertools import groupby as _groupby
+from typing import List
 
 from .core import (linear as _linear,
                    mixed as _mixed,
                    shaped as _shaped)
 from .hints import (Mix,
                     Multipolygon,
-                    Multisegment)
+                    Multisegment,
+                    Segment)
+
+
+def segments_to_multisegment(segments: List[Segment],
+                             *,
+                             accurate: bool = True) -> Multisegment:
+    """
+    Returns multisegment from given segments.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = segments_count + intersections_count``,
+    ``segments_count = len(segments)``,
+    ``intersections_count`` --- number of intersections between segments.
+
+    :param segments: target segments.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: multisegment from segments.
+
+    >>> segments_to_multisegment([])
+    []
+    >>> segments_to_multisegment([((0, 0), (1, 0)), ((0, 1), (1, 0))])
+    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
+    >>> segments_to_multisegment([((0, 0), (2, 0)), ((1, 0), (3, 0))])
+    [((0, 0), (1, 0)), ((1, 0), (2, 0)), ((2, 0), (3, 0))]
+    """
+    return sorted(segment
+                  for segment, _ in _groupby(_linear.merge_segments(segments,
+                                                                    accurate)))
 
 
 def complete_intersect_multisegments(left: Multisegment,

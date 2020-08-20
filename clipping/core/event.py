@@ -3,15 +3,35 @@ from typing import (Optional,
                     TypeVar)
 
 from reprit.base import generate_repr
-from robust.linear import segments_intersection
 
-from clipping.hints import (Coordinate,
-                            Point,
+from clipping.hints import (Point,
                             Segment)
 from .enums import EdgeType
 
 
-class LinearEvent:
+class NaryEvent:
+    __slots__ = 'is_right_endpoint', 'start', 'complement'
+
+    def __init__(self,
+                 is_right_endpoint: bool,
+                 start: Point,
+                 complement: Optional['Event']) -> None:
+        self.is_right_endpoint = is_right_endpoint
+        self.start = start
+        self.complement = complement
+
+    __repr__ = recursive_repr()(generate_repr(__init__))
+
+    @property
+    def end(self) -> Point:
+        return self.complement.start
+
+    @property
+    def segment(self) -> Segment:
+        return self.start, self.end
+
+
+class BinaryEvent:
     __slots__ = 'is_right_endpoint', 'start', 'complement', 'from_left'
 
     def __init__(self,
@@ -37,32 +57,11 @@ class LinearEvent:
         return start_x == end_x
 
     @property
-    def is_horizontal(self) -> bool:
-        _, start_y = self.start
-        _, end_y = self.end
-        return start_y == end_y
-
-    @property
     def segment(self) -> Segment:
         return self.start, self.end
 
-    def y_at(self, x: Coordinate) -> Coordinate:
-        if self.is_vertical or self.is_horizontal:
-            _, start_y = self.start
-            return start_y
-        else:
-            start_x, start_y = self.start
-            if x == start_x:
-                return start_y
-            end_x, end_y = self.end
-            if x == end_x:
-                return end_y
-            _, result = segments_intersection(self.segment,
-                                              ((x, start_y), (x, end_y)))
-            return result
 
-
-class MixedEvent(LinearEvent):
+class MixedEvent(BinaryEvent):
     __slots__ = 'in_out', 'other_in_out', 'overlaps', 'in_result'
 
     def __init__(self,
@@ -83,7 +82,7 @@ class MixedEvent(LinearEvent):
     __repr__ = recursive_repr()(generate_repr(__init__))
 
 
-class ShapedEvent(LinearEvent):
+class ShapedEvent(BinaryEvent):
     __slots__ = ('edge_type', 'in_out', 'other_in_out', 'in_result',
                  'result_in_out', 'position', 'contour_id',
                  'below_in_result_event')
@@ -115,4 +114,4 @@ class ShapedEvent(LinearEvent):
     __repr__ = recursive_repr()(generate_repr(__init__))
 
 
-Event = TypeVar('Event', LinearEvent, MixedEvent, ShapedEvent)
+Event = TypeVar('Event', NaryEvent, BinaryEvent, MixedEvent, ShapedEvent)

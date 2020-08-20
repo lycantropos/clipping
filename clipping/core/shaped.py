@@ -26,9 +26,9 @@ from clipping.hints import (Contour,
 from . import bounding_box
 from .enums import EdgeType
 from .event import ShapedEvent as Event
-from .events_queue import (EventsQueue,
-                           EventsQueueKey)
-from .sweep_line import SweepLine
+from .events_queue import (BinaryEventsQueue as EventsQueue,
+                           BinaryEventsQueueKey as EventsQueueKey)
+from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     contour_to_segments,
                     sort_pair,
@@ -103,7 +103,6 @@ class Operation(ABC):
                 start_min, start_max = event, below_event
             else:
                 start_min, start_max = below_event, event
-
             ends_equal = event.end == below_event.end
             if ends_equal:
                 end_min = end_max = None
@@ -112,7 +111,6 @@ class Operation(ABC):
                 end_min, end_max = event.complement, below_event.complement
             else:
                 end_min, end_max = below_event.complement, event.complement
-
             if starts_equal:
                 # both line segments are equal or share the left endpoint
                 below_event.edge_type = EdgeType.NON_CONTRIBUTING

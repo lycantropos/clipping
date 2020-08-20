@@ -20,9 +20,9 @@ from clipping.hints import (Mix,
                             Segment)
 from . import bounding_box
 from .event import MixedEvent as Event
-from .events_queue import (EventsQueue,
-                           EventsQueueKey)
-from .sweep_line import SweepLine
+from .events_queue import (BinaryEventsQueue as EventsQueue,
+                           BinaryEventsQueueKey as EventsQueueKey)
+from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     contour_to_segments,
                     sort_pair,
