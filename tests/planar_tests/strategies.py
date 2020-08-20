@@ -1,21 +1,42 @@
-from typing import Tuple
+from itertools import combinations
+from typing import (List,
+                    Tuple)
 
 from hypothesis import strategies
 from hypothesis_geometry import planar
 
 from clipping.hints import (Coordinate,
                             Multipolygon,
-                            Multisegment)
+                            Multisegment,
+                            Point,
+                            Segment)
 from tests.strategies import (coordinates_strategies,
                               rational_coordinates_strategies)
 from tests.utils import (Strategy,
                          to_pairs,
                          to_triplets)
 
-rational_segments_lists = (rational_coordinates_strategies.map(planar.segments)
-                           .flatmap(strategies.lists))
-segments_lists = (coordinates_strategies.map(planar.segments)
-                  .flatmap(strategies.lists))
+
+def points_to_nets(points: Strategy[Point]) -> Strategy[List[Segment]]:
+    def to_net(points_list: List[Point]) -> List[Segment]:
+        return list(combinations(points_list, 2))
+
+    return (strategies.lists(points,
+                             min_size=2,
+                             max_size=8,
+                             unique=True)
+            .map(to_net))
+
+
+rational_segments_lists = (
+        (rational_coordinates_strategies.map(planar.segments)
+         .flatmap(strategies.lists))
+        | (rational_coordinates_strategies.map(planar.points)
+           .flatmap(points_to_nets)))
+segments_lists = ((coordinates_strategies.map(planar.segments)
+                   .flatmap(strategies.lists))
+                  | (coordinates_strategies.map(planar.points)
+                     .flatmap(points_to_nets)))
 empty_multipolygons = empty_multisegments = strategies.builds(list)
 multipolygons = coordinates_strategies.flatmap(planar.multipolygons)
 multisegments = coordinates_strategies.flatmap(planar.multisegments)
