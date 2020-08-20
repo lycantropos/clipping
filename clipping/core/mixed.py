@@ -78,7 +78,7 @@ class Operation(ABC):
                                   else below_event.in_out)
         event.in_result = self.in_result(event)
 
-    def detect_intersection(self, below_event: Event, event: Event) -> int:
+    def detect_intersection(self, below_event: Event, event: Event) -> bool:
         below_segment, segment = below_event.segment, event.segment
         relationship = segments_relationship(below_segment, segment)
         if relationship is SegmentsRelationship.OVERLAP:
