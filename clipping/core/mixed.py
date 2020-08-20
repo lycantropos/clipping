@@ -162,8 +162,6 @@ class Operation(ABC):
                 to_rational_multipolygon(multipolygon))
 
     def process_event(self, event: Event, sweep_line: SweepLine) -> None:
-        start_x, _ = event.start
-        sweep_line.move_to(start_x)
         if event.is_right_endpoint:
             event = event.complement
             if event in sweep_line:

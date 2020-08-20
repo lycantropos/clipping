@@ -173,8 +173,6 @@ class Operation(ABC):
 
     def process_event(self, event: Event, processed_events: List[Event],
                       sweep_line: SweepLine) -> None:
-        start_x, _ = event.start
-        sweep_line.move_to(start_x)
         if event.is_right_endpoint:
             processed_events.append(event)
             event = event.complement
