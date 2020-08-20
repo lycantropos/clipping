@@ -12,6 +12,10 @@ from tests.utils import (Strategy,
                          to_pairs,
                          to_triplets)
 
+rational_segments_lists = (rational_coordinates_strategies.map(planar.segments)
+                           .flatmap(strategies.lists))
+segments_lists = (coordinates_strategies.map(planar.segments)
+                  .flatmap(strategies.lists))
 empty_multipolygons = empty_multisegments = strategies.builds(list)
 multipolygons = coordinates_strategies.flatmap(planar.multipolygons)
 multisegments = coordinates_strategies.flatmap(planar.multisegments)
