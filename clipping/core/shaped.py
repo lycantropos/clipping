@@ -421,6 +421,7 @@ def _events_to_contours(events: List[Event],
     depths, parents = defaultdict(int), {}
     processed = [False] * len(events)
     contours = []
+    connectivity = _to_events_connectivity(events)
     for index, event in enumerate(events):
         if processed[index]:
             continue
@@ -428,7 +429,7 @@ def _events_to_contours(events: List[Event],
         initial = event.start
         contour = [initial]
         steps = [event]
-        while position >= index:
+        while True:
             step = events[position]
             if step.end == initial:
                 break
@@ -437,8 +438,10 @@ def _events_to_contours(events: List[Event],
             position = step.position
             processed[position] = True
             contour.append(events[position].start)
-            position = _to_next_position(position, events, processed, index)
-        position = index if position == -1 else position
+            position = _to_next_position(position, processed, connectivity)
+            if position is None:
+                break
+        position = index if position is None else position
         last_event = events[position]
         processed[position] = processed[last_event.position] = True
         _shrink_collinear_vertices(contour)
@@ -476,6 +479,39 @@ def _events_to_contours(events: List[Event],
     return contours
 
 
+def _to_events_connectivity(events: List[Event]) -> List[int]:
+    events_count = len(events)
+    result = [0] * events_count
+    index = 0
+    while index < events_count:
+        current_start = events[index].start
+        right_start_index = index
+        while (index < events_count
+               and events[index].start == current_start
+               and events[index].is_right_endpoint):
+            index += 1
+        right_stop_index = index - 1
+        left_start_index = index
+        while index < events_count and events[index].start == current_start:
+            index += 1
+        left_stop_index = index - 1
+        has_right_events = right_stop_index >= right_start_index
+        has_left_events = left_stop_index >= left_start_index
+        if has_right_events:
+            result[right_start_index:right_stop_index] = range(
+                    right_start_index + 1, right_stop_index + 1)
+            result[right_stop_index] = (left_stop_index
+                                        if has_left_events
+                                        else right_start_index)
+        if has_left_events:
+            result[left_start_index] = (right_start_index
+                                        if has_right_events
+                                        else left_stop_index)
+            result[left_start_index + 1:left_stop_index + 1] = range(
+                    left_start_index, left_stop_index)
+    return result
+
+
 def _shrink_collinear_vertices(contour: Contour) -> None:
     self_intersections, visited = set(), set()
     visit = visited.add
@@ -504,17 +540,12 @@ def _shrink_collinear_vertices(contour: Contour) -> None:
 
 
 def _to_next_position(position: int,
-                      events: List[Event],
                       processed: List[bool],
-                      original_index: int) -> int:
-    point = events[position].start
-    for result in range(position + 1, len(events)):
-        if events[result].start != point:
-            break
-        elif not processed[result]:
-            return result
-    result = position - 1
-    for result in range(result, original_index - 1, -1):
-        if not processed[result]:
-            break
-    return result
+                      connectivity: List[int]) -> Optional[int]:
+    start_position = position
+    while True:
+        position = connectivity[position]
+        if position == start_position:
+            return None
+        elif not processed[position]:
+            return position
