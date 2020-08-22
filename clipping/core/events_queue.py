@@ -77,7 +77,9 @@ class NaryEventsQueueKey:
         else:
             # the lowest segment is processed first
             return (orientation(event.start, other_event.end, event.end)
-                    is Orientation.COUNTERCLOCKWISE)
+                    is (Orientation.CLOCKWISE
+                        if event.is_right_endpoint
+                        else Orientation.COUNTERCLOCKWISE))
 
 
 BinaryEventsQueue = cast(Callable[[], PriorityQueue[BinaryEvent]],
