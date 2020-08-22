@@ -514,14 +514,14 @@ def _to_next_position(position: int,
                       events: List[Event],
                       processed: List[bool],
                       original_index: int) -> int:
-    result = position + 1
     point = events[position].start
-    while result < len(events) and events[result].start == point:
-        if not processed[result]:
+    for result in range(position + 1, len(events)):
+        if events[result].start != point:
+            break
+        elif not processed[result]:
             return result
-        else:
-            result += 1
     result = position - 1
-    while result >= original_index and processed[result]:
-        result -= 1
+    for result in range(result, original_index - 1, -1):
+        if not processed[result]:
+            break
     return result
