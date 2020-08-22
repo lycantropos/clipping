@@ -39,12 +39,16 @@ class BinaryEventsQueueKey:
         # same start, both events are left endpoints
         # or both are right endpoints
         else:
-            other_end_orientation = orientation(event.start, other_event.end,
-                                                event.end)
+            other_end_orientation = orientation(event.end, event.start,
+                                                other_event.end)
             # the lowest segment is processed first
-            return (event.from_left
+            return (other_event.from_left
                     if other_end_orientation is Orientation.COLLINEAR
-                    else other_end_orientation is Orientation.COUNTERCLOCKWISE)
+                    else (other_end_orientation
+                          # the lowest segment is processed first
+                          is (Orientation.CLOCKWISE
+                              if event.is_right_endpoint
+                              else Orientation.COUNTERCLOCKWISE)))
 
 
 class NaryEventsQueueKey:
