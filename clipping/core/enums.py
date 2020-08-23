@@ -3,8 +3,7 @@ from enum import (IntEnum,
 
 
 @unique
-class EdgeType(IntEnum):
-    NORMAL = 0
-    NON_CONTRIBUTING = 1
-    SAME_TRANSITION = 2
-    DIFFERENT_TRANSITION = 3
+class OverlapKind(IntEnum):
+    NONE = 0
+    SAME_ORIENTATION = 1
+    DIFFERENT_ORIENTATION = 2

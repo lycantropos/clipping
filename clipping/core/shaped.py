@@ -5,6 +5,7 @@ from itertools import groupby
 from numbers import Rational
 from operator import attrgetter
 from typing import (DefaultDict,
+                    Iterable,
                     List,
                     Optional,
                     Union as Union_)
@@ -24,17 +25,15 @@ from clipping.hints import (Contour,
                             Point,
                             Segment)
 from . import bounding_box
-from .enums import EdgeType
+from .enums import OverlapKind
 from .event import ShapedEvent as Event
 from .events_queue import (BinaryEventsQueue as EventsQueue,
                            BinaryEventsQueueKey as EventsQueueKey)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
-                    contour_to_segments,
-                    sort_pair,
+                    polygon_to_oriented_segments,
                     to_first_boundary_vertex,
                     to_multipolygon_base,
-                    to_multipolygon_contours,
                     to_multipolygon_x_max,
                     to_rational_multipolygon)
 
@@ -70,18 +69,11 @@ class Operation(ABC):
 
     def compute_fields(self, event: Event, below_event: Optional[Event]
                        ) -> None:
-        if below_event is None:
-            event.in_out = False
-            event.other_in_out = True
-        else:
-            if event.from_left is below_event.from_left:
-                event.in_out = not below_event.in_out
-                event.other_in_out = below_event.other_in_out
-            else:
-                event.in_out = not below_event.other_in_out
-                event.other_in_out = (not below_event.in_out
-                                      if below_event.is_vertical
-                                      else below_event.in_out)
+        if below_event is not None:
+            event.other_inside_on_left = (below_event.other_inside_on_left
+                                          if (event.from_left
+                                              is below_event.from_left)
+                                          else below_event.inside_on_left)
             event.below_in_result_event = (below_event.below_in_result_event
                                            if (not self.in_result(below_event)
                                                or below_event.is_vertical)
@@ -113,10 +105,10 @@ class Operation(ABC):
                 end_min, end_max = below_event.complement, event.complement
             if starts_equal:
                 # both line segments are equal or share the left endpoint
-                below_event.edge_type = EdgeType.NON_CONTRIBUTING
-                event.edge_type = (EdgeType.SAME_TRANSITION
-                                   if event.in_out is below_event.in_out
-                                   else EdgeType.DIFFERENT_TRANSITION)
+                below_event.overlap_kind = event.overlap_kind = (
+                    OverlapKind.SAME_ORIENTATION
+                    if event.inside_on_left is below_event.inside_on_left
+                    else OverlapKind.DIFFERENT_ORIENTATION)
                 if not ends_equal:
                     self.divide_segment(end_max.complement, end_min.start)
                 return True
@@ -143,19 +135,20 @@ class Operation(ABC):
         return False
 
     def divide_segment(self, event: Event, point: Point) -> None:
-        left_event = Event(False, point, event.complement, event.from_left)
-        right_event = Event(True, point, event, event.from_left)
+        left_event = Event(False, point, event.complement, event.from_left,
+                           event.inside_on_left)
+        right_event = Event(True, point, event, event.from_left,
+                            event.inside_on_left)
         event.complement.complement, event.complement = left_event, right_event
         self._events_queue.push(left_event)
         self._events_queue.push(right_event)
 
     def fill_queue(self) -> None:
-        for contour in to_multipolygon_contours(self.left):
-            for segment in contour_to_segments(contour):
-                self.register_segment(segment, True)
-        for contour in to_multipolygon_contours(self.right):
-            for segment in contour_to_segments(contour):
-                self.register_segment(segment, False)
+        for polygon in self.left:
+            self.register_segments(polygon_to_oriented_segments(polygon), True)
+        for polygon in self.right:
+            self.register_segments(polygon_to_oriented_segments(polygon),
+                                   False)
 
     @abstractmethod
     def in_result(self, event: Event) -> bool:
@@ -196,13 +189,21 @@ class Operation(ABC):
                 self.compute_fields(below_event, below_below_event)
                 self.compute_fields(event, below_event)
 
-    def register_segment(self, segment: Segment, from_left: bool) -> None:
-        start, end = sort_pair(segment)
-        start_event = Event(False, start, None, from_left)
-        end_event = Event(True, end, start_event, from_left)
-        start_event.complement = end_event
-        self._events_queue.push(start_event)
-        self._events_queue.push(end_event)
+    def register_segments(self,
+                          segments: Iterable[Segment],
+                          from_left: bool) -> None:
+        events_queue = self._events_queue
+        for start, end in segments:
+            inside_on_left = True
+            if start > end:
+                start, end = end, start
+                inside_on_left = False
+            start_event = Event(False, start, None, from_left, inside_on_left)
+            end_event = Event(True, end, start_event, from_left,
+                              inside_on_left)
+            start_event.complement = end_event
+            events_queue.push(start_event)
+            events_queue.push(end_event)
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -231,10 +232,9 @@ class Difference(Operation):
         return events_to_multipolygon(self.sweep())
 
     def in_result(self, event: Event) -> bool:
-        edge_type = event.edge_type
-        return (edge_type is EdgeType.NORMAL
-                and event.from_left is event.other_in_out
-                or edge_type is EdgeType.DIFFERENT_TRANSITION)
+        return (event.outside
+                if event.from_left
+                else event.inside or event.is_common_polyline_component)
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -284,9 +284,8 @@ class Intersection(Operation):
         return result
 
     def in_result(self, event: Event) -> bool:
-        edge_type = event.edge_type
-        return (edge_type is EdgeType.NORMAL and not event.other_in_out
-                or edge_type is EdgeType.SAME_TRANSITION)
+        return (event.inside
+                or not event.from_left and event.is_common_region_boundary)
 
 
 class CompleteIntersection(Intersection):
@@ -350,7 +349,7 @@ class SymmetricDifference(Operation):
         return events_to_multipolygon(self.sweep())
 
     def in_result(self, event: Event) -> bool:
-        return event.edge_type is EdgeType.NORMAL
+        return not event.is_overlap
 
 
 class Union(Operation):
@@ -369,9 +368,8 @@ class Union(Operation):
         return events_to_multipolygon(self.sweep())
 
     def in_result(self, event: Event) -> bool:
-        edge_type = event.edge_type
-        return (edge_type is EdgeType.NORMAL and event.other_in_out
-                or edge_type is EdgeType.SAME_TRANSITION)
+        return (event.outside
+                or not event.from_left and event.is_common_region_boundary)
 
 
 def events_to_multipolygon(events: List[Event]) -> Multipolygon:

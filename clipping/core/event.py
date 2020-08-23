@@ -6,7 +6,7 @@ from reprit.base import generate_repr
 
 from clipping.hints import (Point,
                             Segment)
-from .enums import EdgeType
+from .enums import OverlapKind
 
 
 class NaryEvent:
@@ -83,8 +83,8 @@ class MixedEvent(BinaryEvent):
 
 
 class ShapedEvent(BinaryEvent):
-    __slots__ = ('edge_type', 'in_out', 'other_in_out', 'in_result',
-                 'result_in_out', 'position', 'contour_id',
+    __slots__ = ('inside_on_left', 'other_inside_on_left', 'overlap_kind',
+                 'in_result', 'result_in_out', 'position', 'contour_id',
                  'below_in_result_event')
 
     def __init__(self,
@@ -92,9 +92,9 @@ class ShapedEvent(BinaryEvent):
                  start: Point,
                  complement: Optional['ShapedEvent'],
                  from_left: bool,
-                 edge_type: EdgeType = EdgeType.NORMAL,
-                 in_out: bool = False,
-                 other_in_out: bool = False,
+                 inside_on_left: bool,
+                 other_inside_on_left: bool = False,
+                 overlap_kind: OverlapKind = OverlapKind.NONE,
                  in_result: bool = False,
                  result_in_out: bool = False,
                  position: int = 0,
@@ -102,9 +102,9 @@ class ShapedEvent(BinaryEvent):
                  below_in_result_event: Optional['ShapedEvent'] = None
                  ) -> None:
         super().__init__(is_right_endpoint, start, complement, from_left)
-        self.edge_type = edge_type
-        self.in_out = in_out
-        self.other_in_out = other_in_out
+        self.inside_on_left = inside_on_left
+        self.other_inside_on_left = other_inside_on_left
+        self.overlap_kind = overlap_kind
         self.in_result = in_result
         self.result_in_out = result_in_out
         self.position = position
@@ -112,6 +112,44 @@ class ShapedEvent(BinaryEvent):
         self.below_in_result_event = below_in_result_event
 
     __repr__ = recursive_repr()(generate_repr(__init__))
+
+    @property
+    def inside(self) -> bool:
+        """
+        Checks if the segment enclosed by
+        or lies within the region of the intersection.
+        """
+        return (self.other_inside_on_left
+                and self.overlap_kind is OverlapKind.NONE)
+
+    @property
+    def is_common_region_boundary(self) -> bool:
+        """
+        Checks if the segment is a boundary of intersection's region.
+        """
+        return self.overlap_kind is OverlapKind.SAME_ORIENTATION
+
+    @property
+    def is_common_polyline_component(self) -> bool:
+        """
+        Checks if the segment is a component of intersection's polyline.
+        """
+        return self.overlap_kind is OverlapKind.DIFFERENT_ORIENTATION
+
+    @property
+    def is_overlap(self) -> bool:
+        """
+        Checks if the segment lies on the boundary of both operands.
+        """
+        return self.overlap_kind is not OverlapKind.NONE
+
+    @property
+    def outside(self) -> bool:
+        """
+        Checks if the segment touches or disjoint with the intersection.
+        """
+        return (not self.other_inside_on_left
+                and self.overlap_kind is OverlapKind.NONE)
 
 
 Event = TypeVar('Event', NaryEvent, BinaryEvent, MixedEvent, ShapedEvent)

@@ -12,6 +12,9 @@ from typing import (Any,
                     Type,
                     TypeVar)
 
+from robust.angular import (Orientation,
+                            orientation)
+
 from clipping.hints import (Base,
                             Contour,
                             Coordinate,
@@ -41,9 +44,38 @@ def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:
         yield from holes
 
 
+def polygon_to_oriented_segments(polygon: Polygon) -> Iterable[Segment]:
+    border, holes = polygon
+    yield from contour_to_oriented_segments(border,
+                                            clockwise=False)
+    for hole in holes:
+        yield from contour_to_oriented_segments(hole,
+                                                clockwise=True)
+
+
+def contour_to_oriented_segments(contour: Contour,
+                                 *,
+                                 clockwise: bool = False) -> Iterable[Segment]:
+    return (((contour[index - 1], contour[index])
+             for index in range(len(contour)))
+            if (to_contour_orientation(contour)
+                is (Orientation.CLOCKWISE
+                    if clockwise
+                    else Orientation.COUNTERCLOCKWISE))
+            else ((contour[index], contour[index - 1])
+                  for index in range(len(contour) - 1, -1, -1)))
+
+
 def contour_to_segments(contour: Contour) -> Iterable[Segment]:
     return ((contour[index - 1], contour[index])
             for index in range(len(contour)))
+
+
+def to_contour_orientation(contour: Contour) -> Orientation:
+    index = min(range(len(contour)),
+                key=contour.__getitem__)
+    return orientation(contour[index], contour[index - 1],
+                       contour[(index + 1) % len(contour)])
 
 
 def to_mixed_base(multisegment: Multisegment,
