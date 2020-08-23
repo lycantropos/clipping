@@ -288,7 +288,7 @@ class Intersection(Operation):
                 or not event.from_left and event.is_common_region_boundary)
 
 
-class CompleteIntersection(Intersection):
+class CompleteIntersection(Operation):
     __slots__ = ()
 
     def compute(self) -> Mix:
@@ -331,6 +331,24 @@ class CompleteIntersection(Intersection):
                     multipoint.append(start)
         multipolygon = events_to_multipolygon(events)
         return multipoint, multisegment, multipolygon
+
+    def sweep(self) -> List[Event]:
+        self.fill_queue()
+        result = []
+        sweep_line = SweepLine()
+        min_max_x = min(to_multipolygon_x_max(self.left),
+                        to_multipolygon_x_max(self.right))
+        while self._events_queue:
+            event = self._events_queue.pop()
+            start_x, _ = event.start
+            if start_x > min_max_x:
+                break
+            self.process_event(event, result, sweep_line)
+        return result
+
+    def in_result(self, event: Event) -> bool:
+        return (event.inside
+                or not event.from_left and event.is_common_region_boundary)
 
 
 class SymmetricDifference(Operation):
