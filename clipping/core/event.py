@@ -62,24 +62,32 @@ class BinaryEvent:
 
 
 class MixedEvent(BinaryEvent):
-    __slots__ = 'in_out', 'other_in_out', 'overlaps', 'in_result'
+    __slots__ = ('inside_on_left', 'other_inside_on_left', 'is_overlap',
+                 'in_result')
 
     def __init__(self,
                  is_right_endpoint: bool,
                  start: Point,
                  complement: Optional['MixedEvent'],
                  from_left: bool,
-                 in_out: bool = False,
-                 other_in_out: bool = False,
-                 overlaps: bool = False,
+                 inside_on_left: bool,
+                 other_inside_on_left: bool = False,
+                 is_overlap: bool = False,
                  in_result: bool = False) -> None:
         super().__init__(is_right_endpoint, start, complement, from_left)
-        self.in_out = in_out
-        self.other_in_out = other_in_out
-        self.overlaps = overlaps
+        self.inside_on_left = inside_on_left
+        self.other_inside_on_left = other_inside_on_left
+        self.is_overlap = is_overlap
         self.in_result = in_result
 
     __repr__ = recursive_repr()(generate_repr(__init__))
+
+    @property
+    def outside(self) -> bool:
+        """
+        Checks if the segment touches or disjoint with the intersection.
+        """
+        return not self.other_inside_on_left and not self.is_overlap
 
 
 class ShapedEvent(BinaryEvent):

@@ -3,7 +3,8 @@ from abc import (ABC,
 from itertools import groupby
 from numbers import Rational
 from operator import attrgetter
-from typing import (List,
+from typing import (Iterable,
+                    List,
                     Optional,
                     Union)
 
@@ -24,10 +25,8 @@ from .events_queue import (BinaryEventsQueue as EventsQueue,
                            BinaryEventsQueueKey as EventsQueueKey)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
-                    contour_to_segments,
-                    sort_pair,
+                    polygon_to_oriented_segments,
                     to_mixed_base,
-                    to_multipolygon_contours,
                     to_multipolygon_x_max,
                     to_multisegment_x_max,
                     to_rational_multipolygon,
@@ -65,17 +64,11 @@ class Operation(ABC):
 
     def compute_fields(self, event: Event,
                        below_event: Optional[Event]) -> None:
-        if below_event is None:
-            event.in_out = False
-            event.other_in_out = True
-        elif event.from_left is below_event.from_left:
-            event.in_out = not below_event.in_out
-            event.other_in_out = below_event.other_in_out
-        else:
-            event.in_out = not below_event.other_in_out
-            event.other_in_out = (not below_event.in_out
-                                  if below_event.is_vertical
-                                  else below_event.in_out)
+        if below_event is not None:
+            event.other_inside_on_left = (below_event.other_inside_on_left
+                                          if (event.from_left
+                                              is below_event.from_left)
+                                          else below_event.inside_on_left)
         event.in_result = self.in_result(event)
 
     def detect_intersection(self, below_event: Event, event: Event) -> bool:
@@ -89,7 +82,7 @@ class Operation(ABC):
                                  .format(geometry=('multisegment'
                                                    if event.from_left
                                                    else 'multipolygon')))
-            event.overlaps = below_event.overlaps = True
+            event.is_overlap = below_event.is_overlap = True
             starts_equal = below_event.start == event.start
             if starts_equal:
                 start_min = start_max = None
@@ -135,18 +128,19 @@ class Operation(ABC):
         return False
 
     def divide_segment(self, event: Event, point: Point) -> None:
-        left_event = Event(False, point, event.complement, event.from_left)
-        right_event = Event(True, point, event, event.from_left)
+        left_event = Event(False, point, event.complement, event.from_left,
+                           event.inside_on_left)
+        right_event = Event(True, point, event, event.from_left,
+                            event.inside_on_left)
         event.complement.complement, event.complement = left_event, right_event
         self._events_queue.push(left_event)
         self._events_queue.push(right_event)
 
     def fill_queue(self) -> None:
-        for segment in self.multisegment:
-            self.register_segment(segment, True)
-        for contour in to_multipolygon_contours(self.multipolygon):
-            for segment in contour_to_segments(contour):
-                self.register_segment(segment, False)
+        self.register_segments(self.multisegment, True)
+        for polygon in self.multipolygon:
+            self.register_segments(polygon_to_oriented_segments(polygon),
+                                   False)
 
     @abstractmethod
     def in_result(self, event: Event) -> bool:
@@ -185,13 +179,21 @@ class Operation(ABC):
                 self.compute_fields(below_event, below_below_event)
                 self.compute_fields(event, below_event)
 
-    def register_segment(self, segment: Segment, from_left: bool) -> None:
-        start, end = sort_pair(segment)
-        start_event = Event(False, start, None, from_left)
-        end_event = Event(True, end, start_event, from_left)
-        start_event.complement = end_event
-        self._events_queue.push(start_event)
-        self._events_queue.push(end_event)
+    def register_segments(self,
+                          segments: Iterable[Segment],
+                          from_left: bool) -> None:
+        events_queue = self._events_queue
+        for start, end in segments:
+            inside_on_left = True
+            if start > end:
+                start, end = end, start
+                inside_on_left = False
+            start_event = Event(False, start, None, from_left, inside_on_left)
+            end_event = Event(True, end, start_event, from_left,
+                              inside_on_left)
+            start_event.complement = end_event
+            events_queue.push(start_event)
+            events_queue.push(end_event)
 
     @abstractmethod
     def sweep(self) -> List[Event]:
@@ -220,7 +222,7 @@ class Difference(Operation):
         return [event.segment for event in self.sweep() if event.in_result]
 
     def in_result(self, event: Event) -> bool:
-        return event.from_left and event.other_in_out and not event.overlaps
+        return event.from_left and event.outside
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -261,7 +263,7 @@ class Intersection(Operation):
         return [event.segment for event in self.sweep() if event.in_result]
 
     def in_result(self, event: Event) -> bool:
-        return event.from_left and (not event.other_in_out or event.overlaps)
+        return event.from_left and not event.outside
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -319,7 +321,7 @@ class CompleteIntersection(Operation):
         return multipoint, border_multisegment + inside_multisegment, []
 
     def in_result(self, event: Event) -> bool:
-        return event.from_left and (not event.other_in_out or event.overlaps)
+        return event.from_left and not event.outside
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
