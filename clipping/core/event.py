@@ -131,18 +131,18 @@ class ShapedEvent(BinaryEvent):
                 and self.overlap_kind is OverlapKind.NONE)
 
     @property
-    def is_common_region_boundary(self) -> bool:
-        """
-        Checks if the segment is a boundary of intersection's region.
-        """
-        return self.overlap_kind is OverlapKind.SAME_ORIENTATION
-
-    @property
     def is_common_polyline_component(self) -> bool:
         """
         Checks if the segment is a component of intersection's polyline.
         """
         return self.overlap_kind is OverlapKind.DIFFERENT_ORIENTATION
+
+    @property
+    def is_common_region_boundary(self) -> bool:
+        """
+        Checks if the segment is a boundary of intersection's region.
+        """
+        return self.overlap_kind is OverlapKind.SAME_ORIENTATION
 
     @property
     def is_overlap(self) -> bool:
