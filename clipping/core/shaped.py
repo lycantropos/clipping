@@ -70,10 +70,10 @@ class Operation(ABC):
     def compute_fields(self, event: Event, below_event: Optional[Event]
                        ) -> None:
         if below_event is not None:
-            event.other_inside_on_left = (below_event.other_inside_on_left
-                                          if (event.from_left
-                                              is below_event.from_left)
-                                          else below_event.inside_on_left)
+            event.other_interior_to_left = (below_event.other_interior_to_left
+                                            if (event.from_left
+                                                is below_event.from_left)
+                                            else below_event.interior_to_left)
             event.below_in_result_event = (below_event.below_in_result_event
                                            if (not self.in_result(below_event)
                                                or below_event.is_vertical)
@@ -107,7 +107,7 @@ class Operation(ABC):
                 # both line segments are equal or share the left endpoint
                 below_event.overlap_kind = event.overlap_kind = (
                     OverlapKind.SAME_ORIENTATION
-                    if event.inside_on_left is below_event.inside_on_left
+                    if event.interior_to_left is below_event.interior_to_left
                     else OverlapKind.DIFFERENT_ORIENTATION)
                 if not ends_equal:
                     self.divide_segment(end_max.complement, end_min.start)
@@ -136,9 +136,9 @@ class Operation(ABC):
 
     def divide_segment(self, event: Event, point: Point) -> None:
         left_event = Event(False, point, event.complement, event.from_left,
-                           event.inside_on_left)
+                           event.interior_to_left)
         right_event = Event(True, point, event, event.from_left,
-                            event.inside_on_left)
+                            event.interior_to_left)
         event.complement.complement, event.complement = left_event, right_event
         self._events_queue.push(left_event)
         self._events_queue.push(right_event)

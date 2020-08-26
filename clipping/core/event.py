@@ -62,7 +62,7 @@ class BinaryEvent:
 
 
 class MixedEvent(BinaryEvent):
-    __slots__ = ('inside_on_left', 'other_inside_on_left', 'is_overlap',
+    __slots__ = ('interior_to_left', 'other_interior_to_left', 'is_overlap',
                  'in_result')
 
     def __init__(self,
@@ -70,13 +70,13 @@ class MixedEvent(BinaryEvent):
                  start: Point,
                  complement: Optional['MixedEvent'],
                  from_left: bool,
-                 inside_on_left: bool,
-                 other_inside_on_left: bool = False,
+                 interior_to_left: bool,
+                 other_interior_to_left: bool = False,
                  is_overlap: bool = False,
                  in_result: bool = False) -> None:
         super().__init__(is_right_endpoint, start, complement, from_left)
-        self.inside_on_left = inside_on_left
-        self.other_inside_on_left = other_inside_on_left
+        self.interior_to_left = interior_to_left
+        self.other_interior_to_left = other_interior_to_left
         self.is_overlap = is_overlap
         self.in_result = in_result
 
@@ -87,11 +87,11 @@ class MixedEvent(BinaryEvent):
         """
         Checks if the segment touches or disjoint with the intersection.
         """
-        return not self.other_inside_on_left and not self.is_overlap
+        return not self.other_interior_to_left and not self.is_overlap
 
 
 class ShapedEvent(BinaryEvent):
-    __slots__ = ('inside_on_left', 'other_inside_on_left', 'overlap_kind',
+    __slots__ = ('interior_to_left', 'other_interior_to_left', 'overlap_kind',
                  'in_result', 'result_in_out', 'position', 'contour_id',
                  'below_in_result_event')
 
@@ -100,8 +100,8 @@ class ShapedEvent(BinaryEvent):
                  start: Point,
                  complement: Optional['ShapedEvent'],
                  from_left: bool,
-                 inside_on_left: bool,
-                 other_inside_on_left: bool = False,
+                 interior_to_left: bool,
+                 other_interior_to_left: bool = False,
                  overlap_kind: OverlapKind = OverlapKind.NONE,
                  in_result: bool = False,
                  result_in_out: bool = False,
@@ -110,8 +110,8 @@ class ShapedEvent(BinaryEvent):
                  below_in_result_event: Optional['ShapedEvent'] = None
                  ) -> None:
         super().__init__(is_right_endpoint, start, complement, from_left)
-        self.inside_on_left = inside_on_left
-        self.other_inside_on_left = other_inside_on_left
+        self.interior_to_left = interior_to_left
+        self.other_interior_to_left = other_interior_to_left
         self.overlap_kind = overlap_kind
         self.in_result = in_result
         self.result_in_out = result_in_out
@@ -127,7 +127,7 @@ class ShapedEvent(BinaryEvent):
         Checks if the segment enclosed by
         or lies within the region of the intersection.
         """
-        return (self.other_inside_on_left
+        return (self.other_interior_to_left
                 and self.overlap_kind is OverlapKind.NONE)
 
     @property
@@ -156,7 +156,7 @@ class ShapedEvent(BinaryEvent):
         """
         Checks if the segment touches or disjoint with the intersection.
         """
-        return (not self.other_inside_on_left
+        return (not self.other_interior_to_left
                 and self.overlap_kind is OverlapKind.NONE)
 
 
