@@ -27,8 +27,14 @@ def from_points(points: Iterable[Point]) -> BoundingBox:
     points = iter(points)
     x_min, y_min = x_max, y_max = next(points)
     for x, y in points:
-        x_min, x_max = min(x_min, x), max(x_max, x)
-        y_min, y_max = min(y_min, y), max(y_max, y)
+        if x < x_min:
+            x_min = x
+        elif x > x_max:
+            x_max = x
+        if y < y_min:
+            y_min = y
+        elif y > y_max:
+            y_max = y
     return x_min, x_max, y_min, y_max
 
 
