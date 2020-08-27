@@ -18,12 +18,10 @@ from clipping.hints import (Mix,
                             Point,
                             Segment)
 from . import bounding_box
-from .event import (BinaryEvent,
-                    NaryEvent)
+from .event import BinaryEvent
 from .events_queue import (BinaryEventsQueue,
                            BinaryEventsQueueKey,
-                           NaryEventsQueue,
-                           NaryEventsQueueKey)
+                           NaryEventsQueue)
 from .sweep_line import (BinarySweepLine,
                          NarySweepLine)
 from .utils import (all_equal,
@@ -37,17 +35,10 @@ def merge_segments(segments: List[Segment],
                    accurate: bool) -> Iterable[Segment]:
     if not segments:
         return
-    events_queue = NaryEventsQueue()
     if accurate and not issubclass(to_multisegment_base(segments), Rational):
         segments = to_rational_multisegment(segments)
-    for start, end in segments:
-        if start > end:
-            start, end = end, start
-        start_event = NaryEvent(False, start, None)
-        end_event = NaryEvent(True, end, start_event)
-        start_event.complement = end_event
-        events_queue.push(start_event)
-        events_queue.push(end_event)
+    events_queue = NaryEventsQueue()
+    events_queue.register_segments(segments)
     sweep_line = NarySweepLine()
     while events_queue:
         event = events_queue.pop()
@@ -58,73 +49,16 @@ def merge_segments(segments: List[Segment],
                                             sweep_line.below(event))
                 sweep_line.remove(event)
                 if above_event is not None and below_event is not None:
-                    detect_intersection(events_queue, below_event, above_event)
+                    events_queue.detect_intersection(below_event, above_event)
                 yield event.segment
         elif event not in sweep_line:
             sweep_line.add(event)
             above_event, below_event = (sweep_line.above(event),
                                         sweep_line.below(event))
             if above_event is not None:
-                detect_intersection(events_queue, event, above_event)
+                events_queue.detect_intersection(event, above_event)
             if below_event is not None:
-                detect_intersection(events_queue, below_event, event)
-
-
-def detect_intersection(events_queue: NaryEventsQueue,
-                        below_event: NaryEvent,
-                        event: NaryEvent) -> None:
-    below_segment, segment = below_event.segment, event.segment
-    relationship = segments_relationship(below_segment, segment)
-    if relationship is SegmentsRelationship.OVERLAP:
-        # segments overlap
-        starts_equal = below_event.start == event.start
-        if starts_equal:
-            start_min = start_max = None
-        elif NaryEventsQueueKey(event) < NaryEventsQueueKey(below_event):
-            start_min, start_max = event, below_event
-        else:
-            start_min, start_max = below_event, event
-        ends_equal = event.end == below_event.end
-        if ends_equal:
-            end_min = end_max = None
-        elif (NaryEventsQueueKey(event.complement)
-              < NaryEventsQueueKey(below_event.complement)):
-            end_min, end_max = event.complement, below_event.complement
-        else:
-            end_min, end_max = below_event.complement, event.complement
-        if starts_equal:
-            # both line segments are equal or share the left endpoint
-            if not ends_equal:
-                divide_segment(events_queue, end_max.complement, end_min.start)
-        elif ends_equal:
-            # the line segments share the right endpoint
-            divide_segment(events_queue, start_min, start_max.start)
-        elif start_min is end_max.complement:
-            # one line segment includes the other one
-            divide_segment(events_queue, start_min, end_min.start)
-            divide_segment(events_queue, start_min, start_max.start)
-        else:
-            # no line segment includes the other one
-            divide_segment(events_queue, start_max, end_min.start)
-            divide_segment(events_queue, start_min, start_max.start)
-    elif (relationship is not SegmentsRelationship.NONE
-          and event.start != below_event.start
-          and event.end != below_event.end):
-        # segments do not intersect_multipolygons at endpoints
-        point = segments_intersection(below_segment, segment)
-        if point != below_event.start and point != below_event.end:
-            divide_segment(events_queue, below_event, point)
-        if point != event.start and point != event.end:
-            divide_segment(events_queue, event, point)
-
-
-def divide_segment(events_queue: NaryEventsQueue, event: NaryEvent,
-                   point: Point) -> None:
-    left_event = NaryEvent(False, point, event.complement)
-    right_event = NaryEvent(True, point, event)
-    event.complement.complement, event.complement = left_event, right_event
-    events_queue.push(left_event)
-    events_queue.push(right_event)
+                events_queue.detect_intersection(below_event, event)
 
 
 class Operation(ABC):
