@@ -441,18 +441,25 @@ def _events_to_contours(events: List[Event],
         contour_events = [event]
         cursor = event
         complement_position = event.complement.position
-        processed[index] = processed[complement_position] = True
+        vertices_positions = {contour_start: 0}
         while cursor.end != contour_start:
-            contour.append(cursor.end)
+            vertex = cursor.end
+            if vertex in vertices_positions:
+                # vertices loop found, i.e. contour has self-intersection
+                previous_vertex_position = vertices_positions[vertex]
+                del contour[previous_vertex_position:]
+                del contour_events[previous_vertex_position:]
+            else:
+                vertices_positions[vertex] = len(contour)
+            contour.append(vertex)
             position = _to_next_position(complement_position, processed,
                                          connectivity)
             if position is None:
                 break
             cursor = events[position]
             contour_events.append(cursor)
-            processed[position] = True
             complement_position = cursor.complement.position
-            processed[complement_position] = True
+        _mark_processed(contour_events, processed)
         _shrink_collinear_vertices(contour)
         if len(contour) < 3:
             continue
@@ -479,6 +486,12 @@ def _events_to_contours(events: List[Event],
             contour.reverse()
         contours.append(contour)
     return contours
+
+
+def _mark_processed(contour_events: Iterable[Event],
+                    processed: List[bool]) -> None:
+    for event in contour_events:
+        processed[event.position] = processed[event.complement.position] = True
 
 
 def _update_contour_events(events: Iterable[Event], contour_id: int) -> None:
@@ -525,17 +538,9 @@ def _to_events_connectivity(events: List[Event]) -> List[int]:
 
 
 def _shrink_collinear_vertices(contour: Contour) -> None:
-    self_intersections, visited = set(), set()
-    visit = visited.add
-    for vertex in contour:
-        if vertex in visited:
-            self_intersections.add(vertex)
-        else:
-            visit(vertex)
     index = -len(contour) + 1
     while index < 0:
         while (max(2, -index) < len(contour)
-               and contour[index + 1] not in self_intersections
                and (orientation(contour[index + 2], contour[index + 1],
                                 contour[index])
                     is Orientation.COLLINEAR)):
@@ -543,7 +548,6 @@ def _shrink_collinear_vertices(contour: Contour) -> None:
         index += 1
     while index < len(contour):
         while (max(2, index) < len(contour)
-               and contour[index - 1] not in self_intersections
                and (orientation(contour[index - 2], contour[index - 1],
                                 contour[index])
                     is Orientation.COLLINEAR)):
