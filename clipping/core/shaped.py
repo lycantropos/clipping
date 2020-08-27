@@ -436,24 +436,23 @@ def _events_to_contours(events: List[Event],
     for index, event in enumerate(events):
         if processed[index]:
             continue
-        position = index
-        initial = event.start
-        contour = [initial]
-        contour_events = []
+        contour_start = event.start
+        contour = [contour_start]
+        contour_events = [event]
         cursor = event
-        while cursor.end != initial:
-            processed[position] = True
-            contour_events.append(cursor)
-            position = cursor.complement.position
-            processed[position] = True
+        complement_position = event.complement.position
+        processed[index] = processed[complement_position] = True
+        while cursor.end != contour_start:
             contour.append(cursor.end)
-            position = _to_next_position(position, processed, connectivity)
+            position = _to_next_position(complement_position, processed,
+                                         connectivity)
             if position is None:
-                position = index
                 break
             cursor = events[position]
-        last_event = events[position]
-        processed[position] = processed[last_event.complement.position] = True
+            contour_events.append(cursor)
+            processed[position] = True
+            complement_position = cursor.complement.position
+            processed[complement_position] = True
         _shrink_collinear_vertices(contour)
         if len(contour) < 3:
             continue
@@ -475,8 +474,6 @@ def _events_to_contours(events: List[Event],
                 is_internal = True
         are_internal[contour_id] = is_internal
         _update_contour_events(contour_events, contour_id)
-        last_event.complement.result_in_out = True
-        last_event.complement.contour_id = contour_id
         if depths[contour_id] % 2:
             # holes will be in clockwise order
             contour.reverse()
