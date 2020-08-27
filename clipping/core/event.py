@@ -57,6 +57,10 @@ class BinaryEvent:
         return start_x == end_x
 
     @property
+    def primary(self) -> Optional['BinaryEvent']:
+        return self.complement if self.is_right_endpoint else self
+
+    @property
     def segment(self) -> Segment:
         return self.start, self.end
 
