@@ -31,6 +31,7 @@ from .events_queue import (BinaryEventsQueue as EventsQueue,
                            BinaryEventsQueueKey as EventsQueueKey)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
+                    pairwise,
                     polygon_to_oriented_segments,
                     to_first_boundary_vertex,
                     to_multipolygon_base,
@@ -317,8 +318,7 @@ class CompleteIntersection(Operation):
                     and not all_equal(event.from_left
                                       for event in same_start_events)):
                 no_segment_found = True
-                for event, next_event in zip(same_start_events,
-                                             same_start_events[1:]):
+                for event, next_event in pairwise(same_start_events):
                     if (event.from_left is not next_event.from_left
                             and event.segment == next_event.segment):
                         no_segment_found = False

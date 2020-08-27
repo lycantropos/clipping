@@ -38,6 +38,14 @@ def sort_pair(pair: Tuple[Domain, Domain]) -> Tuple[Domain, Domain]:
     return (first, second) if first < second else (second, first)
 
 
+def pairwise(iterable: Iterable[Domain]) -> Iterable[Tuple[Domain, Domain]]:
+    iterator = iter(iterable)
+    element = next(iterator, None)
+    for next_element in iterator:
+        yield element, next_element
+        element = next_element
+
+
 def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:
     for border, holes in multipolygon:
         yield border
