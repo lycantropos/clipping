@@ -401,8 +401,9 @@ def events_to_multipolygon(events: List[Event]) -> Multipolygon:
 def _collect_events(events: List[Event]) -> List[Event]:
     return sorted([event
                    for event in events
-                   if not event.is_right_endpoint and event.in_result
-                   or event.is_right_endpoint and event.complement.in_result],
+                   if (event.complement
+                       if event.is_right_endpoint
+                       else event).in_result],
                   key=EventsQueueKey)
 
 
