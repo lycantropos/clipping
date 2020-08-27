@@ -399,18 +399,11 @@ def events_to_multipolygon(events: List[Event]) -> Multipolygon:
 
 
 def _collect_events(events: List[Event]) -> List[Event]:
-    result = sorted(
-            [event
-             for event in events
-             if not event.is_right_endpoint and event.in_result
-             or event.is_right_endpoint and event.complement.in_result],
-            key=EventsQueueKey)
-    for index, event in enumerate(result):
-        event.position = index
-        if event.is_right_endpoint:
-            event.position, event.complement.position = (
-                event.complement.position, event.position)
-    return result
+    return sorted([event
+                   for event in events
+                   if not event.is_right_endpoint and event.in_result
+                   or event.is_right_endpoint and event.complement.in_result],
+                  key=EventsQueueKey)
 
 
 def _contours_to_multipolygon(contours: List[Contour],
@@ -434,6 +427,8 @@ def _contours_to_multipolygon(contours: List[Contour],
 def _events_to_contours(events: List[Event],
                         are_internal: DefaultDict[int, bool],
                         holes: DefaultDict[int, List[int]]) -> List[Contour]:
+    for index, event in enumerate(events):
+        event.position = index
     depths, parents = defaultdict(int), {}
     processed = [False] * len(events)
     contours = []
@@ -444,30 +439,30 @@ def _events_to_contours(events: List[Event],
         position = index
         initial = event.start
         contour = [initial]
-        steps = [event]
-        while True:
-            step = events[position]
-            if step.end == initial:
-                break
+        contour_events = []
+        cursor = event
+        while cursor.end != initial:
             processed[position] = True
-            steps.append(step)
-            position = step.position
+            contour_events.append(cursor)
+            position = cursor.complement.position
             processed[position] = True
-            contour.append(events[position].start)
+            contour.append(cursor.end)
             position = _to_next_position(position, processed, connectivity)
             if position is None:
+                position = index
                 break
-        position = index if position is None else position
+            cursor = events[position]
         last_event = events[position]
-        processed[position] = processed[last_event.position] = True
+        processed[position] = processed[last_event.complement.position] = True
         _shrink_collinear_vertices(contour)
         if len(contour) < 3:
             continue
         contour_id = len(contours)
         is_internal = False
-        if event.below_in_result_event is not None:
-            below_in_result_contour_id = event.below_in_result_event.contour_id
-            if not event.below_in_result_event.result_in_out:
+        below_in_result_event = event.below_in_result_event
+        if below_in_result_event is not None:
+            below_in_result_contour_id = below_in_result_event.contour_id
+            if not below_in_result_event.result_in_out:
                 holes[below_in_result_contour_id].append(contour_id)
                 parents[contour_id] = below_in_result_contour_id
                 depths[contour_id] = depths[below_in_result_contour_id] + 1
@@ -479,20 +474,24 @@ def _events_to_contours(events: List[Event],
                 depths[contour_id] = depths[below_in_result_contour_id]
                 is_internal = True
         are_internal[contour_id] = is_internal
-        for step in steps:
-            if step.is_right_endpoint:
-                step.complement.result_in_out = True
-                step.complement.contour_id = contour_id
-            else:
-                step.result_in_out = False
-                step.contour_id = contour_id
+        _update_contour_events(contour_events, contour_id)
         last_event.complement.result_in_out = True
         last_event.complement.contour_id = contour_id
-        if depths[contour_id] & 1:
+        if depths[contour_id] % 2:
             # holes will be in clockwise order
             contour.reverse()
         contours.append(contour)
     return contours
+
+
+def _update_contour_events(events: Iterable[Event], contour_id: int) -> None:
+    for event in events:
+        if event.is_right_endpoint:
+            event.complement.result_in_out = True
+            event.complement.contour_id = contour_id
+        else:
+            event.result_in_out = False
+            event.contour_id = contour_id
 
 
 def _to_events_connectivity(events: List[Event]) -> List[int]:
@@ -558,10 +557,10 @@ def _shrink_collinear_vertices(contour: Contour) -> None:
 def _to_next_position(position: int,
                       processed: List[bool],
                       connectivity: List[int]) -> Optional[int]:
-    start_position = position
+    candidate = position
     while True:
-        position = connectivity[position]
-        if position == start_position:
+        candidate = connectivity[candidate]
+        if not processed[candidate]:
+            return candidate
+        elif candidate == position:
             return None
-        elif not processed[position]:
-            return position
