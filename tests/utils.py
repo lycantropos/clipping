@@ -18,6 +18,7 @@ from clipping.core.hints import BoundingBox
 from clipping.core.utils import (to_contour_base,
                                  to_first_boundary_vertex)
 from clipping.hints import (Contour,
+                            HolelessMix,
                             Mix,
                             Multipoint,
                             Multipolygon,
@@ -61,6 +62,13 @@ def mix_similar_to_multipolygon(mix: Mix, other: Multipolygon) -> bool:
     multipoint, multisegment, multipolygon = mix
     return (not multipoint and not multisegment
             and are_multipolygons_similar(multipolygon, other))
+
+
+def holeless_mix_similar_to_multiregion(mix: HolelessMix,
+                                        other: Multiregion) -> bool:
+    multipoint, multisegment, multiregion = mix
+    return (not multipoint and not multisegment
+            and are_multiregions_similar(multiregion, other))
 
 
 def are_mixes_similar(left: Mix, right: Mix) -> bool:
@@ -145,6 +153,14 @@ def to_pairs(strategy: Strategy[Domain]) -> Strategy[Tuple[Domain, Domain]]:
 def to_triplets(strategy: Strategy[Domain]
                 ) -> Strategy[Tuple[Domain, Domain, Domain]]:
     return strategies.tuples(strategy, strategy, strategy)
+
+
+def is_holeless_mix(object_: Any) -> bool:
+    return (isinstance(object_, tuple)
+            and len(object_) == 3
+            and is_multipoint(object_[0])
+            and is_multisegment(object_[1])
+            and is_multiregion(object_[2]))
 
 
 def is_mix(object_: Any) -> bool:
