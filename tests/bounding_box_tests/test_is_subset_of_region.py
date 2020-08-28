@@ -7,13 +7,13 @@ from orient.planar import (Relation,
 from clipping.core.bounding_box import (is_subset_of_region,
                                         to_vertices)
 from clipping.core.hints import BoundingBox
-from clipping.hints import Contour
+from clipping.hints import Region
 from . import strategies
 
 
 @given(strategies.contours_with_bounding_boxes)
-def test_basic(contour_with_bounding_box: Tuple[Contour, BoundingBox]) -> None:
-    contour, bounding_box = contour_with_bounding_box
+def test_basic(region_with_bounding_box: Tuple[Region, BoundingBox]) -> None:
+    contour, bounding_box = region_with_bounding_box
 
     result = is_subset_of_region(bounding_box, contour)
 
@@ -26,7 +26,7 @@ def test_self(bounding_box: BoundingBox) -> None:
 
 
 @given(strategies.contours_with_bounding_boxes)
-def test_equivalents(contour_with_bounding_box: Tuple[Contour, BoundingBox]
+def test_equivalents(contour_with_bounding_box: Tuple[Region, BoundingBox]
                      ) -> None:
     contour, bounding_box = contour_with_bounding_box
 
