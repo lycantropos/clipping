@@ -97,6 +97,93 @@ BinaryEventsQueue = cast(Callable[[], PriorityQueue[BinaryEvent]],
                                  key=BinaryEventsQueueKey))
 
 
+class LinearBinaryEventsQueue:
+    __slots__ = '_queue',
+
+    def __init__(self) -> None:
+        self._queue = PriorityQueue(key=BinaryEventsQueueKey)
+
+    __repr__ = generate_repr(__init__)
+
+    def __bool__(self) -> bool:
+        return bool(self._queue)
+
+    def pop(self) -> BinaryEvent:
+        return self._queue.pop()
+
+    def detect_intersection(self,
+                            below_event: BinaryEvent,
+                            event: BinaryEvent) -> None:
+        below_segment, segment = below_event.segment, event.segment
+        relationship = segments_relationship(below_segment, segment)
+        if relationship is SegmentsRelationship.OVERLAP:
+            # segments overlap
+            if below_event.from_left is event.from_left:
+                raise ValueError('Segments of the same multisegment '
+                                 'should not overlap.')
+            starts_equal = below_event.start == event.start
+            if starts_equal:
+                start_min = start_max = None
+            elif (BinaryEventsQueueKey(event)
+                  < BinaryEventsQueueKey(below_event)):
+                start_min, start_max = event, below_event
+            else:
+                start_min, start_max = below_event, event
+            ends_equal = event.end == below_event.end
+            if ends_equal:
+                end_min = end_max = None
+            elif (BinaryEventsQueueKey(event.complement)
+                  < BinaryEventsQueueKey(below_event.complement)):
+                end_min, end_max = event.complement, below_event.complement
+            else:
+                end_min, end_max = below_event.complement, event.complement
+            if starts_equal:
+                # both line segments are equal or share the left endpoint
+                if not ends_equal:
+                    self.divide_segment(end_max.complement, end_min.start)
+            elif ends_equal:
+                # the line segments share the right endpoint
+                self.divide_segment(start_min, start_max.start)
+            elif start_min is end_max.complement:
+                # one line segment includes the other one
+                self.divide_segment(start_min, end_min.start)
+                self.divide_segment(start_min, start_max.start)
+            else:
+                # no line segment includes the other one
+                self.divide_segment(start_max, end_min.start)
+                self.divide_segment(start_min, start_max.start)
+        elif (relationship is not SegmentsRelationship.NONE
+              and event.start != below_event.start
+              and event.end != below_event.end):
+            # segments do not intersect_multipolygons at endpoints
+            point = segments_intersection(below_segment, segment)
+            if point != below_event.start and point != below_event.end:
+                self.divide_segment(below_event, point)
+            if point != event.start and point != event.end:
+                self.divide_segment(event, point)
+
+    def divide_segment(self, event: BinaryEvent, point: Point) -> None:
+        left_event = BinaryEvent(False, point, event.complement,
+                                 event.from_left)
+        right_event = BinaryEvent(True, point, event, event.from_left)
+        event.complement.complement, event.complement = left_event, right_event
+        self._queue.push(left_event)
+        self._queue.push(right_event)
+
+    def register_segments(self,
+                          segments: Iterable[Segment],
+                          from_left: bool) -> None:
+        events_queue = self._queue
+        for start, end in segments:
+            if start > end:
+                start, end = end, start
+            start_event = BinaryEvent(False, start, None, from_left)
+            end_event = BinaryEvent(True, end, start_event, from_left)
+            start_event.complement = end_event
+            events_queue.push(start_event)
+            events_queue.push(end_event)
+
+
 class NaryEventsQueue:
     __slots__ = '_queue',
 
