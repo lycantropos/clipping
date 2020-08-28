@@ -138,35 +138,27 @@ class LinearBinaryEventsQueue:
             if starts_equal:
                 # both line segments are equal or share the left endpoint
                 if not ends_equal:
-                    self.divide_segment(end_max.complement, end_min.start)
+                    self._divide_segment(end_max.complement, end_min.start)
             elif ends_equal:
                 # the line segments share the right endpoint
-                self.divide_segment(start_min, start_max.start)
+                self._divide_segment(start_min, start_max.start)
             elif start_min is end_max.complement:
                 # one line segment includes the other one
-                self.divide_segment(start_min, end_min.start)
-                self.divide_segment(start_min, start_max.start)
+                self._divide_segment(start_min, end_min.start)
+                self._divide_segment(start_min, start_max.start)
             else:
                 # no line segment includes the other one
-                self.divide_segment(start_max, end_min.start)
-                self.divide_segment(start_min, start_max.start)
+                self._divide_segment(start_max, end_min.start)
+                self._divide_segment(start_min, start_max.start)
         elif (relationship is not SegmentsRelationship.NONE
               and event.start != below_event.start
               and event.end != below_event.end):
             # segments do not intersect_multipolygons at endpoints
             point = segments_intersection(below_segment, segment)
             if point != below_event.start and point != below_event.end:
-                self.divide_segment(below_event, point)
+                self._divide_segment(below_event, point)
             if point != event.start and point != event.end:
-                self.divide_segment(event, point)
-
-    def divide_segment(self, event: BinaryEvent, point: Point) -> None:
-        left_event = BinaryEvent(False, point, event.complement,
-                                 event.from_left)
-        right_event = BinaryEvent(True, point, event, event.from_left)
-        event.complement.complement, event.complement = left_event, right_event
-        self._queue.push(left_event)
-        self._queue.push(right_event)
+                self._divide_segment(event, point)
 
     def pop(self) -> BinaryEvent:
         return self._queue.pop()
@@ -183,6 +175,14 @@ class LinearBinaryEventsQueue:
             start_event.complement = end_event
             events_queue.push(start_event)
             events_queue.push(end_event)
+
+    def _divide_segment(self, event: BinaryEvent, point: Point) -> None:
+        left_event = BinaryEvent(False, point, event.complement,
+                                 event.from_left)
+        right_event = BinaryEvent(True, point, event, event.from_left)
+        event.complement.complement, event.complement = left_event, right_event
+        self._queue.push(left_event)
+        self._queue.push(right_event)
 
 
 class MixedBinaryEventsQueue:
@@ -229,38 +229,29 @@ class MixedBinaryEventsQueue:
             if starts_equal:
                 # both line segments are equal or share the left endpoint
                 if not ends_equal:
-                    self.divide_segment(end_max.complement, end_min.start)
+                    self._divide_segment(end_max.complement, end_min.start)
                 return True
             elif ends_equal:
                 # the line segments share the right endpoint
-                self.divide_segment(start_min, start_max.start)
+                self._divide_segment(start_min, start_max.start)
             elif start_min is end_max.complement:
                 # one line segment includes the other one
-                self.divide_segment(start_min, end_min.start)
-                self.divide_segment(start_min, start_max.start)
+                self._divide_segment(start_min, end_min.start)
+                self._divide_segment(start_min, start_max.start)
             else:
                 # no line segment includes the other one
-                self.divide_segment(start_max, end_min.start)
-                self.divide_segment(start_min, start_max.start)
+                self._divide_segment(start_max, end_min.start)
+                self._divide_segment(start_min, start_max.start)
         elif (relationship is not SegmentsRelationship.NONE
               and event.start != below_event.start
               and event.end != below_event.end):
             # segments do not intersect_multipolygons at endpoints
             point = segments_intersection(below_segment, segment)
             if point != below_event.start and point != below_event.end:
-                self.divide_segment(below_event, point)
+                self._divide_segment(below_event, point)
             if point != event.start and point != event.end:
-                self.divide_segment(event, point)
+                self._divide_segment(event, point)
         return False
-
-    def divide_segment(self, event: MixedEvent, point: Point) -> None:
-        left_event = MixedEvent(False, point, event.complement,
-                                event.from_left, event.interior_to_left)
-        right_event = MixedEvent(True, point, event, event.from_left,
-                                 event.interior_to_left)
-        event.complement.complement, event.complement = left_event, right_event
-        self._queue.push(left_event)
-        self._queue.push(right_event)
 
     def pop(self) -> MixedEvent:
         return self._queue.pop()
@@ -281,6 +272,15 @@ class MixedBinaryEventsQueue:
             start_event.complement = end_event
             queue.push(start_event)
             queue.push(end_event)
+
+    def _divide_segment(self, event: MixedEvent, point: Point) -> None:
+        left_event = MixedEvent(False, point, event.complement,
+                                event.from_left, event.interior_to_left)
+        right_event = MixedEvent(True, point, event, event.from_left,
+                                 event.interior_to_left)
+        event.complement.complement, event.complement = left_event, right_event
+        self._queue.push(left_event)
+        self._queue.push(right_event)
 
 
 class NaryEventsQueue:
