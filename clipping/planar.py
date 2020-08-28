@@ -1,5 +1,5 @@
 """
-Boolean operations on multisegments/polygons/multipolygons in the plane.
+Boolean operations on multisegments/multiregions/multipolygons in the plane.
 
 Based on algorithm by F. Martinez et al.
 
@@ -13,22 +13,26 @@ Glossary
 
 **Point** --- pair of real numbers (called *point's coordinates*).
 
+**Multipoint** --- possibly empty sequence of distinct points.
+
 **Segment** (or **line segment**) --- pair of unequal points
 (called *segment's endpoints*).
+
+**Multisegment** --- possibly empty sequence of segments
+such that any pair of them do not cross/overlap each other.
 
 **Contour** --- sequence of points (called *contour's vertices*)
 such that line segments formed by pairs of consecutive points
 (including the last-first point pair)
 do not overlap each other.
 
-**Polygon** --- pair of contour (called *polygon's border*)
-and possibly empty sequence of non-overlapping contours
-which lie within the border (called *polygon's holes*).
+**Region** --- contour with points that lie within it.
 
-**Multipoint** --- possibly empty sequence of distinct points.
+**Multiregion** --- possibly empty sequence of regions such
+that intersection of distinct regions is a discrete points set.
 
-**Multisegment** --- possibly empty sequence of segments
-such that any pair of them do not cross/overlap each other.
+**Polygon** --- pair of region (called *polygon's border*)
+and multiregion which lies within the border (called *polygon's holes*).
 
 **Multipolygon** --- possibly empty sequence of non-overlapping polygons.
 
