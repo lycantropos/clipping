@@ -19,6 +19,7 @@ from clipping.hints import (Base,
                             Contour,
                             Coordinate,
                             Multipolygon,
+                            Multiregion,
                             Multisegment,
                             Point,
                             Polygon,
@@ -94,6 +95,11 @@ def to_multipolygon_base(multipolygon: Multipolygon) -> Base:
                key=_bases_key)
 
 
+def to_multiregion_base(multipolygon: Multiregion) -> Base:
+    return max({to_contour_base(region) for region in multipolygon},
+               key=_bases_key)
+
+
 def to_multisegment_base(multisegment: Multisegment) -> Base:
     return max(set(map(type, flatten(flatten(multisegment)))),
                key=_bases_key)
@@ -129,6 +135,10 @@ def to_rational_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
             for border, holes in multipolygon]
 
 
+def to_rational_multiregion(multiregion: Multiregion) -> Multiregion:
+    return [to_rational_contour(region) for region in multiregion]
+
+
 def to_rational_multisegment(multisegment: Multisegment) -> Multisegment:
     return [(to_rational_point(start), to_rational_point(end))
             for start, end in multisegment]
@@ -150,6 +160,10 @@ def to_first_boundary_vertex(polygon: Polygon) -> Point:
 
 def to_multipolygon_x_max(multipolygon: Multipolygon) -> Coordinate:
     return max(x for border, _ in multipolygon for x, _ in border)
+
+
+def to_multiregion_x_max(multiregion: Multiregion) -> Coordinate:
+    return max(x for border in multiregion for x, _ in border)
 
 
 def to_multisegment_x_max(multisegment: Multisegment) -> Coordinate:

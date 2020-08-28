@@ -11,9 +11,11 @@ from robust.linear import (SegmentsRelationship,
 
 from clipping.hints import (Contour,
                             Multipolygon,
+                            Multiregion,
                             Multisegment,
                             Point,
                             Polygon,
+                            Region,
                             Segment)
 from .hints import BoundingBox
 from .utils import (contour_to_segments,
@@ -50,6 +52,13 @@ def from_multipolygon(multipolygon: Multipolygon) -> BoundingBox:
     Builds bounding box from multipolygon.
     """
     return from_points(flatten(border for border, _ in multipolygon))
+
+
+def from_multiregion(multiregion: Multiregion) -> BoundingBox:
+    """
+    Builds bounding box from multiregion.
+    """
+    return from_points(flatten(multiregion))
 
 
 def disjoint_with(left: BoundingBox, right: BoundingBox) -> bool:
@@ -292,10 +301,26 @@ def intersects_with_polygon(bounding_box: BoundingBox,
                        for border_edge in contour_to_segments(border)))
 
 
+def intersects_with_region(bounding_box: BoundingBox,
+                           region: Region) -> bool:
+    """
+    Checks if the bounding box intersects the region.
+    """
+    region_bounding_box = from_points(region)
+    return (intersects_with(region_bounding_box, bounding_box)
+            and (is_subset_of(region_bounding_box, bounding_box)
+                 or any(contains_point(bounding_box, vertex)
+                        for vertex in region)
+                 or any(point_in_region(vertex, region)
+                        is not Relation.DISJOINT
+                        for vertex in to_vertices(bounding_box))
+                 or any(intersects_with_segment(bounding_box, border_edge)
+                        for border_edge in contour_to_segments(region))))
+
+
 def coupled_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
     """
-    Checks if the bounding box intersects the polygon in some region
-    or by the edge.
+    Checks if the bounding box intersects the polygon in continuous points set.
     """
     border, holes = polygon
     polygon_bounding_box = from_points(border)
@@ -320,6 +345,32 @@ def coupled_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
                          in (Relation.CROSS, Relation.COMPONENT,
                              Relation.ENCLOSED)
                          for segment in to_segments(bounding_box)))
+
+
+def coupled_with_region(bounding_box: BoundingBox, region: Region) -> bool:
+    """
+    Checks if the bounding box intersects the region in continuous points set.
+    """
+    region_bounding_box = from_points(region)
+    if not coupled_with(region_bounding_box, bounding_box):
+        return False
+    elif (is_subset_of(region_bounding_box, bounding_box)
+          or any(covers_point(bounding_box, vertex)
+                 for vertex in region)):
+        return True
+    relations = [point_in_region(vertex, region)
+                 for vertex in to_vertices(bounding_box)]
+    if any(relation is Relation.WITHIN for relation in relations):
+        return not all(relation is Relation.WITHIN for relation in relations)
+    else:
+        return (is_subset_of(bounding_box, region_bounding_box)
+                and is_subset_of_region(bounding_box, region)
+                or any(segment_in_contour(segment, region)
+                       is Relation.OVERLAP
+                       or segment_in_region(segment, region)
+                       in (Relation.CROSS, Relation.COMPONENT,
+                           Relation.ENCLOSED)
+                       for segment in to_segments(bounding_box)))
 
 
 def contains_point(bounding_box: BoundingBox, point: Point) -> bool:
@@ -368,8 +419,22 @@ def to_intersecting_polygons(bounding_box: BoundingBox,
             if intersects_with_polygon(bounding_box, polygon)]
 
 
+def to_intersecting_regions(bounding_box: BoundingBox,
+                            multiregion: Multiregion) -> Multiregion:
+    return [region
+            for region in multiregion
+            if intersects_with_region(bounding_box, region)]
+
+
 def to_coupled_polygons(bounding_box: BoundingBox,
                         multipolygon: Multipolygon) -> Multipolygon:
     return [polygon
             for polygon in multipolygon
             if coupled_with_polygon(bounding_box, polygon)]
+
+
+def to_coupled_regions(bounding_box: BoundingBox,
+                       multiregion: Multiregion) -> Multiregion:
+    return [region
+            for region in multiregion
+            if coupled_with_region(bounding_box, region)]
