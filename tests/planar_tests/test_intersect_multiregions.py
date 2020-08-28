@@ -3,8 +3,7 @@ from hypothesis import given
 from clipping.hints import Multiregion
 from clipping.planar import (intersect_multipolygons,
                              intersect_multiregions,
-                             subtract_multipolygons,
-                             unite_multiregions)
+                             subtract_multipolygons)
 from tests.utils import (MultiregionsPair,
                          MultiregionsTriplet,
                          are_multiregions_similar,
@@ -53,17 +52,6 @@ def test_right_absorbing_element(empty_multiregion_with_multiregion
 
 
 @given(strategies.multiregions_pairs)
-def test_absorption_identity(multiregions_pair: MultiregionsPair) -> None:
-    left_multiregion, right_multiregion = multiregions_pair
-
-    result = intersect_multiregions(left_multiregion,
-                                    unite_multiregions(left_multiregion,
-                                                       right_multiregion))
-
-    assert are_multiregions_similar(result, left_multiregion)
-
-
-@given(strategies.multiregions_pairs)
 def test_commutativity(multiregions_pair: MultiregionsPair) -> None:
     left_multiregion, right_multiregion = multiregions_pair
 
@@ -86,21 +74,6 @@ def test_associativity(multiregions_triplet: MultiregionsTriplet) -> None:
                                             intersect_multiregions(
                                                     mid_multiregion,
                                                     right_multiregion))
-
-
-@given(strategies.multiregions_triplets)
-def test_distribution_over_union(multiregions_triplet: MultiregionsTriplet
-                                 ) -> None:
-    (left_multiregion, mid_multiregion,
-     right_multiregion) = multiregions_triplet
-
-    result = intersect_multiregions(left_multiregion,
-                                    unite_multiregions(mid_multiregion,
-                                                       right_multiregion))
-
-    assert result == unite_multiregions(
-            intersect_multiregions(left_multiregion, mid_multiregion),
-            intersect_multiregions(left_multiregion, right_multiregion))
 
 
 @given(strategies.multiregions_pairs)
