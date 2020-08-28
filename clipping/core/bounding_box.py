@@ -358,19 +358,16 @@ def coupled_with_region(bounding_box: BoundingBox, region: Region) -> bool:
           or any(covers_point(bounding_box, vertex)
                  for vertex in region)):
         return True
-    relations = [point_in_region(vertex, region)
-                 for vertex in to_vertices(bounding_box)]
-    if any(relation is Relation.WITHIN for relation in relations):
-        return not all(relation is Relation.WITHIN for relation in relations)
-    else:
-        return (is_subset_of(bounding_box, region_bounding_box)
-                and is_subset_of_region(bounding_box, region)
-                or any(segment_in_contour(segment, region)
-                       is Relation.OVERLAP
-                       or segment_in_region(segment, region)
-                       in (Relation.CROSS, Relation.COMPONENT,
-                           Relation.ENCLOSED)
-                       for segment in to_segments(bounding_box)))
+    return (any(point_in_region(vertex, region) is Relation.WITHIN
+                for vertex in to_vertices(bounding_box))
+            or is_subset_of(bounding_box, region_bounding_box)
+            and is_subset_of_region(bounding_box, region)
+            or any(segment_in_contour(segment, region)
+                   is Relation.OVERLAP
+                   or segment_in_region(segment, region)
+                   in (Relation.CROSS, Relation.COMPONENT,
+                       Relation.ENCLOSED)
+                   for segment in to_segments(bounding_box)))
 
 
 def contains_point(bounding_box: BoundingBox, point: Point) -> bool:
