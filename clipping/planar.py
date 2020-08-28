@@ -446,8 +446,8 @@ def complete_intersect_multiregions(left: Multiregion,
 
     where ``segments_count = edges_count + intersections_count``,
     ``edges_count = left_edges_count + right_edges_count``,
-    ``left_edges_count = sum(len(region) for region in left)``,
-    ``right_edges_count = sum(len(region) for region in right)``,
+    ``left_edges_count = sum(map(len, left))``,
+    ``right_edges_count = sum(map(len, right))``,
     ``intersections_count`` --- number of intersections between multiregions
     edges.
 
