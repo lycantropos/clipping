@@ -22,7 +22,6 @@ from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     contour_to_oriented_segments,
                     pairwise,
-                    shrink_collinear_vertices,
                     to_multiregion_base,
                     to_multiregion_x_max,
                     to_rational_multiregion)
@@ -243,7 +242,6 @@ def events_to_multiregion(events: List[Event]) -> Multiregion:
             contour_events.append(cursor)
             complement_position = cursor.complement.position
             processed[position] = processed[complement_position] = True
-        shrink_collinear_vertices(contour)
         result.append(contour)
     return result
 
