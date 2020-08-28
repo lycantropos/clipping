@@ -3,8 +3,7 @@ from abc import (ABC,
 from itertools import groupby
 from numbers import Rational
 from operator import attrgetter
-from typing import (Iterable,
-                    List,
+from typing import (List,
                     Optional,
                     Union as Union_)
 
@@ -209,8 +208,7 @@ class CompleteIntersection(Operation):
                 if no_segment_found and all(not event.primary.in_result
                                             for event in same_start_events):
                     multipoint.append(start)
-        multipolygon = events_to_multipolygon(events)
-        return multipoint, multisegment, multipolygon
+        return multipoint, multisegment, events_to_multipolygon(events)
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -311,40 +309,11 @@ class Union(Operation):
 
 
 def events_to_multipolygon(events: List[Event]) -> Multipolygon:
-    are_internal, holes = [], []
-    return _contours_to_multipolygon(
-            _events_to_contours(_collect_events(events), are_internal, holes),
-            are_internal, holes)
-
-
-def _collect_events(events: List[Event]) -> List[Event]:
-    return sorted([event for event in events if event.primary.in_result],
-                  key=EventsQueueKey)
-
-
-def _contours_to_multipolygon(contours: List[Contour],
-                              are_internal: List[bool],
-                              holes: List[List[int]]) -> Multipolygon:
-    result = []
-    for index, contour in enumerate(contours):
-        if are_internal[index]:
-            # hole of a hole is an external polygon
-            result.extend((contours[hole_index],
-                           [contours[hole_hole_index]
-                            for hole_hole_index in holes[hole_index]])
-                          for hole_index in holes[index])
-        else:
-            result.append((contour, [contours[hole_index]
-                                     for hole_index in holes[index]]))
-    return result
-
-
-def _events_to_contours(events: List[Event],
-                        are_internal: List[bool],
-                        holes: List[List[int]]) -> List[Contour]:
+    events = sorted([event for event in events if event.primary.in_result],
+                    key=EventsQueueKey)
     for index, event in enumerate(events):
         event.position = index
-    depths, parents = [], []
+    are_internal, depths, holes, parents = [], [], [], []
     processed = [False] * len(events)
     contours = []
     connectivity = events_to_connectivity(events)
@@ -361,7 +330,18 @@ def _events_to_contours(events: List[Event],
             # holes will be in clockwise order
             contour.reverse()
         contours.append(contour)
-    return contours
+    result = []
+    for index, contour in enumerate(contours):
+        if are_internal[index]:
+            # hole of a hole is an external polygon
+            result.extend((contours[hole_index],
+                           [contours[hole_hole_index]
+                            for hole_hole_index in holes[hole_index]])
+                          for hole_index in holes[index])
+        else:
+            result.append((contour, [contours[hole_index]
+                                     for hole_index in holes[index]]))
+    return result
 
 
 def _compute_relations(event: Event,
@@ -422,7 +402,6 @@ def _events_to_contour(cursor: Event,
         complement_position = cursor.complement.position
     for event in contour_events:
         processed[event.position] = processed[event.complement.position] = True
-    for event in contour_events:
         if event.is_right_endpoint:
             event.complement.result_in_out = True
             event.complement.contour_id = contour_id

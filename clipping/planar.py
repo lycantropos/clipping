@@ -454,21 +454,40 @@ def complete_intersect_multiregions(left: Multiregion,
         for floating point numbers.
     :returns: intersection of operands.
 
+    >>> lower_left_square = [(0, 0), (1, 0), (1, 1), (0, 1)]
+    >>> lower_right_square = [(1, 0), (2, 0), (2, 1), (1, 1)]
+    >>> upper_left_square = [(0, 1), (1, 1), (1, 2), (0, 2)]
+    >>> upper_right_square = [(1, 1), (2, 1), (2, 2), (1, 2)]
     >>> complete_intersect_multiregions([], [])
     ([], [], [])
-    >>> complete_intersect_multiregions([[(0, 0), (1, 0), (0, 1)]], [])
+    >>> complete_intersect_multiregions([lower_left_square], [])
     ([], [], [])
-    >>> complete_intersect_multiregions([], [[(0, 0), (1, 0), (0, 1)]])
+    >>> complete_intersect_multiregions([], [lower_left_square])
     ([], [], [])
-    >>> complete_intersect_multiregions([[(0, 0), (1, 0), (0, 1)]],
-    ...                                 [[(0, 0), (1, 0), (0, 1)]])
-    ([], [], [[(0, 0), (1, 0), (0, 1)]])
-    >>> complete_intersect_multiregions([[(0, 0), (1, 0), (0, 1)]],
-    ...                                 [[(0, 1), (1, 0), (1, 1)]])
-    ([], [((0, 1), (1, 0))], [])
-    >>> complete_intersect_multiregions([[(0, 0), (1, 0), (0, 1)]],
-    ...                                 [[(1, 0), (2, 0), (2, 1)]])
-    ([(1, 0)], [], [])
+    >>> complete_intersect_multiregions([lower_left_square],
+    ...                                 [lower_left_square])
+    ([], [], [[(0, 0), (1, 0), (1, 1), (0, 1)]])
+    >>> complete_intersect_multiregions([lower_left_square],
+    ...                                 [lower_right_square])
+    ([], [((1, 0), (1, 1))], [])
+    >>> complete_intersect_multiregions([lower_left_square],
+    ...                                 [upper_left_square])
+    ([], [((0, 1), (1, 1))], [])
+    >>> complete_intersect_multiregions([lower_left_square],
+    ...                                 [upper_right_square])
+    ([(1, 1)], [], [])
+    >>> complete_intersect_multiregions([lower_left_square,
+    ...                                  upper_right_square],
+    ...                                 [upper_left_square,
+    ...                                  lower_right_square])
+    ([],\
+ [((0, 1), (1, 1)), ((1, 0), (1, 1)), ((1, 1), (2, 1)), ((1, 1), (1, 2))], [])
+    >>> complete_intersect_multiregions([lower_left_square,
+    ...                                  upper_right_square],
+    ...                                 [lower_left_square,
+    ...                                  upper_right_square])
+    ([], [],\
+ [[(0, 0), (1, 0), (1, 1), (0, 1)], [(1, 1), (2, 1), (2, 2), (1, 2)]])
     """
     return _holeless.CompleteIntersection(left, right, accurate).compute()
 
