@@ -6,7 +6,8 @@ from hypothesis_geometry import planar
 from clipping.core.hints import BoundingBox
 from clipping.hints import (Contour,
                             Coordinate,
-                            Polygon)
+                            Polygon,
+                            Region)
 from tests.strategies import coordinates_strategies
 from tests.utils import (Strategy,
                          sort_pair,
@@ -60,6 +61,16 @@ def to_polygons_with_bounding_boxes(coordinates: Strategy[Coordinate]
 
 polygons_with_bounding_boxes = (coordinates_strategies
                                 .flatmap(to_polygons_with_bounding_boxes))
+
+
+def to_regions_with_bounding_boxes(coordinates: Strategy[Coordinate]
+                                   ) -> Strategy[Tuple[Region, BoundingBox]]:
+    return strategies.tuples(planar.contours(coordinates),
+                             planar.bounding_boxes(coordinates))
+
+
+regions_with_bounding_boxes = (coordinates_strategies
+                               .flatmap(to_regions_with_bounding_boxes))
 bounding_boxes_strategies = coordinates_strategies.map(planar.bounding_boxes)
 bounding_boxes_pairs = bounding_boxes_strategies.flatmap(to_pairs)
 bounding_boxes_triplets = bounding_boxes_strategies.flatmap(to_triplets)
