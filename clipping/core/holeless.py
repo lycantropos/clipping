@@ -23,7 +23,6 @@ from .utils import (all_equal,
                     contour_to_oriented_segments,
                     pairwise,
                     shrink_collinear_vertices,
-                    to_first_boundary_vertex,
                     to_multiregion_base,
                     to_multiregion_x_max,
                     to_rational_multiregion)
@@ -215,34 +214,6 @@ class Intersection(Operation):
     def in_result(self, event: Event) -> bool:
         return (event.inside
                 or not event.from_left and event.is_common_region_boundary)
-
-
-class Union(Operation):
-    __slots__ = ()
-
-    def compute(self) -> Multiregion:
-        if not (self.left and self.right):
-            return self.left or self.right
-        elif bounding_box.disjoint_with(
-                bounding_box.from_multiregion(self.left),
-                bounding_box.from_multiregion(self.right)):
-            result = self.left + self.right
-            result.sort(key=to_first_boundary_vertex)
-            return result
-        self.normalize_operands()
-        return events_to_multiregion(self.sweep())
-
-    def in_result(self, event: Event) -> bool:
-        return (event.outside
-                or not event.from_left and event.is_common_region_boundary)
-
-    def sweep(self) -> List[Event]:
-        self.fill_queue()
-        result = []
-        sweep_line = SweepLine()
-        while self._events_queue:
-            self.process_event(self._events_queue.pop(), result, sweep_line)
-        return result
 
 
 def events_to_multiregion(events: List[Event]) -> Multiregion:
