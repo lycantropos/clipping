@@ -119,9 +119,10 @@ class Operation(ABC):
     def sweep(self) -> List[BinaryEvent]:
         self.fill_queue()
         result = []
+        events_queue = self._events_queue
         sweep_line = BinarySweepLine()
-        while self._events_queue:
-            event = self._events_queue.pop()
+        while events_queue:
+            event = events_queue.pop()
             self.process_event(event, sweep_line)
             if event.is_right_endpoint:
                 result.append(event.complement)
@@ -151,10 +152,11 @@ class Difference(Operation):
     def sweep(self) -> List[BinaryEvent]:
         self.fill_queue()
         result = []
+        events_queue = self._events_queue
         sweep_line = BinarySweepLine()
         left_x_max = to_multisegment_x_max(self.left)
-        while self._events_queue:
-            event = self._events_queue.pop()
+        while events_queue:
+            event = events_queue.pop()
             start_x, _ = event.start
             if start_x > left_x_max:
                 break
@@ -189,11 +191,12 @@ class Intersection(Operation):
     def sweep(self) -> List[BinaryEvent]:
         self.fill_queue()
         result = []
+        events_queue = self._events_queue
         sweep_line = BinarySweepLine()
         min_max_x = min(to_multisegment_x_max(self.left),
                         to_multisegment_x_max(self.right))
-        while self._events_queue:
-            event = self._events_queue.pop()
+        while events_queue:
+            event = events_queue.pop()
             start_x, _ = event.start
             if start_x > min_max_x:
                 break
@@ -242,11 +245,12 @@ class CompleteIntersection(Operation):
     def sweep(self) -> List[BinaryEvent]:
         self.fill_queue()
         result = []
+        events_queue = self._events_queue
         sweep_line = BinarySweepLine()
         min_max_x = min(to_multisegment_x_max(self.left),
                         to_multisegment_x_max(self.right))
-        while self._events_queue:
-            event = self._events_queue.pop()
+        while events_queue:
+            event = events_queue.pop()
             start_x, _ = event.start
             if start_x > min_max_x:
                 break
