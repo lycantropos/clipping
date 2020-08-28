@@ -4,12 +4,12 @@ from hypothesis import strategies
 from hypothesis_geometry import planar
 
 from clipping.core.hints import BoundingBox
-from clipping.core.utils import sort_pair
 from clipping.hints import (Contour,
                             Coordinate,
                             Polygon)
 from tests.strategies import coordinates_strategies
 from tests.utils import (Strategy,
+                         sort_pair,
                          to_pairs,
                          to_triplets)
 

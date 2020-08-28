@@ -15,8 +15,7 @@ from robust.angular import (Orientation,
                             orientation)
 
 from clipping.core.hints import BoundingBox
-from clipping.core.utils import (sort_pair,
-                                 to_contour_base,
+from clipping.core.utils import (to_contour_base,
                                  to_first_boundary_vertex)
 from clipping.hints import (Contour,
                             Mix,
@@ -212,3 +211,8 @@ def reverse_multisegment_endpoints(multisegment: Multisegment) -> Multisegment:
 
 def reverse_segment(segment: Segment) -> Segment:
     return segment[::-1]
+
+
+def sort_pair(pair: Tuple[Domain, Domain]) -> Tuple[Domain, Domain]:
+    first, second = pair
+    return pair if first < second else (second, first)

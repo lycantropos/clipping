@@ -4,7 +4,6 @@ from orient.planar import (Relation,
                            segment_in_multisegment,
                            segment_in_segment)
 
-from clipping.core.utils import sort_pair
 from clipping.planar import intersect_multisegment_with_multipolygon
 from tests.utils import (MultipolygonWithMultisegment,
                          is_multisegment,
@@ -13,7 +12,8 @@ from tests.utils import (MultipolygonWithMultisegment,
                          reverse_multipolygon_holes,
                          reverse_multipolygon_holes_contours,
                          reverse_multisegment,
-                         reverse_multisegment_endpoints)
+                         reverse_multisegment_endpoints,
+                         sort_pair)
 from . import strategies
 
 

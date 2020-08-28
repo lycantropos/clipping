@@ -3,11 +3,11 @@ from typing import List
 from bentley_ottmann.planar import segments_cross_or_overlap
 from hypothesis import given
 
-from clipping.core.utils import sort_pair
 from clipping.hints import Segment
 from clipping.planar import segments_to_multisegment
 from tests.utils import (equivalence,
-                         is_multisegment)
+                         is_multisegment,
+                         sort_pair)
 from . import strategies
 
 

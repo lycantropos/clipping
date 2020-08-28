@@ -33,11 +33,6 @@ def all_equal(iterable: Iterable[Any]) -> bool:
 Domain = TypeVar('Domain')
 
 
-def sort_pair(pair: Tuple[Domain, Domain]) -> Tuple[Domain, Domain]:
-    first, second = pair
-    return (first, second) if first < second else (second, first)
-
-
 def pairwise(iterable: Iterable[Domain]) -> Iterable[Tuple[Domain, Domain]]:
     iterator = iter(iterable)
     element = next(iterator, None)

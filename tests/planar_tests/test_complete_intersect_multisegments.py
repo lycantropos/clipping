@@ -8,7 +8,6 @@ from robust.linear import (SegmentsRelationship,
                            segments_intersections,
                            segments_relationship)
 
-from clipping.core.utils import sort_pair
 from clipping.hints import Multisegment
 from clipping.planar import (complete_intersect_multisegments,
                              intersect_multisegments,
@@ -16,7 +15,8 @@ from clipping.planar import (complete_intersect_multisegments,
 from tests.utils import (MultisegmentsPair,
                          is_mix,
                          mix_equivalent_to_multisegment,
-                         reverse_multisegment)
+                         reverse_multisegment,
+                         sort_pair)
 from . import strategies
 
 

@@ -10,7 +10,6 @@ from robust.linear import (SegmentsRelationship,
                            segments_relationship)
 
 from clipping.core.utils import (contour_to_segments,
-                                 sort_pair,
                                  to_multipolygon_contours)
 from clipping.planar import (complete_intersect_multisegment_with_multipolygon,
                              intersect_multisegment_with_multipolygon)
@@ -21,7 +20,8 @@ from tests.utils import (MultipolygonWithMultisegment,
                          reverse_multipolygon_holes,
                          reverse_multipolygon_holes_contours,
                          reverse_multisegment,
-                         reverse_multisegment_endpoints)
+                         reverse_multisegment_endpoints,
+                         sort_pair)
 from . import strategies
 
 
