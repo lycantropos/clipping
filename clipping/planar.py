@@ -473,6 +473,45 @@ def complete_intersect_multiregions(left: Multiregion,
     return _holeless.CompleteIntersection(left, right, accurate).compute()
 
 
+def intersect_multiregions(left: Multiregion,
+                           right: Multiregion,
+                           *,
+                           accurate: bool = True) -> Multiregion:
+    """
+    Returns intersection of multiregions.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = edges_count + intersections_count``,
+    ``edges_count = left_edges_count + right_edges_count``,
+    ``left_edges_count = sum(map(len, left))``,
+    ``right_edges_count = sum(map(len, right))``,
+    ``intersections_count`` --- number of intersections between multiregions
+    edges.
+
+    :param left: left operand.
+    :param right: right operand.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: intersection of operands.
+
+    >>> intersect_multiregions([], [])
+    []
+    >>> intersect_multiregions([[(0, 0), (1, 0), (0, 1)]], [])
+    []
+    >>> intersect_multiregions([], [[(0, 0), (1, 0), (0, 1)]])
+    []
+    >>> intersect_multiregions([[(0, 0), (1, 0), (0, 1)]],
+    ...                        [[(0, 0), (1, 0), (0, 1)]])
+    [[(0, 0), (1, 0), (0, 1)]]
+    """
+    return _holeless.Intersection(left, right, accurate).compute()
+
+
 def complete_intersect_multipolygons(left: Multipolygon,
                                      right: Multipolygon,
                                      *,
