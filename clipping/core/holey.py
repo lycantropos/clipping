@@ -11,28 +11,22 @@ from typing import (DefaultDict,
                     Union as Union_)
 
 from reprit.base import generate_repr
-from robust.angular import (Orientation,
-                            orientation)
-from robust.linear import (SegmentsRelationship,
-                           segments_intersection,
-                           segments_relationship)
 
 from clipping.hints import (Contour,
                             Mix,
                             Multipoint,
                             Multipolygon,
-                            Multisegment,
-                            Point,
-                            Segment)
+                            Multisegment)
 from . import bounding_box
-from .enums import OverlapKind
-from .event import ShapedEvent as Event
-from .events_queue import (BinaryEventsQueue as EventsQueue,
-                           BinaryEventsQueueKey as EventsQueueKey)
+from .event import (HoleyEvent as Event,
+                    events_to_connectivity)
+from .events_queue import (BinaryEventsQueueKey as EventsQueueKey,
+                           HoleyEventsQueue as EventsQueue)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     pairwise,
                     polygon_to_oriented_segments,
+                    shrink_collinear_vertices,
                     to_first_boundary_vertex,
                     to_multipolygon_base,
                     to_multipolygon_x_max,
@@ -81,75 +75,14 @@ class Operation(ABC):
                                            else below_event)
         event.in_result = self.in_result(event)
 
-    def detect_intersection(self, below_event: Event, event: Event) -> bool:
-        below_segment, segment = below_event.segment, event.segment
-        relationship = segments_relationship(below_segment, segment)
-        if relationship is SegmentsRelationship.OVERLAP:
-            # segments overlap
-            if below_event.from_left is event.from_left:
-                raise ValueError('Edges of the same multipolygon '
-                                 'should not overlap.')
-            starts_equal = below_event.start == event.start
-            if starts_equal:
-                start_min = start_max = None
-            elif EventsQueueKey(event) < EventsQueueKey(below_event):
-                start_min, start_max = event, below_event
-            else:
-                start_min, start_max = below_event, event
-            ends_equal = event.end == below_event.end
-            if ends_equal:
-                end_min = end_max = None
-            elif (EventsQueueKey(event.complement)
-                  < EventsQueueKey(below_event.complement)):
-                end_min, end_max = event.complement, below_event.complement
-            else:
-                end_min, end_max = below_event.complement, event.complement
-            if starts_equal:
-                # both line segments are equal or share the left endpoint
-                below_event.overlap_kind = event.overlap_kind = (
-                    OverlapKind.SAME_ORIENTATION
-                    if event.interior_to_left is below_event.interior_to_left
-                    else OverlapKind.DIFFERENT_ORIENTATION)
-                if not ends_equal:
-                    self.divide_segment(end_max.complement, end_min.start)
-                return True
-            elif ends_equal:
-                # the line segments share the right endpoint
-                self.divide_segment(start_min, start_max.start)
-            elif start_min is end_max.complement:
-                # one line segment includes the other one
-                self.divide_segment(start_min, end_min.start)
-                self.divide_segment(start_min, start_max.start)
-            else:
-                # no line segment includes the other one
-                self.divide_segment(start_max, end_min.start)
-                self.divide_segment(start_min, start_max.start)
-        elif (relationship is not SegmentsRelationship.NONE
-              and event.start != below_event.start
-              and event.end != below_event.end):
-            # segments do not intersect_multipolygons at endpoints
-            point = segments_intersection(below_segment, segment)
-            if point != below_event.start and point != below_event.end:
-                self.divide_segment(below_event, point)
-            if point != event.start and point != event.end:
-                self.divide_segment(event, point)
-        return False
-
-    def divide_segment(self, event: Event, point: Point) -> None:
-        left_event = Event(False, point, event.complement, event.from_left,
-                           event.interior_to_left)
-        right_event = Event(True, point, event, event.from_left,
-                            event.interior_to_left)
-        event.complement.complement, event.complement = left_event, right_event
-        self._events_queue.push(left_event)
-        self._events_queue.push(right_event)
-
     def fill_queue(self) -> None:
+        events_queue = self._events_queue
         for polygon in self.left:
-            self.register_segments(polygon_to_oriented_segments(polygon), True)
+            events_queue.register_segments(
+                    polygon_to_oriented_segments(polygon), True)
         for polygon in self.right:
-            self.register_segments(polygon_to_oriented_segments(polygon),
-                                   False)
+            events_queue.register_segments(
+                    polygon_to_oriented_segments(polygon), False)
 
     @abstractmethod
     def in_result(self, event: Event) -> bool:
@@ -173,7 +106,8 @@ class Operation(ABC):
                                             sweep_line.below(event))
                 sweep_line.remove(event)
                 if above_event is not None and below_event is not None:
-                    self.detect_intersection(below_event, above_event)
+                    self._events_queue.detect_intersection(below_event,
+                                                           above_event)
         elif event not in sweep_line:
             processed_events.append(event)
             sweep_line.add(event)
@@ -181,37 +115,24 @@ class Operation(ABC):
                                         sweep_line.below(event))
             self.compute_fields(event, below_event)
             if (above_event is not None
-                    and self.detect_intersection(event, above_event)):
+                    and self._events_queue.detect_intersection(event,
+                                                               above_event)):
                 self.compute_fields(event, below_event)
                 self.compute_fields(above_event, event)
             if (below_event is not None
-                    and self.detect_intersection(below_event, event)):
+                    and self._events_queue.detect_intersection(below_event,
+                                                               event)):
                 below_below_event = sweep_line.below(below_event)
                 self.compute_fields(below_event, below_below_event)
                 self.compute_fields(event, below_event)
-
-    def register_segments(self,
-                          segments: Iterable[Segment],
-                          from_left: bool) -> None:
-        events_queue = self._events_queue
-        for start, end in segments:
-            inside_on_left = True
-            if start > end:
-                start, end = end, start
-                inside_on_left = False
-            start_event = Event(False, start, None, from_left, inside_on_left)
-            end_event = Event(True, end, start_event, from_left,
-                              inside_on_left)
-            start_event.complement = end_event
-            events_queue.push(start_event)
-            events_queue.push(end_event)
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
         result = []
         sweep_line = SweepLine()
-        while self._events_queue:
-            self.process_event(self._events_queue.pop(), result, sweep_line)
+        events_queue = self._events_queue
+        while events_queue:
+            self.process_event(events_queue.pop(), result, sweep_line)
         return result
 
 
@@ -240,53 +161,16 @@ class Difference(Operation):
     def sweep(self) -> List[Event]:
         self.fill_queue()
         result = []
+        events_queue = self._events_queue
         sweep_line = SweepLine()
         left_x_max = to_multipolygon_x_max(self.left)
-        while self._events_queue:
-            event = self._events_queue.pop()
+        while events_queue:
+            event = events_queue.pop()
             start_x, _ = event.start
             if start_x > left_x_max:
                 break
             self.process_event(event, result, sweep_line)
         return result
-
-
-class Intersection(Operation):
-    __slots__ = ()
-
-    def compute(self) -> Multipolygon:
-        if not (self.left and self.right):
-            return []
-        left_bounding_box = bounding_box.from_multipolygon(self.left)
-        right_bounding_box = bounding_box.from_multipolygon(self.right)
-        if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
-            return []
-        self.left = bounding_box.to_coupled_polygons(right_bounding_box,
-                                                     self.left)
-        self.right = bounding_box.to_coupled_polygons(left_bounding_box,
-                                                      self.right)
-        if not (self.left and self.right):
-            return []
-        self.normalize_operands()
-        return events_to_multipolygon(self.sweep())
-
-    def sweep(self) -> List[Event]:
-        self.fill_queue()
-        result = []
-        sweep_line = SweepLine()
-        min_max_x = min(to_multipolygon_x_max(self.left),
-                        to_multipolygon_x_max(self.right))
-        while self._events_queue:
-            event = self._events_queue.pop()
-            start_x, _ = event.start
-            if start_x > min_max_x:
-                break
-            self.process_event(event, result, sweep_line)
-        return result
-
-    def in_result(self, event: Event) -> bool:
-        return (event.inside
-                or not event.from_left and event.is_common_region_boundary)
 
 
 class CompleteIntersection(Operation):
@@ -333,11 +217,51 @@ class CompleteIntersection(Operation):
     def sweep(self) -> List[Event]:
         self.fill_queue()
         result = []
+        events_queue = self._events_queue
         sweep_line = SweepLine()
         min_max_x = min(to_multipolygon_x_max(self.left),
                         to_multipolygon_x_max(self.right))
-        while self._events_queue:
-            event = self._events_queue.pop()
+        while events_queue:
+            event = events_queue.pop()
+            start_x, _ = event.start
+            if start_x > min_max_x:
+                break
+            self.process_event(event, result, sweep_line)
+        return result
+
+    def in_result(self, event: Event) -> bool:
+        return (event.inside
+                or not event.from_left and event.is_common_region_boundary)
+
+
+class Intersection(Operation):
+    __slots__ = ()
+
+    def compute(self) -> Multipolygon:
+        if not (self.left and self.right):
+            return []
+        left_bounding_box = bounding_box.from_multipolygon(self.left)
+        right_bounding_box = bounding_box.from_multipolygon(self.right)
+        if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
+            return []
+        self.left = bounding_box.to_coupled_polygons(right_bounding_box,
+                                                     self.left)
+        self.right = bounding_box.to_coupled_polygons(left_bounding_box,
+                                                      self.right)
+        if not (self.left and self.right):
+            return []
+        self.normalize_operands()
+        return events_to_multipolygon(self.sweep())
+
+    def sweep(self) -> List[Event]:
+        self.fill_queue()
+        result = []
+        events_queue = self._events_queue
+        sweep_line = SweepLine()
+        min_max_x = min(to_multipolygon_x_max(self.left),
+                        to_multipolygon_x_max(self.right))
+        while events_queue:
+            event = events_queue.pop()
             start_x, _ = event.start
             if start_x > min_max_x:
                 break
@@ -427,7 +351,7 @@ def _events_to_contours(events: List[Event],
     depths, parents = defaultdict(int), {}
     processed = [False] * len(events)
     contours = []
-    connectivity = _to_events_connectivity(events)
+    connectivity = events_to_connectivity(events)
     for index, event in enumerate(events):
         if processed[index]:
             continue
@@ -455,7 +379,7 @@ def _events_to_contours(events: List[Event],
             contour_events.append(cursor)
             complement_position = cursor.complement.position
         _mark_processed(contour_events, processed)
-        _shrink_collinear_vertices(contour)
+        shrink_collinear_vertices(contour)
         if len(contour) < 3:
             continue
         contour_id = len(contours)
@@ -497,57 +421,6 @@ def _update_contour_events(events: Iterable[Event], contour_id: int) -> None:
         else:
             event.result_in_out = False
             event.contour_id = contour_id
-
-
-def _to_events_connectivity(events: List[Event]) -> List[int]:
-    events_count = len(events)
-    result = [0] * events_count
-    index = 0
-    while index < events_count:
-        current_start = events[index].start
-        right_start_index = index
-        while (index < events_count
-               and events[index].start == current_start
-               and events[index].is_right_endpoint):
-            index += 1
-        right_stop_index = index - 1
-        left_start_index = index
-        while index < events_count and events[index].start == current_start:
-            index += 1
-        left_stop_index = index - 1
-        has_right_events = right_stop_index >= right_start_index
-        has_left_events = left_stop_index >= left_start_index
-        if has_right_events:
-            result[right_start_index:right_stop_index] = range(
-                    right_start_index + 1, right_stop_index + 1)
-            result[right_stop_index] = (left_stop_index
-                                        if has_left_events
-                                        else right_start_index)
-        if has_left_events:
-            result[left_start_index] = (right_start_index
-                                        if has_right_events
-                                        else left_stop_index)
-            result[left_start_index + 1:left_stop_index + 1] = range(
-                    left_start_index, left_stop_index)
-    return result
-
-
-def _shrink_collinear_vertices(contour: Contour) -> None:
-    index = -len(contour) + 1
-    while index < 0:
-        while (max(2, -index) < len(contour)
-               and (orientation(contour[index + 2], contour[index + 1],
-                                contour[index])
-                    is Orientation.COLLINEAR)):
-            del contour[index + 1]
-        index += 1
-    while index < len(contour):
-        while (max(2, index) < len(contour)
-               and (orientation(contour[index - 2], contour[index - 1],
-                                contour[index])
-                    is Orientation.COLLINEAR)):
-            del contour[index - 1]
-        index += 1
 
 
 def _to_next_position(position: int,

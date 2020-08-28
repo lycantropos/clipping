@@ -154,3 +154,21 @@ def to_multipolygon_x_max(multipolygon: Multipolygon) -> Coordinate:
 
 def to_multisegment_x_max(multisegment: Multisegment) -> Coordinate:
     return max(x for x, _ in flatten(multisegment))
+
+
+def shrink_collinear_vertices(contour: Contour) -> None:
+    index = -len(contour) + 1
+    while index < 0:
+        while (max(2, -index) < len(contour)
+               and (orientation(contour[index + 2], contour[index + 1],
+                                contour[index])
+                    is Orientation.COLLINEAR)):
+            del contour[index + 1]
+        index += 1
+    while index < len(contour):
+        while (max(2, index) < len(contour)
+               and (orientation(contour[index - 2], contour[index - 1],
+                                contour[index])
+                    is Orientation.COLLINEAR)):
+            del contour[index - 1]
+        index += 1

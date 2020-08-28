@@ -1,6 +1,8 @@
 from functools import partial
 from typing import (Callable,
+                    Generic,
                     Iterable,
+                    Type,
                     cast)
 
 from prioq.base import PriorityQueue
@@ -13,9 +15,13 @@ from robust.linear import (SegmentsRelationship,
 
 from clipping.hints import (Point,
                             Segment)
+from .enums import OverlapKind
 from .event import (BinaryEvent,
+                    Event,
+                    HoleyEvent,
                     MixedEvent,
-                    NaryEvent)
+                    NaryEvent,
+                    ShapedEvent)
 
 
 class BinaryEventsQueueKey:
@@ -93,9 +99,108 @@ class NaryEventsQueueKey:
                         else Orientation.COUNTERCLOCKWISE))
 
 
-BinaryEventsQueue = cast(Callable[[], PriorityQueue[BinaryEvent]],
-                         partial(PriorityQueue,
-                                 key=BinaryEventsQueueKey))
+class ShapedBinaryEventsQueue(Generic[Event]):
+    __slots__ = 'event_cls', '_queue'
+
+    def __init__(self, event_cls: Type[Event]) -> None:
+        self.event_cls = event_cls
+        self._queue = PriorityQueue(key=BinaryEventsQueueKey)
+
+    __repr__ = generate_repr(__init__)
+
+    def __bool__(self) -> bool:
+        return bool(self._queue)
+
+    def detect_intersection(self, below_event: Event, event: Event) -> bool:
+        below_segment, segment = below_event.segment, event.segment
+        relationship = segments_relationship(below_segment, segment)
+        if relationship is SegmentsRelationship.OVERLAP:
+            # segments overlap
+            if below_event.from_left is event.from_left:
+                raise ValueError('Edges of the same multipolygon '
+                                 'should not overlap.')
+            starts_equal = below_event.start == event.start
+            if starts_equal:
+                start_min = start_max = None
+            elif (BinaryEventsQueueKey(event)
+                  < BinaryEventsQueueKey(below_event)):
+                start_min, start_max = event, below_event
+            else:
+                start_min, start_max = below_event, event
+            ends_equal = event.end == below_event.end
+            if ends_equal:
+                end_min = end_max = None
+            elif (BinaryEventsQueueKey(event.complement)
+                  < BinaryEventsQueueKey(below_event.complement)):
+                end_min, end_max = event.complement, below_event.complement
+            else:
+                end_min, end_max = below_event.complement, event.complement
+            if starts_equal:
+                # both line segments are equal or share the left endpoint
+                below_event.overlap_kind = event.overlap_kind = (
+                    OverlapKind.SAME_ORIENTATION
+                    if event.interior_to_left is below_event.interior_to_left
+                    else OverlapKind.DIFFERENT_ORIENTATION)
+                if not ends_equal:
+                    self._divide_segment(end_max.complement, end_min.start)
+                return True
+            elif ends_equal:
+                # the line segments share the right endpoint
+                self._divide_segment(start_min, start_max.start)
+            elif start_min is end_max.complement:
+                # one line segment includes the other one
+                self._divide_segment(start_min, end_min.start)
+                self._divide_segment(start_min, start_max.start)
+            else:
+                # no line segment includes the other one
+                self._divide_segment(start_max, end_min.start)
+                self._divide_segment(start_min, start_max.start)
+        elif (relationship is not SegmentsRelationship.NONE
+              and event.start != below_event.start
+              and event.end != below_event.end):
+            # segments do not intersect_multipolygons at endpoints
+            point = segments_intersection(below_segment, segment)
+            if point != below_event.start and point != below_event.end:
+                self._divide_segment(below_event, point)
+            if point != event.start and point != event.end:
+                self._divide_segment(event, point)
+        return False
+
+    def pop(self) -> Event:
+        return self._queue.pop()
+
+    def register_segments(self,
+                          segments: Iterable[Segment],
+                          from_left: bool) -> None:
+        event_cls = self.event_cls
+        queue = self._queue
+        for start, end in segments:
+            inside_on_left = True
+            if start > end:
+                start, end = end, start
+                inside_on_left = False
+            start_event = event_cls(False, start, None, from_left,
+                                    inside_on_left)
+            end_event = event_cls(True, end, start_event, from_left,
+                                  inside_on_left)
+            start_event.complement = end_event
+            queue.push(start_event)
+            queue.push(end_event)
+
+    def _divide_segment(self, event: Event, point: Point) -> None:
+        left_event = self.event_cls(False, point, event.complement,
+                                    event.from_left, event.interior_to_left)
+        right_event = self.event_cls(True, point, event, event.from_left,
+                                     event.interior_to_left)
+        event.complement.complement, event.complement = left_event, right_event
+        self._queue.push(left_event)
+        self._queue.push(right_event)
+
+
+HolelessEventsQueue = cast(Callable[[], ShapedBinaryEventsQueue[ShapedEvent]],
+                           partial(ShapedBinaryEventsQueue, ShapedEvent))
+HoleyEventsQueue = cast(Callable[[], ShapedBinaryEventsQueue[HoleyEvent]],
+                        partial(ShapedBinaryEventsQueue, HoleyEvent))
 
 
 class LinearBinaryEventsQueue:

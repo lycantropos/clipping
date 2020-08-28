@@ -1,5 +1,6 @@
 from reprlib import recursive_repr
-from typing import (Optional,
+from typing import (List,
+                    Optional,
                     TypeVar)
 
 from reprit.base import generate_repr
@@ -96,8 +97,7 @@ class MixedEvent(BinaryEvent):
 
 class ShapedEvent(BinaryEvent):
     __slots__ = ('interior_to_left', 'other_interior_to_left', 'overlap_kind',
-                 'in_result', 'result_in_out', 'position', 'contour_id',
-                 'below_in_result_event')
+                 'in_result', 'position')
 
     def __init__(self,
                  is_right_endpoint: bool,
@@ -108,20 +108,13 @@ class ShapedEvent(BinaryEvent):
                  other_interior_to_left: bool = False,
                  overlap_kind: OverlapKind = OverlapKind.NONE,
                  in_result: bool = False,
-                 result_in_out: bool = False,
-                 position: int = 0,
-                 contour_id: Optional[int] = None,
-                 below_in_result_event: Optional['ShapedEvent'] = None
-                 ) -> None:
+                 position: int = 0) -> None:
         super().__init__(is_right_endpoint, start, complement, from_left)
         self.interior_to_left = interior_to_left
         self.other_interior_to_left = other_interior_to_left
         self.overlap_kind = overlap_kind
         self.in_result = in_result
-        self.result_in_out = result_in_out
         self.position = position
-        self.contour_id = contour_id
-        self.below_in_result_event = below_in_result_event
 
     __repr__ = recursive_repr()(generate_repr(__init__))
 
@@ -164,4 +157,66 @@ class ShapedEvent(BinaryEvent):
                 and self.overlap_kind is OverlapKind.NONE)
 
 
-Event = TypeVar('Event', NaryEvent, BinaryEvent, MixedEvent, ShapedEvent)
+class HoleyEvent(ShapedEvent):
+    __slots__ = ('interior_to_left', 'other_interior_to_left', 'overlap_kind',
+                 'in_result', 'result_in_out', 'position', 'contour_id',
+                 'below_in_result_event')
+
+    def __init__(self,
+                 is_right_endpoint: bool,
+                 start: Point,
+                 complement: Optional['HoleyEvent'],
+                 from_left: bool,
+                 interior_to_left: bool,
+                 other_interior_to_left: bool = False,
+                 overlap_kind: OverlapKind = OverlapKind.NONE,
+                 in_result: bool = False,
+                 result_in_out: bool = False,
+                 position: int = 0,
+                 contour_id: Optional[int] = None,
+                 below_in_result_event: Optional['HoleyEvent'] = None) -> None:
+        super().__init__(is_right_endpoint, start, complement, from_left,
+                         interior_to_left, other_interior_to_left,
+                         overlap_kind, in_result, position)
+        self.result_in_out = result_in_out
+        self.contour_id = contour_id
+        self.below_in_result_event = below_in_result_event
+
+    __repr__ = recursive_repr()(generate_repr(__init__))
+
+
+Event = TypeVar('Event', NaryEvent, BinaryEvent, MixedEvent, ShapedEvent,
+                HoleyEvent)
+
+
+def events_to_connectivity(events: List[BinaryEvent]) -> List[int]:
+    events_count = len(events)
+    result = [0] * events_count
+    index = 0
+    while index < events_count:
+        current_start = events[index].start
+        right_start_index = index
+        while (index < events_count
+               and events[index].start == current_start
+               and events[index].is_right_endpoint):
+            index += 1
+        right_stop_index = index - 1
+        left_start_index = index
+        while index < events_count and events[index].start == current_start:
+            index += 1
+        left_stop_index = index - 1
+        has_right_events = right_stop_index >= right_start_index
+        has_left_events = left_stop_index >= left_start_index
+        if has_right_events:
+            result[right_start_index:right_stop_index] = range(
+                    right_start_index + 1, right_stop_index + 1)
+            result[right_stop_index] = (left_stop_index
+                                        if has_left_events
+                                        else right_start_index)
+        if has_left_events:
+            result[left_start_index] = (right_start_index
+                                        if has_right_events
+                                        else left_stop_index)
+            result[left_start_index + 1:left_stop_index + 1] = range(
+                    left_start_index, left_stop_index)
+    return result
