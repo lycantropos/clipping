@@ -901,14 +901,47 @@ def unite_multipolygons(left: Multipolygon,
         for floating point numbers.
     :returns: union of operands.
 
+    >>> lower_left_square = [(0, 0), (3, 0), (3, 3), (0, 3)]
+    >>> lower_left_triangle = [(2, 1), (2, 2), (1, 2)]
+    >>> lower_right_square = [(3, 0), (6, 0), (6, 3), (3, 3)]
+    >>> lower_right_triangle = [(4, 1), (5, 2), (4, 2)]
+    >>> upper_left_square = [(0, 3), (3, 3), (3, 6), (0, 6)]
+    >>> upper_left_triangle = [(1, 4), (2, 4), (2, 5)]
+    >>> upper_right_square = [(3, 3), (6, 3), (6, 6), (3, 6)]
+    >>> upper_right_triangle = [(4, 4), (5, 4), (4, 5)]
     >>> unite_multipolygons([], [])
     []
-    >>> unite_multipolygons([([(0, 0), (1, 0), (0, 1)], [])], [])
-    [([(0, 0), (1, 0), (0, 1)], [])]
-    >>> unite_multipolygons([], [([(0, 0), (1, 0), (0, 1)], [])])
-    [([(0, 0), (1, 0), (0, 1)], [])]
-    >>> unite_multipolygons([([(0, 0), (1, 0), (0, 1)], [])],
-    ...                     [([(0, 0), (1, 0), (0, 1)], [])])
-    [([(0, 0), (1, 0), (0, 1)], [])]
+    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle])], [])
+    [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 1), (2, 2), (1, 2)]])]
+    >>> unite_multipolygons([], [(lower_left_square, [lower_left_triangle])])
+    [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 1), (2, 2), (1, 2)]])]
+    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle])],
+    ...                     [(lower_left_square, [lower_left_triangle])])
+    [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)]])]
+    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle])],
+    ...                     [(lower_right_square, [lower_right_triangle])])
+    [([(0, 0), (6, 0), (6, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)],\
+ [(4, 2), (5, 2), (4, 1)]])]
+    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle])],
+    ...                     [(upper_left_square, [upper_left_triangle])])
+    [([(0, 0), (3, 0), (3, 6), (0, 6)], [[(2, 2), (2, 1), (1, 2)],\
+ [(2, 5), (2, 4), (1, 4)]])]
+    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle])],
+    ...                     [(upper_right_square, [upper_right_triangle])])
+    [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)]]),\
+ ([(3, 3), (6, 3), (6, 6), (3, 6)], [[(4, 5), (5, 4), (4, 4)]])]
+    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle]),
+    ...                      (upper_right_square, [upper_right_triangle])],
+    ...                     [(upper_left_square, [upper_left_triangle]),
+    ...                      (lower_right_square, [lower_right_triangle])])
+    [([(0, 0), (6, 0), (6, 6), (0, 6)], [[(2, 2), (2, 1), (1, 2)],\
+ [(2, 5), (2, 4), (1, 4)], [(4, 2), (5, 2), (4, 1)],\
+ [(4, 5), (5, 4), (4, 4)]])]
+    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle]),
+    ...                      (upper_right_square, [upper_right_triangle])],
+    ...                     [(lower_left_square, [lower_left_triangle]),
+    ...                      (upper_right_square, [upper_right_triangle])])
+    [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)]]),\
+ ([(3, 3), (6, 3), (6, 6), (3, 6)], [[(4, 5), (5, 4), (4, 4)]])]
     """
     return _holey.Union(left, right, accurate).compute()
