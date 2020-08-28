@@ -1,11 +1,9 @@
 from abc import (ABC,
                  abstractmethod)
-from collections import defaultdict
 from itertools import groupby
 from numbers import Rational
 from operator import attrgetter
-from typing import (DefaultDict,
-                    Iterable,
+from typing import (Iterable,
                     List,
                     Optional,
                     Union as Union_)
@@ -313,8 +311,7 @@ class Union(Operation):
 
 
 def events_to_multipolygon(events: List[Event]) -> Multipolygon:
-    are_internal = defaultdict(bool)
-    holes = defaultdict(list)
+    are_internal, holes = [], []
     return _contours_to_multipolygon(
             _events_to_contours(_collect_events(events), are_internal, holes),
             are_internal, holes)
@@ -326,9 +323,8 @@ def _collect_events(events: List[Event]) -> List[Event]:
 
 
 def _contours_to_multipolygon(contours: List[Contour],
-                              are_internal: DefaultDict[int, bool],
-                              holes: DefaultDict[int, List[int]]
-                              ) -> Multipolygon:
+                              are_internal: List[bool],
+                              holes: List[List[int]]) -> Multipolygon:
     result = []
     for index, contour in enumerate(contours):
         if are_internal[index]:
@@ -344,62 +340,23 @@ def _contours_to_multipolygon(contours: List[Contour],
 
 
 def _events_to_contours(events: List[Event],
-                        are_internal: DefaultDict[int, bool],
-                        holes: DefaultDict[int, List[int]]) -> List[Contour]:
+                        are_internal: List[bool],
+                        holes: List[List[int]]) -> List[Contour]:
     for index, event in enumerate(events):
         event.position = index
-    depths, parents = defaultdict(int), {}
+    depths, parents = [], []
     processed = [False] * len(events)
     contours = []
     connectivity = events_to_connectivity(events)
     for index, event in enumerate(events):
         if processed[index]:
             continue
-        contour_start = event.start
-        contour = [contour_start]
-        contour_events = [event]
-        cursor = event
-        complement_position = event.complement.position
-        vertices_positions = {contour_start: 0}
-        while cursor.end != contour_start:
-            vertex = cursor.end
-            if vertex in vertices_positions:
-                # vertices loop found, i.e. contour has self-intersection
-                previous_vertex_position = vertices_positions[vertex]
-                del contour[previous_vertex_position:]
-                del contour_events[previous_vertex_position:]
-            else:
-                vertices_positions[vertex] = len(contour)
-            contour.append(vertex)
-            position = _to_next_position(complement_position, processed,
-                                         connectivity)
-            if position is None:
-                break
-            cursor = events[position]
-            contour_events.append(cursor)
-            complement_position = cursor.complement.position
-        _mark_processed(contour_events, processed)
-        shrink_collinear_vertices(contour)
-        if len(contour) < 3:
-            continue
         contour_id = len(contours)
-        is_internal = False
-        below_in_result_event = event.below_in_result_event
-        if below_in_result_event is not None:
-            below_in_result_contour_id = below_in_result_event.contour_id
-            if not below_in_result_event.result_in_out:
-                holes[below_in_result_contour_id].append(contour_id)
-                parents[contour_id] = below_in_result_contour_id
-                depths[contour_id] = depths[below_in_result_contour_id] + 1
-                is_internal = True
-            elif are_internal[below_in_result_contour_id]:
-                below_in_result_parent_id = parents[below_in_result_contour_id]
-                holes[below_in_result_parent_id].append(contour_id)
-                parents[contour_id] = below_in_result_parent_id
-                depths[contour_id] = depths[below_in_result_contour_id]
-                is_internal = True
-        are_internal[contour_id] = is_internal
-        _update_contour_events(contour_events, contour_id)
+        _compute_relations(event, contour_id, are_internal, depths, holes,
+                           parents)
+        contour = _events_to_contour(event, events, contour_id, connectivity,
+                                     processed)
+        shrink_collinear_vertices(contour)
         if depths[contour_id] % 2:
             # holes will be in clockwise order
             contour.reverse()
@@ -407,20 +364,72 @@ def _events_to_contours(events: List[Event],
     return contours
 
 
-def _mark_processed(contour_events: Iterable[Event],
-                    processed: List[bool]) -> None:
+def _compute_relations(event: Event,
+                       contour_id: int,
+                       are_internal: List[bool],
+                       depths: List[int],
+                       holes: List[List[int]],
+                       parents: List[Optional[int]]) -> None:
+    depth = 0
+    parent = None
+    is_internal = False
+    below_in_result_event = event.below_in_result_event
+    if below_in_result_event is not None:
+        below_in_result_contour_id = below_in_result_event.contour_id
+        if not below_in_result_event.result_in_out:
+            holes[below_in_result_contour_id].append(contour_id)
+            parent = below_in_result_contour_id
+            depth = depths[below_in_result_contour_id] + 1
+            is_internal = True
+        elif are_internal[below_in_result_contour_id]:
+            below_in_result_parent_id = parents[below_in_result_contour_id]
+            holes[below_in_result_parent_id].append(contour_id)
+            parent = below_in_result_parent_id
+            depth = depths[below_in_result_contour_id]
+            is_internal = True
+    holes.append([])
+    parents.append(parent)
+    depths.append(depth)
+    are_internal.append(is_internal)
+
+
+def _events_to_contour(cursor: Event,
+                       events: List[Event],
+                       contour_id: int,
+                       connectivity: List[int],
+                       processed: List[bool]) -> Contour:
+    contour_start = cursor.start
+    contour = [contour_start]
+    contour_events = [cursor]
+    complement_position = cursor.complement.position
+    vertices_positions = {contour_start: 0}
+    while cursor.end != contour_start:
+        vertex = cursor.end
+        if vertex in vertices_positions:
+            # vertices loop found, i.e. contour has self-intersection
+            previous_vertex_position = vertices_positions[vertex]
+            del contour[previous_vertex_position:]
+            del contour_events[previous_vertex_position:]
+        else:
+            vertices_positions[vertex] = len(contour)
+        contour.append(vertex)
+        position = _to_next_position(complement_position, processed,
+                                     connectivity)
+        if position is None:
+            break
+        cursor = events[position]
+        contour_events.append(cursor)
+        complement_position = cursor.complement.position
     for event in contour_events:
         processed[event.position] = processed[event.complement.position] = True
-
-
-def _update_contour_events(events: Iterable[Event], contour_id: int) -> None:
-    for event in events:
+    for event in contour_events:
         if event.is_right_endpoint:
             event.complement.result_in_out = True
             event.complement.contour_id = contour_id
         else:
             event.result_in_out = False
             event.contour_id = contour_id
+    return contour
 
 
 def _to_next_position(position: int,
