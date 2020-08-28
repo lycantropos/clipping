@@ -38,11 +38,14 @@ and multipolygon.
 from itertools import groupby as _groupby
 from typing import List
 
-from .core import (holey as _holey,
+from .core import (holeless as _holeless,
+                   holey as _holey,
                    linear as _linear,
                    mixed as _mixed)
-from .hints import (Mix,
+from .hints import (HolelessMix,
+                    Mix,
                     Multipolygon,
+                    Multiregion,
                     Multisegment,
                     Segment)
 
@@ -422,6 +425,52 @@ def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
     [((1, 1), (2, 2))]
     """
     return _mixed.Difference(multisegment, multipolygon, accurate).compute()
+
+
+def complete_intersect_multiregions(left: Multiregion,
+                                    right: Multiregion,
+                                    *,
+                                    accurate: bool = True) -> HolelessMix:
+    """
+    Returns intersection of multiregions considering cases
+    with regions touching each other in points/segments.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = edges_count + intersections_count``,
+    ``edges_count = left_edges_count + right_edges_count``,
+    ``left_edges_count = sum(len(region) for region in left)``,
+    ``right_edges_count = sum(len(region) for region in right)``,
+    ``intersections_count`` --- number of intersections between multiregions
+    edges.
+
+    :param left: left operand.
+    :param right: right operand.
+    :param accurate:
+        flag that tells whether to use slow but more accurate arithmetic
+        for floating point numbers.
+    :returns: intersection of operands.
+
+    >>> complete_intersect_multiregions([], [])
+    ([], [], [])
+    >>> complete_intersect_multiregions([[(0, 0), (1, 0), (0, 1)]], [])
+    ([], [], [])
+    >>> complete_intersect_multiregions([], [[(0, 0), (1, 0), (0, 1)]])
+    ([], [], [])
+    >>> complete_intersect_multiregions([[(0, 0), (1, 0), (0, 1)]],
+    ...                                 [[(0, 0), (1, 0), (0, 1)]])
+    ([], [], [[(0, 0), (1, 0), (0, 1)]])
+    >>> complete_intersect_multiregions([[(0, 0), (1, 0), (0, 1)]],
+    ...                                 [[(0, 1), (1, 0), (1, 1)]])
+    ([], [((0, 1), (1, 0))], [])
+    >>> complete_intersect_multiregions([[(0, 0), (1, 0), (0, 1)]],
+    ...                                 [[(1, 0), (2, 0), (2, 1)]])
+    ([(1, 0)], [], [])
+    """
+    return _holeless.CompleteIntersection(left, right, accurate).compute()
 
 
 def complete_intersect_multipolygons(left: Multipolygon,
