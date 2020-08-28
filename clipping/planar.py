@@ -38,9 +38,9 @@ and multipolygon.
 from itertools import groupby as _groupby
 from typing import List
 
-from .core import (linear as _linear,
-                   mixed as _mixed,
-                   shaped as _shaped)
+from .core import (holey as _holey,
+                   linear as _linear,
+                   mixed as _mixed)
 from .hints import (Mix,
                     Multipolygon,
                     Multisegment,
@@ -469,7 +469,7 @@ def complete_intersect_multipolygons(left: Multipolygon,
     ...                                  [([(1, 0), (2, 0), (2, 1)], [])])
     ([(1, 0)], [], [])
     """
-    return _shaped.CompleteIntersection(left, right, accurate).compute()
+    return _holey.CompleteIntersection(left, right, accurate).compute()
 
 
 def intersect_multipolygons(left: Multipolygon,
@@ -510,7 +510,7 @@ def intersect_multipolygons(left: Multipolygon,
     ...                         [([(0, 0), (1, 0), (0, 1)], [])])
     [([(0, 0), (1, 0), (0, 1)], [])]
     """
-    return _shaped.Intersection(left, right, accurate).compute()
+    return _holey.Intersection(left, right, accurate).compute()
 
 
 def subtract_multipolygons(minuend: Multipolygon,
@@ -551,7 +551,7 @@ def subtract_multipolygons(minuend: Multipolygon,
     ...                        [([(0, 0), (1, 0), (0, 1)], [])])
     []
     """
-    return _shaped.Difference(minuend, subtrahend, accurate).compute()
+    return _holey.Difference(minuend, subtrahend, accurate).compute()
 
 
 def symmetric_subtract_multipolygons(left: Multipolygon,
@@ -592,7 +592,7 @@ def symmetric_subtract_multipolygons(left: Multipolygon,
     ...                                  [([(0, 0), (1, 0), (0, 1)], [])])
     []
     """
-    return _shaped.SymmetricDifference(left, right, accurate).compute()
+    return _holey.SymmetricDifference(left, right, accurate).compute()
 
 
 def unite_multipolygons(left: Multipolygon,
@@ -633,4 +633,4 @@ def unite_multipolygons(left: Multipolygon,
     ...                     [([(0, 0), (1, 0), (0, 1)], [])])
     [([(0, 0), (1, 0), (0, 1)], [])]
     """
-    return _shaped.Union(left, right, accurate).compute()
+    return _holey.Union(left, right, accurate).compute()
