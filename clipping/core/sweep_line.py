@@ -5,7 +5,7 @@ from typing import (Callable,
                     cast)
 
 from dendroid import red_black
-from dendroid.hints import Sortable
+from dendroid.hints import Key
 from reprit.base import generate_repr
 from robust.angular import (Orientation,
                             orientation)
@@ -18,8 +18,8 @@ from .event import (BinaryEvent,
 class SweepLine(Generic[Event]):
     __slots__ = '_tree',
 
-    def __init__(self, key: Callable[[Event], Sortable]) -> None:
-        self._tree = red_black.tree(key=key)
+    def __init__(self, key: Callable[[Event], Key]) -> None:
+        self._tree = red_black.set_(key=key)
 
     __repr__ = generate_repr(__init__)
 
