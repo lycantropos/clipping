@@ -5,15 +5,15 @@ services:
     build:
       context: .
       args:
-        - PYTHON_IMAGE=${PYPY_IMAGE_NAME}
-        - PYTHON_IMAGE_VERSION=${PYPY_IMAGE_VERSION}
+        - IMAGE_NAME=${PYPY_IMAGE_NAME}
+        - IMAGE_VERSION=${PYPY_IMAGE_VERSION}
     image: lycantropos/clipping-pypy:0.12.0
     volumes:
-      - ./clipping/:/opt/clipping/clipping/
-      - ./tests/:/opt/clipping/tests/
-      - ./README.md:/opt/clipping/README.md
-      - ./requirements.txt:/opt/clipping/requirements.txt
-      - ./requirements-tests.txt:/opt/clipping/requirements-tests.txt
-      - ./setup.py:/opt/clipping/setup.py
+      - ./clipping:/opt/clipping/clipping
       - ./pytest.ini:/opt/clipping/pytest.ini
+      - ./README.md:/opt/clipping/README.md
+      - ./requirements-tests.txt:/opt/clipping/requirements-tests.txt
+      - ./requirements.txt:/opt/clipping/requirements.txt
+      - ./setup.py:/opt/clipping/setup.py
+      - ./tests:/opt/clipping/tests
     entrypoint: pytest
