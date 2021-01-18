@@ -268,7 +268,7 @@ def segments_intersections(first: Segment, second: Segment
         return ()
     elif (relation is SegmentsRelation.TOUCH
           or relation is SegmentsRelation.CROSS):
-        return segments_intersection(first, second),
+        return segments_intersection(context, first, second),
     else:
         _, first_point, second_point, _ = sorted(first + second)
         return first_point, second_point
