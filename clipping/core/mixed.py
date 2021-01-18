@@ -126,7 +126,7 @@ class Difference(Operation):
         self.fill_queue()
         result = []
         events_queue = self._events_queue
-        sweep_line = SweepLine()
+        sweep_line = SweepLine(self.context)
         left_x_max = to_multisegment_x_max(self.multisegment)
         while events_queue:
             event = events_queue.pop()
@@ -184,7 +184,7 @@ class CompleteIntersection(Operation):
         self.fill_queue()
         result = []
         events_queue = self._events_queue
-        sweep_line = SweepLine()
+        sweep_line = SweepLine(self.context)
         min_max_x = min(to_multisegment_x_max(self.multisegment),
                         to_multipolygon_x_max(self.multipolygon))
         while events_queue:
@@ -226,7 +226,7 @@ class Intersection(Operation):
         self.fill_queue()
         result = []
         events_queue = self._events_queue
-        sweep_line = SweepLine()
+        sweep_line = SweepLine(self.context)
         min_max_x = min(to_multisegment_x_max(self.multisegment),
                         to_multipolygon_x_max(self.multipolygon))
         while events_queue:

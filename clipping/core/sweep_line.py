@@ -1,11 +1,10 @@
-from functools import partial
-from typing import (Callable,
-                    Generic,
-                    Optional,
-                    cast)
+from abc import (ABC,
+                 abstractmethod)
+from typing import (Generic,
+                    Optional)
 
 from dendroid import red_black
-from dendroid.hints import Key
+from ground.base import Context
 from reprit.base import generate_repr
 
 from .event import (BinaryEvent,
@@ -15,32 +14,84 @@ from .utils import (Orientation,
                     orientation)
 
 
-class SweepLine(Generic[Event]):
-    __slots__ = '_tree',
+class SweepLine(ABC, Generic[Event]):
+    __slots__ = ()
 
-    def __init__(self, key: Callable[[Event], Key]) -> None:
-        self._tree = red_black.set_(key=key)
+    @abstractmethod
+    def __contains__(self, event: Event) -> bool:
+        """Checks if given event is in the sweep line."""
 
-    __repr__ = generate_repr(__init__)
+    @abstractmethod
+    def above(self, event: Event) -> Optional[Event]:
+        """Returns event which is above the given one."""
+
+    @abstractmethod
+    def add(self, event: Event) -> None:
+        """Adds given event to the sweep line."""
+
+    @abstractmethod
+    def below(self, event: Event) -> Optional[Event]:
+        """Returns event which is below the given one."""
+
+    @abstractmethod
+    def remove(self, event: Event) -> None:
+        """Removes given event from the sweep line."""
+
+
+class BinarySweepLine(SweepLine):
+    __slots__ = 'context', '_ordered_set'
+
+    def __init__(self, context: Context) -> None:
+        self.context = context
+        self._ordered_set = red_black.set_(key=BinarySweepLineKey)
 
     def __contains__(self, event: Event) -> bool:
-        return event in self._tree
+        return event in self._ordered_set
 
     def add(self, event: Event) -> None:
-        self._tree.add(event)
+        self._ordered_set.add(event)
 
     def remove(self, event: Event) -> None:
-        self._tree.remove(event)
+        self._ordered_set.remove(event)
 
     def above(self, event: Event) -> Optional[Event]:
         try:
-            return self._tree.next(event)
+            return self._ordered_set.next(event)
         except ValueError:
             return None
 
     def below(self, event: Event) -> Optional[Event]:
         try:
-            return self._tree.prev(event)
+            return self._ordered_set.prev(event)
+        except ValueError:
+            return None
+
+
+class NarySweepLine(SweepLine):
+    __slots__ = 'context', '_ordered_set'
+
+    def __init__(self, context: Context) -> None:
+        self.context = context
+        self._ordered_set = red_black.set_(key=NarySweepLineKey)
+
+    def __contains__(self, event: Event) -> bool:
+        return event in self._ordered_set
+
+    def add(self, event: Event) -> None:
+        self._ordered_set.add(event)
+
+    def remove(self, event: Event) -> None:
+        self._ordered_set.remove(event)
+
+    def above(self, event: Event) -> Optional[Event]:
+        try:
+            return self._ordered_set.next(event)
+        except ValueError:
+            return None
+
+    def below(self, event: Event) -> Optional[Event]:
+        try:
+            return self._ordered_set.prev(event)
         except ValueError:
             return None
 
@@ -161,9 +212,3 @@ class NarySweepLineKey:
             return start_orientation is Orientation.CLOCKWISE
         else:
             return other_start_orientation is Orientation.COUNTERCLOCKWISE
-
-
-BinarySweepLine = cast(Callable[[], SweepLine[BinaryEvent]],
-                       partial(SweepLine, BinarySweepLineKey))
-NarySweepLine = cast(Callable[[], SweepLine[NaryEvent]],
-                     partial(SweepLine, NarySweepLineKey))

@@ -153,7 +153,7 @@ class Operation(ABC):
     def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
-        sweep_line = SweepLine()
+        sweep_line = SweepLine(self.context)
         events_queue = self._events_queue
         while events_queue:
             self.process_event(events_queue.pop(), result, sweep_line)
@@ -186,7 +186,7 @@ class Difference(Operation):
         self.fill_queue()
         result = []
         events_queue = self._events_queue
-        sweep_line = SweepLine()
+        sweep_line = SweepLine(self.context)
         left_x_max = to_multipolygon_x_max(self.left)
         while events_queue:
             event = events_queue.pop()
@@ -241,7 +241,7 @@ class CompleteIntersection(Operation):
         self.fill_queue()
         result = []
         events_queue = self._events_queue
-        sweep_line = SweepLine()
+        sweep_line = SweepLine(self.context)
         min_max_x = min(to_multipolygon_x_max(self.left),
                         to_multipolygon_x_max(self.right))
         while events_queue:
@@ -280,7 +280,7 @@ class Intersection(Operation):
         self.fill_queue()
         result = []
         events_queue = self._events_queue
-        sweep_line = SweepLine()
+        sweep_line = SweepLine(self.context)
         min_max_x = min(to_multipolygon_x_max(self.left),
                         to_multipolygon_x_max(self.right))
         while events_queue:

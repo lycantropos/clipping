@@ -184,7 +184,7 @@ class CompleteIntersection(Operation):
     def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
-        sweep_line = SweepLine()
+        sweep_line = SweepLine(self.context)
         min_max_x = min(to_multiregion_x_max(self.left),
                         to_multiregion_x_max(self.right))
         while self._events_queue:
@@ -222,7 +222,7 @@ class Intersection(Operation):
     def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
-        sweep_line = SweepLine()
+        sweep_line = SweepLine(self.context)
         min_max_x = min(to_multiregion_x_max(self.left),
                         to_multiregion_x_max(self.right))
         while self._events_queue:

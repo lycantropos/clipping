@@ -30,7 +30,7 @@ def merge_segments(segments: Sequence[Segment],
         return
     events_queue = NaryEventsQueue()
     events_queue.register_segments(segments)
-    sweep_line = NarySweepLine()
+    sweep_line = NarySweepLine(context)
     while events_queue:
         event = events_queue.pop()
         if event.is_right_endpoint:
@@ -108,7 +108,7 @@ class Operation(ABC):
         self.fill_queue()
         result = []
         events_queue = self._events_queue
-        sweep_line = BinarySweepLine()
+        sweep_line = BinarySweepLine(self.context)
         while events_queue:
             event = events_queue.pop()
             self.process_event(event, sweep_line)
@@ -141,7 +141,7 @@ class Difference(Operation):
         self.fill_queue()
         result = []
         events_queue = self._events_queue
-        sweep_line = BinarySweepLine()
+        sweep_line = BinarySweepLine(self.context)
         left_x_max = to_multisegment_x_max(self.left)
         while events_queue:
             event = events_queue.pop()
@@ -180,7 +180,7 @@ class Intersection(Operation):
         self.fill_queue()
         result = []
         events_queue = self._events_queue
-        sweep_line = BinarySweepLine()
+        sweep_line = BinarySweepLine(self.context)
         min_max_x = min(to_multisegment_x_max(self.left),
                         to_multisegment_x_max(self.right))
         while events_queue:
@@ -234,7 +234,7 @@ class CompleteIntersection(Operation):
         self.fill_queue()
         result = []
         events_queue = self._events_queue
-        sweep_line = BinarySweepLine()
+        sweep_line = BinarySweepLine(self.context)
         min_max_x = min(to_multisegment_x_max(self.left),
                         to_multisegment_x_max(self.right))
         while events_queue:
