@@ -3,7 +3,7 @@ from abc import (ABC,
 from itertools import groupby
 from operator import attrgetter
 from typing import (Iterable,
-                    List,
+                    Sequence,
                     Union as Union_)
 
 from ground.base import Context
@@ -23,7 +23,7 @@ from .utils import (all_equal,
                     to_multisegment_x_max)
 
 
-def merge_segments(segments: List[Segment],
+def merge_segments(segments: Sequence[Segment],
                    *,
                    context: Context) -> Iterable[Segment]:
     if not segments:
@@ -104,7 +104,7 @@ class Operation(ABC):
             if below_event is not None:
                 self._events_queue.detect_intersection(below_event, event)
 
-    def sweep(self) -> List[BinaryEvent]:
+    def sweep(self) -> Iterable[BinaryEvent]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
@@ -137,7 +137,7 @@ class Difference(Operation):
                                                      key=event_to_segment)
                       if all(event.from_left for event in events))
 
-    def sweep(self) -> List[BinaryEvent]:
+    def sweep(self) -> Iterable[BinaryEvent]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
@@ -176,7 +176,7 @@ class Intersection(Operation):
                                                      key=event_to_segment)
                       if not all_equal(event.from_left for event in events))
 
-    def sweep(self) -> List[BinaryEvent]:
+    def sweep(self) -> Sequence[BinaryEvent]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
@@ -230,7 +230,7 @@ class CompleteIntersection(Operation):
                     multipoint.append(start)
         return multipoint, multisegment, []
 
-    def sweep(self) -> List[BinaryEvent]:
+    def sweep(self) -> Sequence[BinaryEvent]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue

@@ -2,8 +2,10 @@ from abc import (ABC,
                  abstractmethod)
 from itertools import groupby
 from operator import attrgetter
-from typing import (List,
+from typing import (Iterable,
+                    List,
                     Optional,
+                    Sequence,
                     Union as Union_)
 
 from ground.base import Context
@@ -58,7 +60,7 @@ class Operation(ABC):
                                             else below_event.interior_to_left)
         event.in_result = self.in_result(event)
 
-    def events_to_multiregion(self, events: List[Event]) -> Multiregion:
+    def events_to_multiregion(self, events: Iterable[Event]) -> Multiregion:
         events = sorted([event for event in events if event.primary.in_result],
                         key=self._events_queue.key)
         for index, event in enumerate(events):
@@ -179,7 +181,7 @@ class CompleteIntersection(Operation):
                     multipoint.append(start)
         return multipoint, multisegment, self.events_to_multiregion(events)
 
-    def sweep(self) -> List[Event]:
+    def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
         sweep_line = SweepLine()
@@ -217,7 +219,7 @@ class Intersection(Operation):
         self.normalize_operands()
         return self.events_to_multiregion(self.sweep())
 
-    def sweep(self) -> List[Event]:
+    def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
         sweep_line = SweepLine()
@@ -238,7 +240,7 @@ class Intersection(Operation):
 
 def _to_next_position(position: int,
                       processed: List[bool],
-                      connectivity: List[int]) -> Optional[int]:
+                      connectivity: Sequence[int]) -> Optional[int]:
     candidate = position
     while True:
         candidate = connectivity[candidate]

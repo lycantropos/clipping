@@ -40,7 +40,7 @@ and multiregion which lies within the border (called *polygon's holes*).
 and multipolygon.
 """
 from itertools import groupby as _groupby
-from typing import List
+from typing import Sequence
 
 from ground.base import get_context
 
@@ -56,7 +56,7 @@ from .hints import (HolelessMix,
                     Segment)
 
 
-def segments_to_multisegment(segments: List[Segment]) -> Multisegment:
+def segments_to_multisegment(segments: Sequence[Segment]) -> Multisegment:
     """
     Returns multisegment from given segments.
 

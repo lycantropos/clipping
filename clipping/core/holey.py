@@ -2,8 +2,10 @@ from abc import (ABC,
                  abstractmethod)
 from itertools import groupby
 from operator import attrgetter
-from typing import (List,
+from typing import (Iterable,
+                    List,
                     Optional,
+                    Sequence,
                     Union as Union_)
 
 from ground.base import Context
@@ -65,7 +67,7 @@ class Operation(ABC):
                                            else below_event)
         event.in_result = self.in_result(event)
 
-    def events_to_multipolygon(self, events: List[Event]) -> Multipolygon:
+    def events_to_multipolygon(self, events: Iterable[Event]) -> Multipolygon:
         events = sorted([event for event in events if event.primary.in_result],
                         key=self._events_queue.key)
         for index, event in enumerate(events):
@@ -148,7 +150,7 @@ class Operation(ABC):
                 self.compute_fields(below_event, below_below_event)
                 self.compute_fields(event, below_event)
 
-    def sweep(self) -> List[Event]:
+    def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
         sweep_line = SweepLine()
@@ -180,7 +182,7 @@ class Difference(Operation):
                 if event.from_left
                 else event.inside or event.is_common_polyline_component)
 
-    def sweep(self) -> List[Event]:
+    def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
@@ -235,7 +237,7 @@ class CompleteIntersection(Operation):
                     multipoint.append(start)
         return multipoint, multisegment, self.events_to_multipolygon(events)
 
-    def sweep(self) -> List[Event]:
+    def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
@@ -274,7 +276,7 @@ class Intersection(Operation):
         self.normalize_operands()
         return self.events_to_multipolygon(self.sweep())
 
-    def sweep(self) -> List[Event]:
+    def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
@@ -363,9 +365,9 @@ def _compute_relations(event: Event,
 
 
 def _events_to_contour(cursor: Event,
-                       events: List[Event],
+                       events: Sequence[Event],
                        contour_id: int,
-                       connectivity: List[int],
+                       connectivity: Sequence[int],
                        processed: List[bool]) -> Contour:
     contour_start = cursor.start
     contour = [contour_start]
@@ -401,8 +403,8 @@ def _events_to_contour(cursor: Event,
 
 
 def _to_next_position(position: int,
-                      processed: List[bool],
-                      connectivity: List[int]) -> Optional[int]:
+                      processed: Sequence[bool],
+                      connectivity: Sequence[int]) -> Optional[int]:
     candidate = position
     while True:
         candidate = connectivity[candidate]

@@ -1,6 +1,6 @@
 from reprlib import recursive_repr
-from typing import (List,
-                    Optional,
+from typing import (Optional,
+                    Sequence,
                     TypeVar)
 
 from reprit.base import generate_repr
@@ -189,7 +189,7 @@ Event = TypeVar('Event', NaryEvent, BinaryEvent, MixedEvent, ShapedEvent,
                 HoleyEvent)
 
 
-def events_to_connectivity(events: List[BinaryEvent]) -> List[int]:
+def events_to_connectivity(events: Sequence[BinaryEvent]) -> Sequence[int]:
     events_count = len(events)
     result = [0] * events_count
     index = 0

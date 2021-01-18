@@ -2,7 +2,7 @@ from abc import (ABC,
                  abstractmethod)
 from itertools import groupby
 from operator import attrgetter
-from typing import (List,
+from typing import (Iterable,
                     Optional,
                     Union)
 
@@ -122,7 +122,7 @@ class Difference(Operation):
     def in_result(self, event: Event) -> bool:
         return event.from_left and event.outside
 
-    def sweep(self) -> List[Event]:
+    def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
@@ -180,7 +180,7 @@ class CompleteIntersection(Operation):
     def in_result(self, event: Event) -> bool:
         return event.from_left and not event.outside
 
-    def sweep(self) -> List[Event]:
+    def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
@@ -222,7 +222,7 @@ class Intersection(Operation):
     def in_result(self, event: Event) -> bool:
         return event.from_left and not event.outside
 
-    def sweep(self) -> List[Event]:
+    def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
