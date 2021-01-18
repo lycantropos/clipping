@@ -6,10 +6,10 @@ from orient.planar import (Relation,
                            segment_in_multipolygon,
                            segment_in_multisegment,
                            segment_in_segment)
-from robust.linear import (SegmentsRelationship,
-                           segments_relationship)
 
-from clipping.core.utils import (contour_to_segments,
+from clipping.core.utils import (SegmentsRelationship,
+                                 contour_to_segments,
+                                 segments_relationship,
                                  to_multipolygon_contours)
 from clipping.planar import (complete_intersect_multisegment_with_multipolygon,
                              intersect_multisegment_with_multipolygon)

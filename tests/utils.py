@@ -6,22 +6,28 @@ from typing import (Any,
                     Tuple,
                     TypeVar)
 
+from ground.base import get_context
 from hypothesis import strategies
 from hypothesis.strategies import SearchStrategy
 from orient.planar import (Relation,
                            multisegment_in_multisegment)
-from robust.angular import (Orientation,
-                            orientation)
 
 from clipping.core.hints import BoundingBox
-from clipping.core.utils import to_first_boundary_vertex
+from clipping.core.utils import (Orientation,
+                                 SegmentsRelationship,
+                                 orientation,
+                                 segments_intersection,
+                                 segments_relationship,
+                                 to_first_boundary_vertex)
 from clipping.hints import (Contour,
                             HolelessMix,
                             Mix,
                             Multipoint,
                             Multipolygon,
                             Multiregion,
-                            Multisegment)
+                            Multisegment,
+                            Point,
+                            Segment)
 
 Strategy = SearchStrategy
 Domain = TypeVar('Domain')
@@ -35,6 +41,7 @@ MultiregionsPair = Tuple[Multiregion, Multiregion]
 MultiregionsTriplet = Tuple[Multiregion, Multiregion, Multiregion]
 MultipolygonsPair = Tuple[Multipolygon, Multipolygon]
 MultipolygonsTriplet = Tuple[Multipolygon, Multipolygon, Multipolygon]
+context = get_context()
 
 
 def equivalence(left_statement: bool, right_statement: bool) -> bool:
@@ -252,3 +259,15 @@ def multipolygon_to_multiregion(multipolygon: Multipolygon) -> Multiregion:
 
 def multiregion_to_multipolygon(multiregion: Multiregion) -> Multipolygon:
     return [(region, []) for region in multiregion]
+
+
+def segments_intersections(first: Segment, second: Segment
+                           ) -> Tuple[Point, ...]:
+    relation = segments_relationship(first, second)
+    if relation is SegmentsRelationship.DISJOINT:
+        return ()
+    elif relation is SegmentsRelationship.OVERLAP:
+        _, first_point, second_point, _ = sorted(first + second)
+        return first_point, second_point
+    else:
+        return segments_intersection(first, second),
