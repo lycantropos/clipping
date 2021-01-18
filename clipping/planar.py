@@ -576,43 +576,58 @@ def complete_intersect_multiregions(left: Multiregion,
     :param right: right operand.
     :returns: intersection of operands.
 
-    >>> lower_left_square = [(0, 0), (1, 0), (1, 1), (0, 1)]
-    >>> lower_right_square = [(1, 0), (2, 0), (2, 1), (1, 1)]
-    >>> upper_left_square = [(0, 1), (1, 1), (1, 2), (0, 2)]
-    >>> upper_right_square = [(1, 1), (2, 1), (2, 2), (1, 2)]
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> Contour, Point = context.contour_cls, context.point_cls
+    >>> lower_left_square = Contour([Point(0, 0), Point(1, 0), Point(1, 1),
+    ...                              Point(0, 1)])
+    >>> lower_right_square = Contour([Point(1, 0), Point(2, 0), Point(2, 1),
+    ...                               Point(1, 1)])
+    >>> upper_left_square = Contour([Point(0, 1), Point(1, 1), Point(1, 2),
+    ...                              Point(0, 2)])
+    >>> upper_right_square = Contour([Point(1, 1), Point(2, 1), Point(2, 2),
+    ...                               Point(1, 2)])
     >>> complete_intersect_multiregions([], [])
-    ([], [], [])
+    (Multipoint([]), Multisegment([]), [])
     >>> complete_intersect_multiregions([lower_left_square], [])
-    ([], [], [])
+    (Multipoint([]), Multisegment([]), [])
     >>> complete_intersect_multiregions([], [lower_left_square])
-    ([], [], [])
+    (Multipoint([]), Multisegment([]), [])
     >>> complete_intersect_multiregions([lower_left_square],
     ...                                 [lower_left_square])
-    ([], [], [[(0, 0), (1, 0), (1, 1), (0, 1)]])
+    (Multipoint([]), Multisegment([]),\
+ [Contour([Point(0, 0), Point(1, 0), Point(1, 1), Point(0, 1)])])
     >>> complete_intersect_multiregions([lower_left_square],
     ...                                 [lower_right_square])
-    ([], [((1, 0), (1, 1))], [])
+    (Multipoint([]), Multisegment([Segment(Point(1, 0), Point(1, 1))]), [])
     >>> complete_intersect_multiregions([lower_left_square],
     ...                                 [upper_left_square])
-    ([], [((0, 1), (1, 1))], [])
+    (Multipoint([]), Multisegment([Segment(Point(0, 1), Point(1, 1))]), [])
     >>> complete_intersect_multiregions([lower_left_square],
     ...                                 [upper_right_square])
-    ([(1, 1)], [], [])
+    (Multipoint([Point(1, 1)]), Multisegment([]), [])
     >>> complete_intersect_multiregions([lower_left_square,
     ...                                  upper_right_square],
     ...                                 [upper_left_square,
     ...                                  lower_right_square])
-    ([],\
- [((0, 1), (1, 1)), ((1, 0), (1, 1)), ((1, 1), (2, 1)), ((1, 1), (1, 2))], [])
+    (Multipoint([]),\
+ Multisegment([Segment(Point(0, 1), Point(1, 1)),\
+ Segment(Point(1, 0), Point(1, 1)), Segment(Point(1, 1), Point(2, 1)),\
+ Segment(Point(1, 1), Point(1, 2))]), [])
     >>> complete_intersect_multiregions([lower_left_square,
     ...                                  upper_right_square],
     ...                                 [lower_left_square,
     ...                                  upper_right_square])
-    ([], [],\
- [[(0, 0), (1, 0), (1, 1), (0, 1)], [(1, 1), (2, 1), (2, 2), (1, 2)]])
+    (Multipoint([]), Multisegment([]),\
+ [Contour([Point(0, 0), Point(1, 0), Point(1, 1), Point(0, 1)]),\
+ Contour([Point(1, 1), Point(2, 1), Point(2, 2), Point(1, 2)])])
     """
-    return _holeless.CompleteIntersection(left, right,
-                                          context=get_context()).compute()
+    context = get_context()
+    return _raw.to_holeless_mix(
+            _holeless.CompleteIntersection(_raw.from_multiregion(left),
+                                           _raw.from_multiregion(right),
+                                           context=context).compute(),
+            context=context)
 
 
 def intersect_multiregions(left: Multiregion,
