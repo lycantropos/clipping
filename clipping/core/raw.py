@@ -58,7 +58,7 @@ def to_multisegment(raw, context: Context) -> Multisegment:
 
 
 def to_contour(raw, context: Context) -> Contour:
-    return context.contour_cls(*map(to_point, raw, repeat(context)))
+    return context.contour_cls(list(map(to_point, raw, repeat(context))))
 
 
 def to_multiregion(raw, context: Context) -> Multiregion:
