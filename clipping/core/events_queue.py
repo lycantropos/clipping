@@ -128,7 +128,8 @@ class LinearBinaryEventsQueue:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = segments_intersection(below_segment, segment)
+                point = segments_intersection(self.context, below_segment,
+                                              segment)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -220,7 +221,8 @@ class MixedBinaryEventsQueue:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = segments_intersection(below_segment, segment)
+                point = segments_intersection(self.context, below_segment,
+                                              segment)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -323,7 +325,8 @@ class NaryEventsQueue:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = segments_intersection(below_segment, segment)
+                point = segments_intersection(self.context, below_segment,
+                                              segment)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -407,7 +410,8 @@ class ShapedBinaryEventsQueue(Generic[Event]):
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = segments_intersection(below_segment, segment)
+                point = segments_intersection(self.context, below_segment,
+                                              segment)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:

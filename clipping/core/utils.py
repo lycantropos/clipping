@@ -131,10 +131,9 @@ def orientation(context, first, vertex, second):
 SegmentsRelation = Relation
 
 
-def segments_intersection(first, second):
+def segments_intersection(context: Context, first, second):
     first_start, first_end = first
     second_start, second_end = second
-    context = get_context()
     point_cls = context.point_cls
     result = context.segments_intersection(point_cls(*first_start),
                                            point_cls(*first_end),
