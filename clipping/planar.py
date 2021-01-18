@@ -513,25 +513,45 @@ def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
     :param multipolygon: multipolygon to subtract.
     :returns: difference of multisegment with multipolygon.
 
-    >>> subtract_multipolygon_from_multisegment([], [])
-    []
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> Contour, Multipolygon, Multisegment, Point, Polygon, Segment = (
+    ...     context.contour_cls, context.multipolygon_cls,
+    ...     context.multisegment_cls, context.point_cls, context.polygon_cls,
+    ...     context.segment_cls)
+    >>> subtract_multipolygon_from_multisegment(Multisegment([]),
+    ...                                         Multipolygon([]))
+    Multisegment([])
     >>> subtract_multipolygon_from_multisegment(
-    ...         [], [([(0, 0), (1, 0), (0, 1)], [])])
-    []
+    ...     Multisegment([]),
+    ...     Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+    ...                                    Point(0, 1)]), [])]))
+    Multisegment([])
     >>> subtract_multipolygon_from_multisegment(
-    ...         [((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
-    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]),
+    ...     Multipolygon([]))
+    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
+ Segment(Point(0, 1), Point(1, 0))])
     >>> subtract_multipolygon_from_multisegment(
-    ...         [((0, 0), (1, 0)), ((0, 1), (1, 0))],
-    ...         [([(0, 0), (1, 0), (0, 1)], [])])
-    []
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]),
+    ...     Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+    ...                                    Point(0, 1)]), [])]))
+    Multisegment([])
     >>> subtract_multipolygon_from_multisegment(
-    ...         [((0, 0), (1, 0)), ((1, 1), (2, 2))],
-    ...         [([(0, 0), (1, 0), (1, 1), (0, 1)], [])])
-    [((1, 1), (2, 2))]
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(1, 1), Point(2, 2))]),
+    ...     Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+    ...                                    Point(1, 1), Point(0, 1)]), [])]))
+    Multisegment([Segment(Point(1, 1), Point(2, 2))])
     """
-    return _mixed.Difference(multisegment, multipolygon,
-                             context=get_context()).compute()
+    context = get_context()
+    return _raw.to_multisegment(
+            _mixed.Difference(_raw.from_multisegment(multisegment),
+                              _raw.from_multipolygon(multipolygon),
+                              context=context).compute(),
+            context=context)
 
 
 def complete_intersect_multiregions(left: Multiregion,
