@@ -42,6 +42,8 @@ and multipolygon.
 from itertools import groupby as _groupby
 from typing import List
 
+from ground.base import get_context
+
 from .core import (holeless as _holeless,
                    holey as _holey,
                    linear as _linear,
@@ -78,7 +80,9 @@ def segments_to_multisegment(segments: List[Segment]) -> Multisegment:
     [((0, 0), (1, 0)), ((1, 0), (2, 0)), ((2, 0), (3, 0))]
     """
     return sorted(segment
-                  for segment, _ in _groupby(_linear.merge_segments(segments)))
+                  for segment, _
+                  in _groupby(_linear.merge_segments(segments,
+                                                     context=get_context())))
 
 
 def complete_intersect_multisegments(left: Multisegment,
@@ -115,7 +119,8 @@ def complete_intersect_multisegments(left: Multisegment,
     ...                                  [((0, 0), (2, 0)), ((0, 0), (2, 2))])
     ([(1, 1)], [((0, 0), (1, 0))], [])
     """
-    return _linear.CompleteIntersection(left, right).compute()
+    return _linear.CompleteIntersection(left, right,
+                                        context=get_context()).compute()
 
 
 def intersect_multisegments(left: Multisegment,
@@ -149,7 +154,8 @@ def intersect_multisegments(left: Multisegment,
     ...                         [((0, 0), (2, 0)), ((0, 0), (2, 2))])
     [((0, 0), (1, 0))]
     """
-    return _linear.Intersection(left, right).compute()
+    return _linear.Intersection(left, right,
+                                context=get_context()).compute()
 
 
 def subtract_multisegments(minuend: Multisegment,
@@ -183,7 +189,8 @@ def subtract_multisegments(minuend: Multisegment,
     ...                        [((0, 0), (2, 0)), ((0, 0), (2, 2))])
     [((0, 1), (1, 1))]
     """
-    return _linear.Difference(minuend, subtrahend).compute()
+    return _linear.Difference(minuend, subtrahend,
+                              context=get_context()).compute()
 
 
 def symmetric_subtract_multisegments(left: Multisegment,
@@ -219,7 +226,8 @@ def symmetric_subtract_multisegments(left: Multisegment,
     ...                                  [((0, 0), (2, 0)), ((0, 0), (2, 2))])
     [((0, 0), (1, 1)), ((0, 1), (1, 1)), ((1, 0), (2, 0)), ((1, 1), (2, 2))]
     """
-    return _linear.SymmetricDifference(left, right).compute()
+    return _linear.SymmetricDifference(left, right,
+                                       context=get_context()).compute()
 
 
 def unite_multisegments(left: Multisegment,
@@ -254,7 +262,8 @@ def unite_multisegments(left: Multisegment,
     [((0, 0), (1, 0)), ((0, 0), (1, 1)), ((0, 1), (1, 1)), ((1, 0), (2, 0)),\
  ((1, 1), (2, 2))]
     """
-    return _linear.Union(left, right).compute()
+    return _linear.Union(left, right,
+                         context=get_context()).compute()
 
 
 def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
@@ -296,7 +305,8 @@ def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
     ...         [([(0, 0), (1, 0), (1, 1), (0, 1)], [])])
     [((0, 0), (1, 0))]
     """
-    return _mixed.Intersection(multisegment, multipolygon).compute()
+    return _mixed.Intersection(multisegment, multipolygon,
+                               context=get_context()).compute()
 
 
 def complete_intersect_multisegment_with_multipolygon(
@@ -339,7 +349,8 @@ def complete_intersect_multisegment_with_multipolygon(
     ...         [([(0, 0), (1, 0), (1, 1), (0, 1)], [])])
     ([(1, 1)], [((0, 0), (1, 0))], [])
     """
-    return _mixed.CompleteIntersection(multisegment, multipolygon).compute()
+    return _mixed.CompleteIntersection(multisegment, multipolygon,
+                                       context=get_context()).compute()
 
 
 def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
@@ -381,7 +392,8 @@ def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
     ...         [([(0, 0), (1, 0), (1, 1), (0, 1)], [])])
     [((1, 1), (2, 2))]
     """
-    return _mixed.Difference(multisegment, multipolygon).compute()
+    return _mixed.Difference(multisegment, multipolygon,
+                             context=get_context()).compute()
 
 
 def complete_intersect_multiregions(left: Multiregion,
@@ -441,7 +453,8 @@ def complete_intersect_multiregions(left: Multiregion,
     ([], [],\
  [[(0, 0), (1, 0), (1, 1), (0, 1)], [(1, 1), (2, 1), (2, 2), (1, 2)]])
     """
-    return _holeless.CompleteIntersection(left, right).compute()
+    return _holeless.CompleteIntersection(left, right,
+                                          context=get_context()).compute()
 
 
 def intersect_multiregions(left: Multiregion,
@@ -490,7 +503,7 @@ def intersect_multiregions(left: Multiregion,
     ...                        [lower_left_square, upper_right_square])
     [[(0, 0), (1, 0), (1, 1), (0, 1)], [(1, 1), (2, 1), (2, 2), (1, 2)]]
     """
-    return _holeless.Intersection(left, right).compute()
+    return _holeless.Intersection(left, right, context=get_context()).compute()
 
 
 def complete_intersect_multipolygons(left: Multipolygon,
@@ -575,7 +588,8 @@ def complete_intersect_multipolygons(left: Multipolygon,
  [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)]]),\
  ([(3, 3), (6, 3), (6, 6), (3, 6)], [[(4, 5), (5, 4), (4, 4)]])])
     """
-    return _holey.CompleteIntersection(left, right).compute()
+    return _holey.CompleteIntersection(left, right,
+                                       context=get_context()).compute()
 
 
 def intersect_multipolygons(left: Multipolygon,
@@ -641,7 +655,7 @@ def intersect_multipolygons(left: Multipolygon,
     [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)]]),\
  ([(3, 3), (6, 3), (6, 6), (3, 6)], [[(4, 5), (5, 4), (4, 4)]])]
     """
-    return _holey.Intersection(left, right).compute()
+    return _holey.Intersection(left, right, context=get_context()).compute()
 
 
 def subtract_multipolygons(minuend: Multipolygon,
@@ -707,7 +721,8 @@ def subtract_multipolygons(minuend: Multipolygon,
     ...                         (upper_right_square, [upper_right_triangle])])
     []
     """
-    return _holey.Difference(minuend, subtrahend).compute()
+    return _holey.Difference(minuend, subtrahend,
+                             context=get_context()).compute()
 
 
 def symmetric_subtract_multipolygons(left: Multipolygon,
@@ -793,7 +808,8 @@ def symmetric_subtract_multipolygons(left: Multipolygon,
     ...                                    [upper_right_triangle])])
     []
     """
-    return _holey.SymmetricDifference(left, right).compute()
+    return _holey.SymmetricDifference(left, right,
+                                      context=get_context()).compute()
 
 
 def unite_multipolygons(left: Multipolygon,
@@ -862,4 +878,5 @@ def unite_multipolygons(left: Multipolygon,
     [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)]]),\
  ([(3, 3), (6, 3), (6, 6), (3, 6)], [[(4, 5), (5, 4), (4, 4)]])]
     """
-    return _holey.Union(left, right).compute()
+    return _holey.Union(left, right,
+                        context=get_context()).compute()

@@ -6,6 +6,7 @@ from typing import (Iterable,
                     List,
                     Union as Union_)
 
+from ground.base import Context
 from reprit.base import generate_repr
 
 from clipping.hints import (Mix,
@@ -22,7 +23,9 @@ from .utils import (all_equal,
                     to_multisegment_x_max)
 
 
-def merge_segments(segments: List[Segment]) -> Iterable[Segment]:
+def merge_segments(segments: List[Segment],
+                   *,
+                   context: Context) -> Iterable[Segment]:
     if not segments:
         return
     events_queue = NaryEventsQueue()
@@ -50,16 +53,20 @@ def merge_segments(segments: List[Segment]) -> Iterable[Segment]:
 
 
 class Operation(ABC):
-    __slots__ = 'left', 'right', '_events_queue'
+    __slots__ = 'context', 'left', 'right', '_events_queue'
 
-    def __init__(self, left: Multisegment, right: Multisegment) -> None:
+    def __init__(self,
+                 left: Multisegment,
+                 right: Multisegment,
+                 context: Context) -> None:
         """
         Initializes operation.
 
         :param left: left operand.
         :param right: right operand.
+        :param context: operation context.
         """
-        self.left, self.right = left, right
+        self.context, self.left, self.right = context, left, right
         self._events_queue = BinaryEventsQueue()
 
     __repr__ = generate_repr(__init__)

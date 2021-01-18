@@ -6,6 +6,7 @@ from typing import (List,
                     Optional,
                     Union as Union_)
 
+from ground.base import Context
 from reprit.base import generate_repr
 
 from clipping.hints import (Contour,
@@ -28,16 +29,20 @@ from .utils import (all_equal,
 
 
 class Operation(ABC):
-    __slots__ = 'left', 'right', '_events_queue'
+    __slots__ = 'context', 'left', 'right', '_events_queue'
 
-    def __init__(self, left: Multipolygon, right: Multipolygon) -> None:
+    def __init__(self,
+                 left: Multipolygon,
+                 right: Multipolygon,
+                 context: Context) -> None:
         """
         Initializes operation.
 
         :param left: left operand.
         :param right: right operand.
+        :param context: operation context.
         """
-        self.left, self.right = left, right
+        self.context, self.left, self.right = context, left, right
         self._events_queue = EventsQueue()
 
     __repr__ = generate_repr(__init__)
