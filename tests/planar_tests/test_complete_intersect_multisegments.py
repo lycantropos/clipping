@@ -5,8 +5,8 @@ from orient.planar import (Relation,
                            segment_in_multisegment,
                            segment_in_segment)
 
-from clipping.core.utils import (SegmentsRelationship,
-                                 segments_relationship)
+from clipping.core.utils import (SegmentsRelation,
+                                 segments_relation)
 from clipping.hints import Multisegment
 from clipping.planar import (complete_intersect_multisegments,
                              intersect_multisegments,
@@ -65,8 +65,8 @@ def test_properties(multisegments_pair: MultisegmentsPair) -> None:
                       is Relation.COMPONENT
                       for segment in result_multisegment)
                for left_segment in left_multisegment
-               if any(segments_relationship(left_segment, right_segment)
-                      is SegmentsRelationship.OVERLAP
+               if any(segments_relation(left_segment, right_segment)
+                      is SegmentsRelation.OVERLAP
                       for right_segment in right_multisegment))
     assert not result_multipolygon
 

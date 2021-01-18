@@ -7,9 +7,9 @@ from orient.planar import (Relation,
                            segment_in_multisegment,
                            segment_in_segment)
 
-from clipping.core.utils import (SegmentsRelationship,
+from clipping.core.utils import (SegmentsRelation,
                                  contour_to_segments,
-                                 segments_relationship,
+                                 segments_relation,
                                  to_multipolygon_contours)
 from clipping.planar import (complete_intersect_multisegment_with_multipolygon,
                              intersect_multisegment_with_multipolygon)
@@ -53,15 +53,15 @@ def test_properties(multipolygon_with_multisegment
                for point in result_multipoint)
     assert all(any(point_in_segment(point, segment) is Relation.COMPONENT
                    for point in result_multipoint)
-               or any(segments_relationship(segment, result_segment)
-                      is SegmentsRelationship.TOUCH
+               or any(segments_relation(segment, result_segment)
+                      is SegmentsRelation.TOUCH
                       for result_segment in result_multisegment)
                for segment in multisegment
                if (segment_in_multipolygon(segment, multipolygon)
                    is Relation.TOUCH
                    and not any(
-                    segments_relationship(segment, edge)
-                    is SegmentsRelationship.OVERLAP
+                    segments_relation(segment, edge)
+                    is SegmentsRelation.OVERLAP
                     for contour in to_multipolygon_contours(multipolygon)
                     for edge in contour_to_segments(contour))))
     assert all(segment_in_multisegment(segment, multisegment)

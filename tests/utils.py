@@ -14,10 +14,10 @@ from orient.planar import (Relation,
 
 from clipping.core.hints import BoundingBox
 from clipping.core.utils import (Orientation,
-                                 SegmentsRelationship,
+                                 SegmentsRelation,
                                  orientation,
                                  segments_intersection,
-                                 segments_relationship,
+                                 segments_relation,
                                  to_first_boundary_vertex)
 from clipping.hints import (Contour,
                             HolelessMix,
@@ -263,10 +263,10 @@ def multiregion_to_multipolygon(multiregion: Multiregion) -> Multipolygon:
 
 def segments_intersections(first: Segment, second: Segment
                            ) -> Tuple[Point, ...]:
-    relation = segments_relationship(first, second)
-    if relation is SegmentsRelationship.DISJOINT:
+    relation = segments_relation(first, second)
+    if relation is SegmentsRelation.DISJOINT:
         return ()
-    elif relation is SegmentsRelationship.OVERLAP:
+    elif relation is SegmentsRelation.OVERLAP:
         _, first_point, second_point, _ = sorted(first + second)
         return first_point, second_point
     else:
