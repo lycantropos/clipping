@@ -5,16 +5,19 @@ from typing import (Any,
                     Tuple,
                     TypeVar)
 
-from ground.base import Context, Orientation, Relation, get_context
+from ground.base import (Context,
+                         Orientation,
+                         Relation,
+                         get_context)
 
-from clipping.hints import (Contour,
-                            Coordinate,
-                            Multipolygon,
-                            Multiregion,
-                            Multisegment,
-                            Point,
-                            Polygon,
-                            Segment)
+from .hints import (Contour,
+                    Coordinate,
+                    Multipolygon,
+                    Multiregion,
+                    Multisegment,
+                    Point,
+                    Polygon,
+                    Segment)
 
 
 def all_equal(iterable: Iterable[Any]) -> bool:

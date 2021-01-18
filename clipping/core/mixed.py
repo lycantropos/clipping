@@ -9,13 +9,13 @@ from typing import (Iterable,
 from ground.base import Context
 from reprit.base import generate_repr
 
-from clipping.hints import (Mix,
-                            Multipoint,
-                            Multipolygon,
-                            Multisegment)
-from . import bounding_box
+from . import bounding
 from .event import MixedEvent as Event
 from .events_queue import MixedBinaryEventsQueue as EventsQueue
+from .hints import (Mix,
+                    Multipoint,
+                    Multipolygon,
+                    Multisegment)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     polygon_to_oriented_segments,
@@ -107,14 +107,13 @@ class Difference(Operation):
     def compute(self) -> Multisegment:
         if not (self.multisegment and self.multipolygon):
             return self.multisegment
-        multisegment_bounding_box = (bounding_box
-                                     .from_multisegment(self.multisegment))
-        if bounding_box.disjoint_with(
-                multisegment_bounding_box,
-                bounding_box.from_multipolygon(self.multipolygon)):
+        multisegment_box = bounding.from_multisegment(self.multisegment)
+        if bounding.disjoint_with(
+                multisegment_box,
+                bounding.from_multipolygon(self.multipolygon)):
             return self.multisegment
-        self.multipolygon = bounding_box.to_coupled_polygons(
-                multisegment_bounding_box, self.multipolygon)
+        self.multipolygon = bounding.to_coupled_polygons(multisegment_box,
+                                                         self.multipolygon)
         if not self.multipolygon:
             return self.multisegment
         self.normalize_operands()
@@ -146,17 +145,14 @@ class CompleteIntersection(Operation):
     def compute(self) -> Mix:
         if not (self.multisegment and self.multipolygon):
             return [], [], []
-        multisegment_bounding_box = (bounding_box
-                                     .from_multisegment(self.multisegment))
-        multipolygon_bounding_box = (bounding_box
-                                     .from_multipolygon(self.multipolygon))
-        if bounding_box.disjoint_with(multisegment_bounding_box,
-                                      multipolygon_bounding_box):
+        multisegment_box = bounding.from_multisegment(self.multisegment)
+        multipolygon_box = bounding.from_multipolygon(self.multipolygon)
+        if bounding.disjoint_with(multisegment_box, multipolygon_box):
             return [], [], []
-        self.multisegment = bounding_box.to_intersecting_segments(
-                multipolygon_bounding_box, self.multisegment)
-        self.multipolygon = bounding_box.to_intersecting_polygons(
-                multisegment_bounding_box, self.multipolygon)
+        self.multisegment = bounding.to_intersecting_segments(
+                multipolygon_box, self.multisegment)
+        self.multipolygon = bounding.to_intersecting_polygons(
+                multisegment_box, self.multipolygon)
         if not (self.multisegment and self.multipolygon):
             return [], [], []
         self.normalize_operands()
@@ -204,17 +200,15 @@ class Intersection(Operation):
     def compute(self) -> Multisegment:
         if not (self.multisegment and self.multipolygon):
             return []
-        multisegment_bounding_box = (bounding_box
-                                     .from_multisegment(self.multisegment))
-        multipolygon_bounding_box = (bounding_box
-                                     .from_multipolygon(self.multipolygon))
-        if bounding_box.disjoint_with(multisegment_bounding_box,
-                                      multipolygon_bounding_box):
+        multisegment_box = bounding.from_multisegment(self.multisegment)
+        multipolygon_box = bounding.from_multipolygon(self.multipolygon)
+        if bounding.disjoint_with(multisegment_box,
+                                  multipolygon_box):
             return []
-        self.multisegment = bounding_box.to_intersecting_segments(
-                multipolygon_bounding_box, self.multisegment)
-        self.multipolygon = bounding_box.to_intersecting_polygons(
-                multisegment_bounding_box, self.multipolygon)
+        self.multisegment = bounding.to_intersecting_segments(
+                multipolygon_box, self.multisegment)
+        self.multipolygon = bounding.to_intersecting_polygons(
+                multisegment_box, self.multipolygon)
         if not (self.multisegment and self.multipolygon):
             return []
         self.normalize_operands()

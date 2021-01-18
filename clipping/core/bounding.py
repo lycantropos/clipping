@@ -7,24 +7,24 @@ from orient.planar import (Relation,
                            segment_in_contour,
                            segment_in_region)
 
-from clipping.hints import (Contour,
-                            Multipolygon,
-                            Multiregion,
-                            Multisegment,
-                            Point,
-                            Polygon,
-                            Region,
-                            Segment)
-from .hints import BoundingBox
+from .hints import (Box,
+                    Contour,
+                    Multipolygon,
+                    Multiregion,
+                    Multisegment,
+                    Point,
+                    Polygon,
+                    Region,
+                    Segment)
 from .utils import (SegmentsRelation,
                     contour_to_segments,
                     flatten,
                     segments_relation)
 
 
-def from_points(points: Iterable[Point]) -> BoundingBox:
+def from_points(points: Iterable[Point]) -> Box:
     """
-    Builds bounding box from points.
+    Builds box from points.
     """
     points = iter(points)
     x_min, y_min = x_max, y_max = next(points)
@@ -40,30 +40,30 @@ def from_points(points: Iterable[Point]) -> BoundingBox:
     return x_min, x_max, y_min, y_max
 
 
-def from_multisegment(multisegment: Multisegment) -> BoundingBox:
+def from_multisegment(multisegment: Multisegment) -> Box:
     """
-    Builds bounding box from multisegment.
+    Builds box from multisegment.
     """
     return from_points(flatten(multisegment))
 
 
-def from_multipolygon(multipolygon: Multipolygon) -> BoundingBox:
+def from_multipolygon(multipolygon: Multipolygon) -> Box:
     """
-    Builds bounding box from multipolygon.
+    Builds box from multipolygon.
     """
     return from_points(flatten(border for border, _ in multipolygon))
 
 
-def from_multiregion(multiregion: Multiregion) -> BoundingBox:
+def from_multiregion(multiregion: Multiregion) -> Box:
     """
-    Builds bounding box from multiregion.
+    Builds box from multiregion.
     """
     return from_points(flatten(multiregion))
 
 
-def disjoint_with(left: BoundingBox, right: BoundingBox) -> bool:
+def disjoint_with(left: Box, right: Box) -> bool:
     """
-    Checks if bounding boxes do not intersect.
+    Checks if boxes do not intersect.
 
     >>> disjoint_with((0, 2, 0, 2), (0, 2, 0, 2))
     False
@@ -82,9 +82,9 @@ def disjoint_with(left: BoundingBox, right: BoundingBox) -> bool:
             or left_y_min > right_y_max or left_y_max < right_y_min)
 
 
-def intersects_with(left: BoundingBox, right: BoundingBox) -> bool:
+def intersects_with(left: Box, right: Box) -> bool:
     """
-    Checks if bounding boxes intersect.
+    Checks if boxes intersect.
 
     >>> intersects_with((0, 2, 0, 2), (0, 2, 0, 2))
     True
@@ -103,9 +103,9 @@ def intersects_with(left: BoundingBox, right: BoundingBox) -> bool:
             and right_y_min <= left_y_max and left_y_min <= right_y_max)
 
 
-def coupled_with(left: BoundingBox, right: BoundingBox) -> bool:
+def coupled_with(left: Box, right: Box) -> bool:
     """
-    Checks if bounding boxes intersect in some region or by the edge.
+    Checks if boxes intersect in some region or by the edge.
 
     >>> coupled_with((0, 2, 0, 2), (0, 2, 0, 2))
     True
@@ -123,9 +123,9 @@ def coupled_with(left: BoundingBox, right: BoundingBox) -> bool:
                  or edges_overlap_with(left, right)))
 
 
-def touches_with(left: BoundingBox, right: BoundingBox) -> bool:
+def touches_with(left: Box, right: Box) -> bool:
     """
-    Checks if bounding boxes intersect at point or by the edge.
+    Checks if boxes intersect at point or by the edge.
 
     >>> touches_with((0, 2, 0, 2), (0, 2, 0, 2))
     False
@@ -146,9 +146,9 @@ def touches_with(left: BoundingBox, right: BoundingBox) -> bool:
             and (left_y_min == right_y_max or right_y_min == left_y_max))
 
 
-def edges_overlap_with(left: BoundingBox, right: BoundingBox) -> bool:
+def edges_overlap_with(left: Box, right: Box) -> bool:
     """
-    Checks if bounding boxes intersect by the edge.
+    Checks if boxes intersect by the edge.
 
     >>> edges_overlap_with((0, 2, 0, 2), (0, 2, 0, 2))
     False
@@ -169,9 +169,9 @@ def edges_overlap_with(left: BoundingBox, right: BoundingBox) -> bool:
             and (left_y_min == right_y_max or right_y_min == left_y_max))
 
 
-def is_subset_of(test: BoundingBox, goal: BoundingBox) -> bool:
+def is_subset_of(test: Box, goal: Box) -> bool:
     """
-    Checks if the bounding box is the subset of the other.
+    Checks if the box is the subset of the other.
 
     >>> is_subset_of((0, 2, 0, 2), (0, 2, 0, 2))
     True
@@ -190,9 +190,9 @@ def is_subset_of(test: BoundingBox, goal: BoundingBox) -> bool:
             and goal_y_min <= test_y_min and test_y_max <= goal_y_max)
 
 
-def within_of(test: BoundingBox, goal: BoundingBox) -> bool:
+def within_of(test: Box, goal: Box) -> bool:
     """
-    Checks if the bounding box is contained in an interior of the other.
+    Checks if the box is contained in an interior of the other.
 
     >>> within_of((0, 2, 0, 2), (0, 2, 0, 2))
     False
@@ -211,226 +211,225 @@ def within_of(test: BoundingBox, goal: BoundingBox) -> bool:
             and goal_y_min < test_y_min and test_y_max < goal_y_max)
 
 
-def intersects_with_segment(bounding_box: BoundingBox,
+def intersects_with_segment(box: Box,
                             segment: Segment) -> bool:
     """
-    Checks if the bounding box intersects the segment.
+    Checks if the box intersects the segment.
     """
-    segment_bounding_box = from_points(segment)
-    return (intersects_with(segment_bounding_box, bounding_box)
-            and (is_subset_of(segment_bounding_box, bounding_box)
+    segment_box = from_points(segment)
+    return (intersects_with(segment_box, box)
+            and (is_subset_of(segment_box, box)
                  or any(segments_relation(edge, segment)
                         is not SegmentsRelation.DISJOINT
-                        for edge in to_segments(bounding_box))))
+                        for edge in to_segments(box))))
 
 
-def coupled_with_segment(bounding_box: BoundingBox,
+def coupled_with_segment(box: Box,
                          segment: Segment) -> bool:
     """
-    Checks if the bounding box intersects the segment at more than one point.
+    Checks if the box intersects the segment at more than one point.
     """
-    segment_bounding_box = from_points(segment)
-    return (coupled_with(segment_bounding_box, bounding_box)
-            and (is_subset_of(segment_bounding_box, bounding_box)
+    segment_box = from_points(segment)
+    return (coupled_with(segment_box, box)
+            and (is_subset_of(segment_box, box)
                  or any(segments_relation(edge, segment)
                         not in (SegmentsRelation.TOUCH,
                                 SegmentsRelation.DISJOINT)
-                        for edge in to_segments(bounding_box))))
+                        for edge in to_segments(box))))
 
 
-def is_subset_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
+def is_subset_of_region(box: Box, border: Contour) -> bool:
     """
-    Checks if the bounding box is the subset of the region.
+    Checks if the box is the subset of the region.
     """
     return all(segment_in_region(segment, border) in (Relation.COMPONENT,
                                                       Relation.ENCLOSED,
                                                       Relation.WITHIN)
-               for segment in to_segments(bounding_box))
+               for segment in to_segments(box))
 
 
-def within_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
+def within_of_region(box: Box, border: Contour) -> bool:
     """
-    Checks if the bounding box is contained in an interior of the region.
+    Checks if the box is contained in an interior of the region.
     """
     return (all(point_in_region(vertex, border) is Relation.WITHIN
-                for vertex in to_vertices(bounding_box))
+                for vertex in to_vertices(box))
             and all(segments_relation(edge, border_edge)
                     is SegmentsRelation.DISJOINT
-                    for edge in to_segments(bounding_box)
+                    for edge in to_segments(box)
                     for border_edge in contour_to_segments(border)))
 
 
-def is_subset_of_multiregion(bounding_box: BoundingBox,
+def is_subset_of_multiregion(box: Box,
                              borders: List[Contour]) -> bool:
     """
-    Checks if the bounding box is the subset of the multiregion.
+    Checks if the box is the subset of the multiregion.
     """
-    return any(is_subset_of(bounding_box, from_points(border))
-               and is_subset_of_region(bounding_box, border)
+    return any(is_subset_of(box, from_points(border))
+               and is_subset_of_region(box, border)
                for border in borders)
 
 
-def intersects_with_polygon(bounding_box: BoundingBox,
+def intersects_with_polygon(box: Box,
                             polygon: Polygon) -> bool:
     """
-    Checks if the bounding box intersects the polygon.
+    Checks if the box intersects the polygon.
     """
     border, holes = polygon
-    polygon_bounding_box = from_points(border)
-    if not intersects_with(polygon_bounding_box, bounding_box):
+    polygon_box = from_points(border)
+    if not intersects_with(polygon_box, box):
         return False
-    elif (is_subset_of(polygon_bounding_box, bounding_box)
-          or any(contains_point(bounding_box, vertex) for vertex in border)):
+    elif (is_subset_of(polygon_box, box)
+          or any(contains_point(box, vertex) for vertex in border)):
         return True
     relations = [point_in_region(vertex, border)
-                 for vertex in to_vertices(bounding_box)]
-    if (within_of(bounding_box, polygon_bounding_box)
+                 for vertex in to_vertices(box)]
+    if (within_of(box, polygon_box)
             and all(relation is Relation.WITHIN for relation in relations)
             and all(segments_relation(edge, border_edge)
                     is SegmentsRelation.DISJOINT
-                    for edge in to_segments(bounding_box)
+                    for edge in to_segments(box)
                     for border_edge in contour_to_segments(border))):
-        return not any(within_of(bounding_box, from_points(hole))
-                       and within_of_region(bounding_box, hole)
+        return not any(within_of(box, from_points(hole))
+                       and within_of_region(box, hole)
                        for hole in holes)
     else:
         return (any(relation is not Relation.DISJOINT
                     for relation in relations)
-                or any(intersects_with_segment(bounding_box, border_edge)
+                or any(intersects_with_segment(box, border_edge)
                        for border_edge in contour_to_segments(border)))
 
 
-def intersects_with_region(bounding_box: BoundingBox,
+def intersects_with_region(box: Box,
                            region: Region) -> bool:
     """
-    Checks if the bounding box intersects the region.
+    Checks if the box intersects the region.
     """
-    region_bounding_box = from_points(region)
-    return (intersects_with(region_bounding_box, bounding_box)
-            and (is_subset_of(region_bounding_box, bounding_box)
-                 or any(contains_point(bounding_box, vertex)
-                        for vertex in region)
+    region_box = from_points(region)
+    return (intersects_with(region_box, box)
+            and (is_subset_of(region_box, box)
+                 or any(contains_point(box, vertex) for vertex in region)
                  or any(point_in_region(vertex, region)
                         is not Relation.DISJOINT
-                        for vertex in to_vertices(bounding_box))
-                 or any(intersects_with_segment(bounding_box, border_edge)
+                        for vertex in to_vertices(box))
+                 or any(intersects_with_segment(box, border_edge)
                         for border_edge in contour_to_segments(region))))
 
 
-def coupled_with_polygon(bounding_box: BoundingBox, polygon: Polygon) -> bool:
+def coupled_with_polygon(box: Box, polygon: Polygon) -> bool:
     """
-    Checks if the bounding box intersects the polygon in continuous points set.
+    Checks if the box intersects the polygon in continuous points set.
     """
     border, holes = polygon
-    polygon_bounding_box = from_points(border)
-    if not coupled_with(polygon_bounding_box, bounding_box):
+    polygon_box = from_points(border)
+    if not coupled_with(polygon_box, box):
         return False
-    elif (is_subset_of(polygon_bounding_box, bounding_box)
-          or any(covers_point(bounding_box, vertex)
+    elif (is_subset_of(polygon_box, box)
+          or any(covers_point(box, vertex)
                  for vertex in border)):
         return True
     relations = [point_in_region(vertex, border)
-                 for vertex in to_vertices(bounding_box)]
+                 for vertex in to_vertices(box)]
     if any(relation is Relation.WITHIN for relation in relations):
         return (not all(relation is Relation.WITHIN for relation in relations)
-                or not is_subset_of_multiregion(bounding_box, holes))
+                or not is_subset_of_multiregion(box, holes))
     else:
-        return (not is_subset_of_multiregion(bounding_box, holes)
-                if (is_subset_of(bounding_box, polygon_bounding_box)
-                    and is_subset_of_region(bounding_box, border))
+        return (not is_subset_of_multiregion(box, holes)
+                if (is_subset_of(box, polygon_box)
+                    and is_subset_of_region(box, border))
                 else any(segment_in_contour(segment, border)
                          is Relation.OVERLAP
                          or segment_in_region(segment, border)
                          in (Relation.CROSS, Relation.COMPONENT,
                              Relation.ENCLOSED)
-                         for segment in to_segments(bounding_box)))
+                         for segment in to_segments(box)))
 
 
-def coupled_with_region(bounding_box: BoundingBox, region: Region) -> bool:
+def coupled_with_region(box: Box, region: Region) -> bool:
     """
-    Checks if the bounding box intersects the region in continuous points set.
+    Checks if the box intersects the region in continuous points set.
     """
-    region_bounding_box = from_points(region)
-    if not coupled_with(region_bounding_box, bounding_box):
+    region_box = from_points(region)
+    if not coupled_with(region_box, box):
         return False
-    elif (is_subset_of(region_bounding_box, bounding_box)
-          or any(covers_point(bounding_box, vertex)
+    elif (is_subset_of(region_box, box)
+          or any(covers_point(box, vertex)
                  for vertex in region)):
         return True
     return (any(point_in_region(vertex, region) is Relation.WITHIN
-                for vertex in to_vertices(bounding_box))
-            or is_subset_of(bounding_box, region_bounding_box)
-            and is_subset_of_region(bounding_box, region)
+                for vertex in to_vertices(box))
+            or is_subset_of(box, region_box)
+            and is_subset_of_region(box, region)
             or any(segment_in_contour(segment, region)
                    is Relation.OVERLAP
                    or segment_in_region(segment, region)
                    in (Relation.CROSS, Relation.COMPONENT,
                        Relation.ENCLOSED)
-                   for segment in to_segments(bounding_box)))
+                   for segment in to_segments(box)))
 
 
-def contains_point(bounding_box: BoundingBox, point: Point) -> bool:
-    x_min, x_max, y_min, y_max = bounding_box
+def contains_point(box: Box, point: Point) -> bool:
+    x_min, x_max, y_min, y_max = box
     x, y = point
     return x_min <= x <= x_max and y_min <= y <= y_max
 
 
-def covers_point(bounding_box: BoundingBox, point: Point) -> bool:
-    x_min, x_max, y_min, y_max = bounding_box
+def covers_point(box: Box, point: Point) -> bool:
+    x_min, x_max, y_min, y_max = box
     x, y = point
     return x_min < x < x_max and y_min < y < y_max
 
 
-def to_vertices(bounding_box: BoundingBox) -> Sequence[Point]:
-    x_min, x_max, y_min, y_max = bounding_box
+def to_vertices(box: Box) -> Sequence[Point]:
+    x_min, x_max, y_min, y_max = box
     return (x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max)
 
 
-def to_segments(bounding_box: BoundingBox) -> Sequence[Segment]:
-    x_min, x_max, y_min, y_max = bounding_box
+def to_segments(box: Box) -> Sequence[Segment]:
+    x_min, x_max, y_min, y_max = box
     return (((x_min, y_min), (x_max, y_min)),
             ((x_max, y_min), (x_max, y_max)),
             ((x_min, y_max), (x_max, y_max)),
             ((x_min, y_min), (x_min, y_max)))
 
 
-def to_intersecting_segments(bounding_box: BoundingBox,
+def to_intersecting_segments(box: Box,
                              multisegment: Multisegment) -> Multisegment:
     return [segment
             for segment in multisegment
-            if intersects_with_segment(bounding_box, segment)]
+            if intersects_with_segment(box, segment)]
 
 
-def to_coupled_segments(bounding_box: BoundingBox,
+def to_coupled_segments(box: Box,
                         multisegment: Multisegment) -> Multisegment:
     return [segment
             for segment in multisegment
-            if coupled_with_segment(bounding_box, segment)]
+            if coupled_with_segment(box, segment)]
 
 
-def to_intersecting_polygons(bounding_box: BoundingBox,
+def to_intersecting_polygons(box: Box,
                              multipolygon: Multipolygon) -> Multipolygon:
     return [polygon
             for polygon in multipolygon
-            if intersects_with_polygon(bounding_box, polygon)]
+            if intersects_with_polygon(box, polygon)]
 
 
-def to_intersecting_regions(bounding_box: BoundingBox,
+def to_intersecting_regions(box: Box,
                             multiregion: Multiregion) -> Multiregion:
     return [region
             for region in multiregion
-            if intersects_with_region(bounding_box, region)]
+            if intersects_with_region(box, region)]
 
 
-def to_coupled_polygons(bounding_box: BoundingBox,
+def to_coupled_polygons(box: Box,
                         multipolygon: Multipolygon) -> Multipolygon:
     return [polygon
             for polygon in multipolygon
-            if coupled_with_polygon(bounding_box, polygon)]
+            if coupled_with_polygon(box, polygon)]
 
 
-def to_coupled_regions(bounding_box: BoundingBox,
+def to_coupled_regions(box: Box,
                        multiregion: Multiregion) -> Multiregion:
     return [region
             for region in multiregion
-            if coupled_with_region(bounding_box, region)]
+            if coupled_with_region(box, region)]

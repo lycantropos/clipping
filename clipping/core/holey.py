@@ -11,15 +11,15 @@ from typing import (Iterable,
 from ground.base import Context
 from reprit.base import generate_repr
 
-from clipping.hints import (Contour,
-                            Mix,
-                            Multipoint,
-                            Multipolygon,
-                            Multisegment)
-from . import bounding_box
+from . import bounding
 from .event import (HoleyEvent as Event,
                     events_to_connectivity)
 from .events_queue import HoleyEventsQueue as EventsQueue
+from .hints import (Contour,
+                    Mix,
+                    Multipoint,
+                    Multipolygon,
+                    Multisegment)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     pairwise,
@@ -169,12 +169,11 @@ class Difference(Operation):
     def compute(self) -> Multipolygon:
         if not (self.left and self.right):
             return self.left
-        left_bounding_box = bounding_box.from_multipolygon(self.left)
-        if bounding_box.disjoint_with(
-                left_bounding_box, bounding_box.from_multipolygon(self.right)):
+        left_box = bounding.from_multipolygon(self.left)
+        if bounding.disjoint_with(
+                left_box, bounding.from_multipolygon(self.right)):
             return self.left
-        self.right = bounding_box.to_coupled_polygons(left_bounding_box,
-                                                      self.right)
+        self.right = bounding.to_coupled_polygons(left_box, self.right)
         if not self.right:
             return self.left
         self.normalize_operands()
@@ -206,14 +205,12 @@ class CompleteIntersection(Operation):
     def compute(self) -> Mix:
         if not (self.left and self.right):
             return [], [], []
-        left_bounding_box = bounding_box.from_multipolygon(self.left)
-        right_bounding_box = bounding_box.from_multipolygon(self.right)
-        if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
+        left_box = bounding.from_multipolygon(self.left)
+        right_box = bounding.from_multipolygon(self.right)
+        if bounding.disjoint_with(left_box, right_box):
             return [], [], []
-        self.left = bounding_box.to_intersecting_polygons(right_bounding_box,
-                                                          self.left)
-        self.right = bounding_box.to_intersecting_polygons(left_bounding_box,
-                                                           self.right)
+        self.left = bounding.to_intersecting_polygons(right_box, self.left)
+        self.right = bounding.to_intersecting_polygons(left_box, self.right)
         if not (self.left and self.right):
             return [], [], []
         self.normalize_operands()
@@ -266,14 +263,12 @@ class Intersection(Operation):
     def compute(self) -> Multipolygon:
         if not (self.left and self.right):
             return []
-        left_bounding_box = bounding_box.from_multipolygon(self.left)
-        right_bounding_box = bounding_box.from_multipolygon(self.right)
-        if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
+        left_box = bounding.from_multipolygon(self.left)
+        right_box = bounding.from_multipolygon(self.right)
+        if bounding.disjoint_with(left_box, right_box):
             return []
-        self.left = bounding_box.to_coupled_polygons(right_bounding_box,
-                                                     self.left)
-        self.right = bounding_box.to_coupled_polygons(left_bounding_box,
-                                                      self.right)
+        self.left = bounding.to_coupled_polygons(right_box, self.left)
+        self.right = bounding.to_coupled_polygons(left_box, self.right)
         if not (self.left and self.right):
             return []
         self.normalize_operands()
@@ -305,9 +300,8 @@ class SymmetricDifference(Operation):
     def compute(self) -> Multipolygon:
         if not (self.left and self.right):
             return self.left or self.right
-        elif bounding_box.disjoint_with(
-                bounding_box.from_multipolygon(self.left),
-                bounding_box.from_multipolygon(self.right)):
+        elif bounding.disjoint_with(bounding.from_multipolygon(self.left),
+                                    bounding.from_multipolygon(self.right)):
             result = self.left + self.right
             result.sort(key=to_first_boundary_vertex)
             return result
@@ -324,9 +318,8 @@ class Union(Operation):
     def compute(self) -> Multipolygon:
         if not (self.left and self.right):
             return self.left or self.right
-        elif bounding_box.disjoint_with(
-                bounding_box.from_multipolygon(self.left),
-                bounding_box.from_multipolygon(self.right)):
+        elif bounding.disjoint_with(bounding.from_multipolygon(self.left),
+                                    bounding.from_multipolygon(self.right)):
             result = self.left + self.right
             result.sort(key=to_first_boundary_vertex)
             return result

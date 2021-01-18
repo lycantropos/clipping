@@ -6,7 +6,7 @@ from ground.hints import Contour, Multipoint, Multipolygon, Multisegment, \
     Point, Polygon, \
     Segment
 
-from clipping.hints import Multiregion
+from .hints import Multiregion
 
 
 def from_point(point: Point):

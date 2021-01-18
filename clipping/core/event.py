@@ -5,9 +5,9 @@ from typing import (Optional,
 
 from reprit.base import generate_repr
 
-from clipping.hints import (Point,
-                            Segment)
 from .enums import OverlapKind
+from .hints import (Point,
+                    Segment)
 
 
 class NaryEvent:

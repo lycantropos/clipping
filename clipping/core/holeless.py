@@ -11,14 +11,14 @@ from typing import (Iterable,
 from ground.base import Context
 from reprit.base import generate_repr
 
-from clipping.hints import (HolelessMix,
-                            Multipoint,
-                            Multiregion,
-                            Multisegment)
-from . import bounding_box
+from . import bounding
 from .event import (ShapedEvent as Event,
                     events_to_connectivity)
 from .events_queue import HolelessEventsQueue as EventsQueue
+from .hints import (HolelessMix,
+                    Multipoint,
+                    Multiregion,
+                    Multisegment)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     contour_to_oriented_segments,
@@ -147,14 +147,12 @@ class CompleteIntersection(Operation):
     def compute(self) -> HolelessMix:
         if not (self.left and self.right):
             return [], [], []
-        left_bounding_box = bounding_box.from_multiregion(self.left)
-        right_bounding_box = bounding_box.from_multiregion(self.right)
-        if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
+        left_box = bounding.from_multiregion(self.left)
+        right_box = bounding.from_multiregion(self.right)
+        if bounding.disjoint_with(left_box, right_box):
             return [], [], []
-        self.left = bounding_box.to_intersecting_regions(right_bounding_box,
-                                                         self.left)
-        self.right = bounding_box.to_intersecting_regions(left_bounding_box,
-                                                          self.right)
+        self.left = bounding.to_intersecting_regions(right_box, self.left)
+        self.right = bounding.to_intersecting_regions(left_box, self.right)
         if not (self.left and self.right):
             return [], [], []
         self.normalize_operands()
@@ -208,14 +206,12 @@ class Intersection(Operation):
     def compute(self) -> Multiregion:
         if not (self.left and self.right):
             return []
-        left_bounding_box = bounding_box.from_multiregion(self.left)
-        right_bounding_box = bounding_box.from_multiregion(self.right)
-        if bounding_box.disjoint_with(left_bounding_box, right_bounding_box):
+        left_box = bounding.from_multiregion(self.left)
+        right_box = bounding.from_multiregion(self.right)
+        if bounding.disjoint_with(left_box, right_box):
             return []
-        self.left = bounding_box.to_coupled_regions(right_bounding_box,
-                                                    self.left)
-        self.right = bounding_box.to_coupled_regions(left_bounding_box,
-                                                     self.right)
+        self.left = bounding.to_coupled_regions(right_box, self.left)
+        self.right = bounding.to_coupled_regions(left_box, self.right)
         if not (self.left and self.right):
             return []
         self.normalize_operands()

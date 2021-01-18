@@ -9,8 +9,6 @@ from ground.base import Context
 from prioq.base import PriorityQueue
 from reprit.base import generate_repr
 
-from clipping.hints import (Point,
-                            Segment)
 from .enums import OverlapKind
 from .event import (BinaryEvent,
                     Event,
@@ -18,7 +16,9 @@ from .event import (BinaryEvent,
                     MixedEvent,
                     NaryEvent,
                     ShapedEvent)
-from .hints import Orienteer
+from .hints import (Orienteer,
+                    Point,
+                    Segment)
 from .utils import (Orientation,
                     SegmentsRelation,
                     orientation,
