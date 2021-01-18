@@ -7,12 +7,12 @@ from typing import (Callable,
 from dendroid import red_black
 from dendroid.hints import Key
 from reprit.base import generate_repr
-from robust.angular import (Orientation,
-                            orientation)
 
 from .event import (BinaryEvent,
                     Event,
                     NaryEvent)
+from .utils import (Orientation,
+                    orientation)
 
 
 class SweepLine(Generic[Event]):

@@ -1,3 +1,4 @@
+from enum import IntEnum, unique
 from itertools import (chain,
                        groupby)
 from typing import (Any,
@@ -5,8 +6,7 @@ from typing import (Any,
                     Tuple,
                     TypeVar)
 
-from robust.angular import (Orientation,
-                            orientation)
+from ground.base import Orientation, Relation, get_context
 
 from clipping.hints import (Contour,
                             Coordinate,
@@ -110,3 +110,55 @@ def shrink_collinear_vertices(contour: Contour) -> None:
                     is Orientation.COLLINEAR)):
             del contour[index - 1]
         index += 1
+
+
+Orientation = Orientation
+
+
+def orientation(first, vertex, second):
+    context = get_context()
+    point_cls = context.point_cls
+    return context.angle_orientation(point_cls(*vertex), point_cls(*first),
+                                     point_cls(*second))
+
+
+@unique
+class SegmentsRelationship(IntEnum):
+    """
+    Represents relationship between segments based on their intersection.
+    """
+    #: intersection is empty
+    NONE = 0
+    #: intersection is an endpoint of one of segments
+    TOUCH = 1
+    #: intersection is a point which is not an endpoint of any of segments
+    CROSS = 2
+    #: intersection is a segment itself
+    OVERLAP = 3
+
+
+def segments_intersection(first, second):
+    first_start, first_end = first
+    second_start, second_end = second
+    context = get_context()
+    point_cls = context.point_cls
+    result = context.segments_intersection(point_cls(*first_start),
+                                           point_cls(*first_end),
+                                           point_cls(*second_start),
+                                           point_cls(*second_end))
+    return result.x, result.y
+
+
+def segments_relationship(first, second):
+    first_start, first_end = first
+    second_start, second_end = second
+    context = get_context()
+    point_cls = context.point_cls
+    result = context.segments_relation(point_cls(*first_start),
+                                       point_cls(*first_end),
+                                       point_cls(*second_start),
+                                       point_cls(*second_end))
+    return (SegmentsRelationship.NONE if result is Relation.DISJOINT
+            else (SegmentsRelationship.TOUCH if result is Relation.TOUCH
+                  else (SegmentsRelationship.CROSS if result is Relation.CROSS
+                        else SegmentsRelationship.OVERLAP)))

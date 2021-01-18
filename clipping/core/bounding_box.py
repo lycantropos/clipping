@@ -6,8 +6,6 @@ from orient.planar import (Relation,
                            point_in_region,
                            segment_in_contour,
                            segment_in_region)
-from robust.linear import (SegmentsRelationship,
-                           segments_relationship)
 
 from clipping.hints import (Contour,
                             Multipolygon,
@@ -18,8 +16,10 @@ from clipping.hints import (Contour,
                             Region,
                             Segment)
 from .hints import BoundingBox
-from .utils import (contour_to_segments,
-                    flatten)
+from .utils import (SegmentsRelationship,
+                    contour_to_segments,
+                    flatten,
+                    segments_relationship)
 
 
 def from_points(points: Iterable[Point]) -> BoundingBox:
