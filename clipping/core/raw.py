@@ -68,8 +68,7 @@ def to_multiregion(raw, context: Context) -> Multiregion:
 
 def to_polygon(raw, context: Context) -> Polygon:
     raw_border, raw_holes = raw
-    return context.polygon_cls(to_contour(raw_border, context,
-                                          repeat(context)),
+    return context.polygon_cls(to_contour(raw_border, context),
                                to_multiregion(raw_holes, context))
 
 
