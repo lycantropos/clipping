@@ -1,7 +1,6 @@
 from abc import (ABC,
                  abstractmethod)
 from itertools import groupby
-from numbers import Rational
 from operator import attrgetter
 from typing import (Iterable,
                     List,
@@ -20,17 +19,12 @@ from .events_queue import (LinearBinaryEventsQueue as BinaryEventsQueue,
 from .sweep_line import (BinarySweepLine,
                          NarySweepLine)
 from .utils import (all_equal,
-                    to_multisegment_base,
-                    to_multisegment_x_max,
-                    to_rational_multisegment)
+                    to_multisegment_x_max)
 
 
-def merge_segments(segments: List[Segment],
-                   accurate: bool) -> Iterable[Segment]:
+def merge_segments(segments: List[Segment]) -> Iterable[Segment]:
     if not segments:
         return
-    if accurate and not issubclass(to_multisegment_base(segments), Rational):
-        segments = to_rational_multisegment(segments)
     events_queue = NaryEventsQueue()
     events_queue.register_segments(segments)
     sweep_line = NarySweepLine()
@@ -56,24 +50,16 @@ def merge_segments(segments: List[Segment],
 
 
 class Operation(ABC):
-    __slots__ = 'left', 'right', 'accurate', '_events_queue'
+    __slots__ = 'left', 'right', '_events_queue'
 
-    def __init__(self,
-                 left: Multisegment,
-                 right: Multisegment,
-                 accurate: bool) -> None:
+    def __init__(self, left: Multisegment, right: Multisegment) -> None:
         """
         Initializes operation.
 
         :param left: left operand.
         :param right: right operand.
-        :param accurate:
-            flag that tells whether to use slow but more accurate arithmetic
-            for floating point numbers.
         """
-        self.left = left
-        self.right = right
-        self.accurate = accurate
+        self.left, self.right = left, right
         self._events_queue = BinaryEventsQueue()
 
     __repr__ = generate_repr(__init__)
@@ -89,12 +75,7 @@ class Operation(ABC):
         self._events_queue.register_segments(self.right, False)
 
     def normalize_operands(self) -> None:
-        left, right = self.left, self.right
-        if (self.accurate
-                and not issubclass(to_multisegment_base(left + right),
-                                   Rational)):
-            self.left, self.right = (to_rational_multisegment(left),
-                                     to_rational_multisegment(right))
+        pass
 
     def process_event(self, event: BinaryEvent,
                       sweep_line: BinarySweepLine) -> None:

@@ -1,7 +1,6 @@
 from abc import (ABC,
                  abstractmethod)
 from itertools import groupby
-from numbers import Rational
 from operator import attrgetter
 from typing import (List,
                     Optional,
@@ -20,32 +19,23 @@ from .events_queue import (BinaryEventsQueueKey as EventsQueueKey,
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     polygon_to_oriented_segments,
-                    to_mixed_base,
                     to_multipolygon_x_max,
-                    to_multisegment_x_max,
-                    to_rational_multipolygon,
-                    to_rational_multisegment)
+                    to_multisegment_x_max)
 
 
 class Operation(ABC):
-    __slots__ = 'multisegment', 'multipolygon', 'accurate', '_events_queue'
+    __slots__ = 'multisegment', 'multipolygon', '_events_queue'
 
     def __init__(self,
                  multisegment: Multisegment,
-                 multipolygon: Multipolygon,
-                 accurate: bool) -> None:
+                 multipolygon: Multipolygon) -> None:
         """
         Initializes operation.
 
         :param multisegment: left operand.
         :param multipolygon: right operand.
-        :param accurate:
-            flag that tells whether to use slow but more accurate arithmetic
-            for floating point numbers.
         """
-        self.multisegment = multisegment
-        self.multipolygon = multipolygon
-        self.accurate = accurate
+        self.multisegment, self.multipolygon = multisegment, multipolygon
         self._events_queue = EventsQueue()
 
     __repr__ = generate_repr(__init__)
@@ -77,13 +67,7 @@ class Operation(ABC):
         """Detects if event will be presented in result of the operation."""
 
     def normalize_operands(self) -> None:
-        multisegment, multipolygon = self.multisegment, self.multipolygon
-        if (self.accurate
-                and not issubclass(to_mixed_base(multisegment, multipolygon),
-                                   Rational)):
-            self.multisegment, self.multipolygon = (
-                to_rational_multisegment(multisegment),
-                to_rational_multipolygon(multipolygon))
+        pass
 
     def process_event(self, event: Event, sweep_line: SweepLine) -> None:
         if event.is_right_endpoint:

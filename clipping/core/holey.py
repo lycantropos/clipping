@@ -1,7 +1,6 @@
 from abc import (ABC,
                  abstractmethod)
 from itertools import groupby
-from numbers import Rational
 from operator import attrgetter
 from typing import (List,
                     Optional,
@@ -25,30 +24,20 @@ from .utils import (all_equal,
                     polygon_to_oriented_segments,
                     shrink_collinear_vertices,
                     to_first_boundary_vertex,
-                    to_multipolygon_base,
-                    to_multipolygon_x_max,
-                    to_rational_multipolygon)
+                    to_multipolygon_x_max)
 
 
 class Operation(ABC):
-    __slots__ = 'left', 'right', 'accurate', '_events_queue'
+    __slots__ = 'left', 'right', '_events_queue'
 
-    def __init__(self,
-                 left: Multipolygon,
-                 right: Multipolygon,
-                 accurate: bool) -> None:
+    def __init__(self, left: Multipolygon, right: Multipolygon) -> None:
         """
         Initializes operation.
 
         :param left: left operand.
         :param right: right operand.
-        :param accurate:
-            flag that tells whether to use slow but more accurate arithmetic
-            for floating point numbers.
         """
-        self.left = left
-        self.right = right
-        self.accurate = accurate
+        self.left, self.right = left, right
         self._events_queue = EventsQueue()
 
     __repr__ = generate_repr(__init__)
@@ -86,14 +75,11 @@ class Operation(ABC):
         """Detects if event will be presented in result of the operation."""
 
     def normalize_operands(self) -> None:
-        left, right = self.left, self.right
-        if (self.accurate
-                and not issubclass(to_multipolygon_base(left + right),
-                                   Rational)):
-            self.left, self.right = (to_rational_multipolygon(left),
-                                     to_rational_multipolygon(right))
+        pass
 
-    def process_event(self, event: Event, processed_events: List[Event],
+    def process_event(self,
+                      event: Event,
+                      processed_events: List[Event],
                       sweep_line: SweepLine) -> None:
         if event.is_right_endpoint:
             processed_events.append(event)

@@ -54,9 +54,7 @@ from .hints import (HolelessMix,
                     Segment)
 
 
-def segments_to_multisegment(segments: List[Segment],
-                             *,
-                             accurate: bool = True) -> Multisegment:
+def segments_to_multisegment(segments: List[Segment]) -> Multisegment:
     """
     Returns multisegment from given segments.
 
@@ -70,9 +68,6 @@ def segments_to_multisegment(segments: List[Segment],
     ``intersections_count`` --- number of intersections between segments.
 
     :param segments: target segments.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: multisegment from segments.
 
     >>> segments_to_multisegment([])
@@ -83,14 +78,11 @@ def segments_to_multisegment(segments: List[Segment],
     [((0, 0), (1, 0)), ((1, 0), (2, 0)), ((2, 0), (3, 0))]
     """
     return sorted(segment
-                  for segment, _ in _groupby(_linear.merge_segments(segments,
-                                                                    accurate)))
+                  for segment, _ in _groupby(_linear.merge_segments(segments)))
 
 
 def complete_intersect_multisegments(left: Multisegment,
-                                     right: Multisegment,
-                                     *,
-                                     accurate: bool = True) -> Mix:
+                                     right: Multisegment) -> Mix:
     """
     Returns intersection of multisegments considering cases
     with segments touching each other in points.
@@ -106,9 +98,6 @@ def complete_intersect_multisegments(left: Multisegment,
 
     :param left: left operand.
     :param right: right operand.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: intersection of operands.
 
     >>> complete_intersect_multisegments([], [])
@@ -126,13 +115,11 @@ def complete_intersect_multisegments(left: Multisegment,
     ...                                  [((0, 0), (2, 0)), ((0, 0), (2, 2))])
     ([(1, 1)], [((0, 0), (1, 0))], [])
     """
-    return _linear.CompleteIntersection(left, right, accurate).compute()
+    return _linear.CompleteIntersection(left, right).compute()
 
 
 def intersect_multisegments(left: Multisegment,
-                            right: Multisegment,
-                            *,
-                            accurate: bool = True) -> Multisegment:
+                            right: Multisegment) -> Multisegment:
     """
     Returns intersection of multisegments.
 
@@ -147,9 +134,6 @@ def intersect_multisegments(left: Multisegment,
 
     :param left: left operand.
     :param right: right operand.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: intersection of operands.
 
     >>> intersect_multisegments([], [])
@@ -165,13 +149,11 @@ def intersect_multisegments(left: Multisegment,
     ...                         [((0, 0), (2, 0)), ((0, 0), (2, 2))])
     [((0, 0), (1, 0))]
     """
-    return _linear.Intersection(left, right, accurate).compute()
+    return _linear.Intersection(left, right).compute()
 
 
 def subtract_multisegments(minuend: Multisegment,
-                           subtrahend: Multisegment,
-                           *,
-                           accurate: bool = True) -> Multisegment:
+                           subtrahend: Multisegment) -> Multisegment:
     """
     Returns difference of multisegments.
 
@@ -186,9 +168,6 @@ def subtract_multisegments(minuend: Multisegment,
 
     :param minuend: multisegment to subtract from.
     :param subtrahend: multisegment to subtract.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: difference between minuend and subtrahend.
 
     >>> subtract_multisegments([], [])
@@ -204,13 +183,11 @@ def subtract_multisegments(minuend: Multisegment,
     ...                        [((0, 0), (2, 0)), ((0, 0), (2, 2))])
     [((0, 1), (1, 1))]
     """
-    return _linear.Difference(minuend, subtrahend, accurate).compute()
+    return _linear.Difference(minuend, subtrahend).compute()
 
 
 def symmetric_subtract_multisegments(left: Multisegment,
-                                     right: Multisegment,
-                                     *,
-                                     accurate: bool = True) -> Multisegment:
+                                     right: Multisegment) -> Multisegment:
     """
     Returns symmetric difference of multisegments.
 
@@ -225,9 +202,6 @@ def symmetric_subtract_multisegments(left: Multisegment,
 
     :param left: left operand.
     :param right: right operand.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: symmetric difference of operands.
 
     >>> symmetric_subtract_multisegments([], [])
@@ -245,13 +219,11 @@ def symmetric_subtract_multisegments(left: Multisegment,
     ...                                  [((0, 0), (2, 0)), ((0, 0), (2, 2))])
     [((0, 0), (1, 1)), ((0, 1), (1, 1)), ((1, 0), (2, 0)), ((1, 1), (2, 2))]
     """
-    return _linear.SymmetricDifference(left, right, accurate).compute()
+    return _linear.SymmetricDifference(left, right).compute()
 
 
 def unite_multisegments(left: Multisegment,
-                        right: Multisegment,
-                        *,
-                        accurate: bool = True) -> Multisegment:
+                        right: Multisegment) -> Multisegment:
     """
     Returns union of multisegments.
 
@@ -266,9 +238,6 @@ def unite_multisegments(left: Multisegment,
 
     :param left: left operand.
     :param right: right operand.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: union of operands.
 
     >>> unite_multisegments([], [])
@@ -285,13 +254,11 @@ def unite_multisegments(left: Multisegment,
     [((0, 0), (1, 0)), ((0, 0), (1, 1)), ((0, 1), (1, 1)), ((1, 0), (2, 0)),\
  ((1, 1), (2, 2))]
     """
-    return _linear.Union(left, right, accurate).compute()
+    return _linear.Union(left, right).compute()
 
 
 def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
-                                             multipolygon: Multipolygon,
-                                             *,
-                                             accurate: bool = True
+                                             multipolygon: Multipolygon
                                              ) -> Multisegment:
     """
     Returns intersection of multisegment with multipolygon.
@@ -310,9 +277,6 @@ def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
 
     :param multisegment: multisegment to intersect with.
     :param multipolygon: multipolygon to intersect with.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: intersection of multisegment with multipolygon.
 
     >>> intersect_multisegment_with_multipolygon([], [])
@@ -332,14 +296,12 @@ def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
     ...         [([(0, 0), (1, 0), (1, 1), (0, 1)], [])])
     [((0, 0), (1, 0))]
     """
-    return _mixed.Intersection(multisegment, multipolygon, accurate).compute()
+    return _mixed.Intersection(multisegment, multipolygon).compute()
 
 
 def complete_intersect_multisegment_with_multipolygon(
         multisegment: Multisegment,
-        multipolygon: Multipolygon,
-        *,
-        accurate: bool = True) -> Mix:
+        multipolygon: Multipolygon) -> Mix:
     """
     Returns intersection of multisegment with multipolygon considering cases
     with geometries touching each other in points/segments.
@@ -358,9 +320,6 @@ def complete_intersect_multisegment_with_multipolygon(
 
     :param multisegment: multisegment to intersect with.
     :param multipolygon: multipolygon to intersect with.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: intersection of multisegment with multipolygon.
 
     >>> complete_intersect_multisegment_with_multipolygon([], [])
@@ -380,14 +339,11 @@ def complete_intersect_multisegment_with_multipolygon(
     ...         [([(0, 0), (1, 0), (1, 1), (0, 1)], [])])
     ([(1, 1)], [((0, 0), (1, 0))], [])
     """
-    return _mixed.CompleteIntersection(multisegment, multipolygon,
-                                       accurate).compute()
+    return _mixed.CompleteIntersection(multisegment, multipolygon).compute()
 
 
 def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
-                                            multipolygon: Multipolygon,
-                                            *,
-                                            accurate: bool = True
+                                            multipolygon: Multipolygon
                                             ) -> Multisegment:
     """
     Returns difference of multisegment with multipolygon.
@@ -406,9 +362,6 @@ def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
 
     :param multisegment: multisegment to subtract from.
     :param multipolygon: multipolygon to subtract.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: difference of multisegment with multipolygon.
 
     >>> subtract_multipolygon_from_multisegment([], [])
@@ -428,13 +381,11 @@ def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
     ...         [([(0, 0), (1, 0), (1, 1), (0, 1)], [])])
     [((1, 1), (2, 2))]
     """
-    return _mixed.Difference(multisegment, multipolygon, accurate).compute()
+    return _mixed.Difference(multisegment, multipolygon).compute()
 
 
 def complete_intersect_multiregions(left: Multiregion,
-                                    right: Multiregion,
-                                    *,
-                                    accurate: bool = True) -> HolelessMix:
+                                    right: Multiregion) -> HolelessMix:
     """
     Returns intersection of multiregions considering cases
     with regions touching each other in points/segments.
@@ -453,9 +404,6 @@ def complete_intersect_multiregions(left: Multiregion,
 
     :param left: left operand.
     :param right: right operand.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: intersection of operands.
 
     >>> lower_left_square = [(0, 0), (1, 0), (1, 1), (0, 1)]
@@ -493,13 +441,11 @@ def complete_intersect_multiregions(left: Multiregion,
     ([], [],\
  [[(0, 0), (1, 0), (1, 1), (0, 1)], [(1, 1), (2, 1), (2, 2), (1, 2)]])
     """
-    return _holeless.CompleteIntersection(left, right, accurate).compute()
+    return _holeless.CompleteIntersection(left, right).compute()
 
 
 def intersect_multiregions(left: Multiregion,
-                           right: Multiregion,
-                           *,
-                           accurate: bool = True) -> Multiregion:
+                           right: Multiregion) -> Multiregion:
     """
     Returns intersection of multiregions.
 
@@ -517,9 +463,6 @@ def intersect_multiregions(left: Multiregion,
 
     :param left: left operand.
     :param right: right operand.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: intersection of operands.
 
     >>> lower_left_square = [(0, 0), (1, 0), (1, 1), (0, 1)]
@@ -547,13 +490,11 @@ def intersect_multiregions(left: Multiregion,
     ...                        [lower_left_square, upper_right_square])
     [[(0, 0), (1, 0), (1, 1), (0, 1)], [(1, 1), (2, 1), (2, 2), (1, 2)]]
     """
-    return _holeless.Intersection(left, right, accurate).compute()
+    return _holeless.Intersection(left, right).compute()
 
 
 def complete_intersect_multipolygons(left: Multipolygon,
-                                     right: Multipolygon,
-                                     *,
-                                     accurate: bool = True) -> Mix:
+                                     right: Multipolygon) -> Mix:
     """
     Returns intersection of multipolygons considering cases
     with polygons touching each other in points/segments.
@@ -574,9 +515,6 @@ def complete_intersect_multipolygons(left: Multipolygon,
 
     :param left: left operand.
     :param right: right operand.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: intersection of operands.
 
     >>> lower_left_square = [(0, 0), (3, 0), (3, 3), (0, 3)]
@@ -637,13 +575,11 @@ def complete_intersect_multipolygons(left: Multipolygon,
  [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)]]),\
  ([(3, 3), (6, 3), (6, 6), (3, 6)], [[(4, 5), (5, 4), (4, 4)]])])
     """
-    return _holey.CompleteIntersection(left, right, accurate).compute()
+    return _holey.CompleteIntersection(left, right).compute()
 
 
 def intersect_multipolygons(left: Multipolygon,
-                            right: Multipolygon,
-                            *,
-                            accurate: bool = True) -> Multipolygon:
+                            right: Multipolygon) -> Multipolygon:
     """
     Returns intersection of multipolygons.
 
@@ -663,9 +599,6 @@ def intersect_multipolygons(left: Multipolygon,
 
     :param left: left operand.
     :param right: right operand.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: intersection of operands.
 
     >>> lower_left_square = [(0, 0), (3, 0), (3, 3), (0, 3)]
@@ -708,13 +641,11 @@ def intersect_multipolygons(left: Multipolygon,
     [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)]]),\
  ([(3, 3), (6, 3), (6, 6), (3, 6)], [[(4, 5), (5, 4), (4, 4)]])]
     """
-    return _holey.Intersection(left, right, accurate).compute()
+    return _holey.Intersection(left, right).compute()
 
 
 def subtract_multipolygons(minuend: Multipolygon,
-                           subtrahend: Multipolygon,
-                           *,
-                           accurate: bool = True) -> Multipolygon:
+                           subtrahend: Multipolygon) -> Multipolygon:
     """
     Returns difference of multipolygons.
 
@@ -734,9 +665,6 @@ def subtract_multipolygons(minuend: Multipolygon,
 
     :param minuend: multipolygon to subtract from.
     :param subtrahend: multipolygon to subtract.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: difference between minuend and subtrahend.
 
     >>> lower_left_square = [(0, 0), (3, 0), (3, 3), (0, 3)]
@@ -779,13 +707,11 @@ def subtract_multipolygons(minuend: Multipolygon,
     ...                         (upper_right_square, [upper_right_triangle])])
     []
     """
-    return _holey.Difference(minuend, subtrahend, accurate).compute()
+    return _holey.Difference(minuend, subtrahend).compute()
 
 
 def symmetric_subtract_multipolygons(left: Multipolygon,
-                                     right: Multipolygon,
-                                     *,
-                                     accurate: bool = True) -> Multipolygon:
+                                     right: Multipolygon) -> Multipolygon:
     """
     Returns symmetric difference of multipolygons.
 
@@ -805,9 +731,6 @@ def symmetric_subtract_multipolygons(left: Multipolygon,
 
     :param left: left operand.
     :param right: right operand.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: symmetric difference of operands.
 
     >>> lower_left_square = [(0, 0), (3, 0), (3, 3), (0, 3)]
@@ -870,13 +793,11 @@ def symmetric_subtract_multipolygons(left: Multipolygon,
     ...                                    [upper_right_triangle])])
     []
     """
-    return _holey.SymmetricDifference(left, right, accurate).compute()
+    return _holey.SymmetricDifference(left, right).compute()
 
 
 def unite_multipolygons(left: Multipolygon,
-                        right: Multipolygon,
-                        *,
-                        accurate: bool = True) -> Multipolygon:
+                        right: Multipolygon) -> Multipolygon:
     """
     Returns union of multipolygons.
 
@@ -896,9 +817,6 @@ def unite_multipolygons(left: Multipolygon,
 
     :param left: left operand.
     :param right: right operand.
-    :param accurate:
-        flag that tells whether to use slow but more accurate arithmetic
-        for floating point numbers.
     :returns: union of operands.
 
     >>> lower_left_square = [(0, 0), (3, 0), (3, 3), (0, 3)]
@@ -944,4 +862,4 @@ def unite_multipolygons(left: Multipolygon,
     [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)]]),\
  ([(3, 3), (6, 3), (6, 6), (3, 6)], [[(4, 5), (5, 4), (4, 4)]])]
     """
-    return _holey.Union(left, right, accurate).compute()
+    return _holey.Union(left, right).compute()
