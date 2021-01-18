@@ -11,49 +11,33 @@ Reference:
 Glossary
 ########
 
-**Point** --- pair of real numbers (called *point's coordinates*).
-
-**Multipoint** --- possibly empty sequence of distinct points.
-
-**Segment** (or **line segment**) --- pair of unequal points
-(called *segment's endpoints*).
-
-**Multisegment** --- possibly empty sequence of segments
-such that any pair of them do not cross/overlap each other.
-
-**Contour** --- sequence of points (called *contour's vertices*)
-such that line segments formed by pairs of consecutive points
-(including the last-first point pair)
-do not overlap each other.
-
 **Region** --- contour with points that lie within it.
 
 **Multiregion** --- possibly empty sequence of regions such
 that intersection of distinct regions is a discrete points set.
 
-**Polygon** --- pair of region (called *polygon's border*)
-and multiregion which lies within the border (called *polygon's holes*).
-
-**Multipolygon** --- possibly empty sequence of non-overlapping polygons.
-
 **Mix** --- triplet of disjoint/touching multipoint, multisegment
 and multipolygon.
+
+**Holeless mix** --- triplet of disjoint/touching multipoint, multisegment
+and multiregion.
 """
 from itertools import groupby as _groupby
 from typing import Sequence
 
 from ground.base import get_context
+from ground.hints import (Multipolygon,
+                          Multisegment,
+                          Segment)
 
 from .core import (holeless as _holeless,
                    holey as _holey,
                    linear as _linear,
-                   mixed as _mixed)
+                   mixed as _mixed,
+                   raw as _raw)
 from .hints import (HolelessMix,
                     Mix,
-                    Multipolygon,
-                    Multiregion,
-                    Multisegment,
-                    Segment)
+                    Multiregion)
 
 
 def segments_to_multisegment(segments: Sequence[Segment]) -> Multisegment:
@@ -72,17 +56,27 @@ def segments_to_multisegment(segments: Sequence[Segment]) -> Multisegment:
     :param segments: target segments.
     :returns: multisegment from segments.
 
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> Point, Segment = context.point_cls, context.segment_cls
     >>> segments_to_multisegment([])
-    []
-    >>> segments_to_multisegment([((0, 0), (1, 0)), ((0, 1), (1, 0))])
-    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
-    >>> segments_to_multisegment([((0, 0), (2, 0)), ((1, 0), (3, 0))])
-    [((0, 0), (1, 0)), ((1, 0), (2, 0)), ((2, 0), (3, 0))]
+    Multisegment([])
+    >>> segments_to_multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                           Segment(Point(0, 1), Point(1, 0))])
+    Multisegment([Segment(Point(0, 0), Point(1, 0)), Segment(Point(0, 1),\
+ Point(1, 0))])
+    >>> segments_to_multisegment([Segment(Point(0, 0), Point(2, 0)),
+    ...                           Segment(Point(1, 0), Point(3, 0))])
+    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
+ Segment(Point(1, 0), Point(2, 0)), Segment(Point(2, 0), Point(3, 0))])
     """
-    return sorted(segment
-                  for segment, _
-                  in _groupby(_linear.merge_segments(segments,
-                                                     context=get_context())))
+    context = get_context()
+    return _raw.to_multisegment(
+            sorted(segment
+                   for segment, _ in _groupby(_linear.merge_segments(
+                    _raw.from_segments(segments),
+                    context=context))),
+            context=context)
 
 
 def complete_intersect_multisegments(left: Multisegment,
@@ -104,23 +98,43 @@ def complete_intersect_multisegments(left: Multisegment,
     :param right: right operand.
     :returns: intersection of operands.
 
-    >>> complete_intersect_multisegments([], [])
-    ([], [], [])
-    >>> complete_intersect_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))],
-    ...                                  [])
-    ([], [], [])
-    >>> complete_intersect_multisegments([],
-    ...                                  [((0, 0), (1, 0)), ((0, 1), (1, 0))])
-    ([], [], [])
-    >>> complete_intersect_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))],
-    ...                                  [((0, 0), (1, 0)), ((0, 1), (1, 0))])
-    ([], [((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
-    >>> complete_intersect_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 1))],
-    ...                                  [((0, 0), (2, 0)), ((0, 0), (2, 2))])
-    ([(1, 1)], [((0, 0), (1, 0))], [])
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> Multisegment, Point, Segment = (context.multisegment_cls,
+    ...                                 context.point_cls, context.segment_cls)
+    >>> complete_intersect_multisegments(Multisegment([]), Multisegment([]))
+    (Multipoint([]), Multisegment([]), Multipolygon([]))
+    >>> complete_intersect_multisegments(
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]),
+    ...     Multisegment([]))
+    (Multipoint([]), Multisegment([]), Multipolygon([]))
+    >>> complete_intersect_multisegments(
+    ...     Multisegment([]),
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    (Multipoint([]), Multisegment([]), Multipolygon([]))
+    >>> complete_intersect_multisegments(
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]),
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    (Multipoint([]), Multisegment([Segment(Point(0, 0), Point(1, 0)),\
+ Segment(Point(0, 1), Point(1, 0))]), Multipolygon([]))
+    >>> complete_intersect_multisegments(
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 1))]),
+    ...     Multisegment([Segment(Point(0, 0), Point(2, 0)),
+    ...                   Segment(Point(0, 0), Point(2, 2))]))
+    (Multipoint([Point(1, 1)]),\
+ Multisegment([Segment(Point(0, 0), Point(1, 0))]), Multipolygon([]))
     """
-    return _linear.CompleteIntersection(left, right,
-                                        context=get_context()).compute()
+    context = get_context()
+    return _raw.to_mix(
+            _linear.CompleteIntersection(_raw.from_multisegment(left),
+                                         _raw.from_multisegment(right),
+                                         context=context).compute(),
+            context=context)
 
 
 def intersect_multisegments(left: Multisegment,
@@ -141,21 +155,42 @@ def intersect_multisegments(left: Multisegment,
     :param right: right operand.
     :returns: intersection of operands.
 
-    >>> intersect_multisegments([], [])
-    []
-    >>> intersect_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
-    []
-    >>> intersect_multisegments([], [((0, 0), (1, 0)), ((0, 1), (1, 0))])
-    []
-    >>> intersect_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))],
-    ...                         [((0, 0), (1, 0)), ((0, 1), (1, 0))])
-    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
-    >>> intersect_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 1))],
-    ...                         [((0, 0), (2, 0)), ((0, 0), (2, 2))])
-    [((0, 0), (1, 0))]
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> Multisegment, Point, Segment = (context.multisegment_cls,
+    ...                                 context.point_cls, context.segment_cls)
+    >>> intersect_multisegments(Multisegment([]), Multisegment([]))
+    Multisegment([])
+    >>> intersect_multisegments(
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]),
+    ...     Multisegment([]))
+    Multisegment([])
+    >>> intersect_multisegments(
+    ...     Multisegment([]),
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    Multisegment([])
+    >>> intersect_multisegments(
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]),
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
+ Segment(Point(0, 1), Point(1, 0))])
+    >>> intersect_multisegments(
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 1))]),
+    ...     Multisegment([Segment(Point(0, 0), Point(2, 0)),
+    ...                   Segment(Point(0, 0), Point(2, 2))]))
+    Multisegment([Segment(Point(0, 0), Point(1, 0))])
     """
-    return _linear.Intersection(left, right,
-                                context=get_context()).compute()
+    context = get_context()
+    return _raw.to_multisegment(
+            _linear.Intersection(_raw.from_multisegment(left),
+                                 _raw.from_multisegment(right),
+                                 context=context).compute(),
+            context=context)
 
 
 def subtract_multisegments(minuend: Multisegment,
@@ -176,21 +211,42 @@ def subtract_multisegments(minuend: Multisegment,
     :param subtrahend: multisegment to subtract.
     :returns: difference between minuend and subtrahend.
 
-    >>> subtract_multisegments([], [])
-    []
-    >>> subtract_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
-    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
-    >>> subtract_multisegments([], [((0, 0), (1, 0)), ((0, 1), (1, 0))])
-    []
-    >>> subtract_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))],
-    ...                        [((0, 0), (1, 0)), ((0, 1), (1, 0))])
-    []
-    >>> subtract_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 1))],
-    ...                        [((0, 0), (2, 0)), ((0, 0), (2, 2))])
-    [((0, 1), (1, 1))]
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> Multisegment, Point, Segment = (context.multisegment_cls,
+    ...                                 context.point_cls, context.segment_cls)
+    >>> subtract_multisegments(Multisegment([]), Multisegment([]))
+    Multisegment([])
+    >>> subtract_multisegments(
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]),
+    ...     Multisegment([]))
+    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
+ Segment(Point(0, 1), Point(1, 0))])
+    >>> subtract_multisegments(
+    ...     Multisegment([]),
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    Multisegment([])
+    >>> subtract_multisegments(
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]),
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    Multisegment([])
+    >>> subtract_multisegments(
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 1))]),
+    ...     Multisegment([Segment(Point(0, 0), Point(2, 0)),
+    ...                   Segment(Point(0, 0), Point(2, 2))]))
+    Multisegment([Segment(Point(0, 1), Point(1, 1))])
     """
-    return _linear.Difference(minuend, subtrahend,
-                              context=get_context()).compute()
+    context = get_context()
+    return _raw.to_multisegment(
+            _linear.Difference(_raw.from_multisegment(minuend),
+                               _raw.from_multisegment(subtrahend),
+                               context=context).compute(),
+            context=context)
 
 
 def symmetric_subtract_multisegments(left: Multisegment,
@@ -211,23 +267,45 @@ def symmetric_subtract_multisegments(left: Multisegment,
     :param right: right operand.
     :returns: symmetric difference of operands.
 
-    >>> symmetric_subtract_multisegments([], [])
-    []
-    >>> symmetric_subtract_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))],
-    ...                                  [])
-    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
-    >>> symmetric_subtract_multisegments([],
-    ...                                  [((0, 0), (1, 0)), ((0, 1), (1, 0))])
-    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
-    >>> symmetric_subtract_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))],
-    ...                                  [((0, 0), (1, 0)), ((0, 1), (1, 0))])
-    []
-    >>> symmetric_subtract_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 1))],
-    ...                                  [((0, 0), (2, 0)), ((0, 0), (2, 2))])
-    [((0, 0), (1, 1)), ((0, 1), (1, 1)), ((1, 0), (2, 0)), ((1, 1), (2, 2))]
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> Multisegment, Point, Segment = (context.multisegment_cls,
+    ...                                 context.point_cls, context.segment_cls)
+    >>> symmetric_subtract_multisegments(Multisegment([]), Multisegment([]))
+    Multisegment([])
+    >>> symmetric_subtract_multisegments(
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]),
+    ...     Multisegment([]))
+    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
+ Segment(Point(0, 1), Point(1, 0))])
+    >>> symmetric_subtract_multisegments(
+    ...     Multisegment([]),
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
+ Segment(Point(0, 1), Point(1, 0))])
+    >>> symmetric_subtract_multisegments(
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]),
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    Multisegment([])
+    >>> symmetric_subtract_multisegments(
+    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 1))]),
+    ...     Multisegment([Segment(Point(0, 0), Point(2, 0)),
+    ...                   Segment(Point(0, 0), Point(2, 2))]))
+    Multisegment([Segment(Point(0, 0), Point(1, 1)),\
+ Segment(Point(0, 1), Point(1, 1)), Segment(Point(1, 0), Point(2, 0)),\
+ Segment(Point(1, 1), Point(2, 2))])
     """
-    return _linear.SymmetricDifference(left, right,
-                                       context=get_context()).compute()
+    context = get_context()
+    return _raw.to_multisegment(
+            _linear.SymmetricDifference(_raw.from_multisegment(left),
+                                        _raw.from_multisegment(right),
+                                        context=context).compute(),
+            context=context)
 
 
 def unite_multisegments(left: Multisegment,
@@ -248,22 +326,41 @@ def unite_multisegments(left: Multisegment,
     :param right: right operand.
     :returns: union of operands.
 
-    >>> unite_multisegments([], [])
-    []
-    >>> unite_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))], [])
-    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
-    >>> unite_multisegments([], [((0, 0), (1, 0)), ((0, 1), (1, 0))])
-    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
-    >>> unite_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 0))],
-    ...                     [((0, 0), (1, 0)), ((0, 1), (1, 0))])
-    [((0, 0), (1, 0)), ((0, 1), (1, 0))]
-    >>> unite_multisegments([((0, 0), (1, 0)), ((0, 1), (1, 1))],
-    ...                     [((0, 0), (2, 0)), ((0, 0), (2, 2))])
-    [((0, 0), (1, 0)), ((0, 0), (1, 1)), ((0, 1), (1, 1)), ((1, 0), (2, 0)),\
- ((1, 1), (2, 2))]
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> Multisegment, Point, Segment = (context.multisegment_cls,
+    ...                                 context.point_cls, context.segment_cls)
+    >>> unite_multisegments(Multisegment([]), Multisegment([]))
+    Multisegment([])
+    >>> unite_multisegments(Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                                   Segment(Point(0, 1), Point(1, 0))]),
+    ...                     Multisegment([]))
+    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
+ Segment(Point(0, 1), Point(1, 0))])
+    >>> unite_multisegments(Multisegment([]),
+    ...                     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                                   Segment(Point(0, 1), Point(1, 0))]))
+    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
+ Segment(Point(0, 1), Point(1, 0))])
+    >>> unite_multisegments(Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                                   Segment(Point(0, 1), Point(1, 0))]),
+    ...                     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                                   Segment(Point(0, 1), Point(1, 0))]))
+    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
+ Segment(Point(0, 1), Point(1, 0))])
+    >>> unite_multisegments(Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                                   Segment(Point(0, 1), Point(1, 1))]),
+    ...                     Multisegment([Segment(Point(0, 0), Point(2, 0)),
+    ...                                   Segment(Point(0, 0), Point(2, 2))]))
+    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
+ Segment(Point(0, 0), Point(1, 1)), Segment(Point(0, 1), Point(1, 1)),\
+ Segment(Point(1, 0), Point(2, 0)), Segment(Point(1, 1), Point(2, 2))])
     """
-    return _linear.Union(left, right,
-                         context=get_context()).compute()
+    context = get_context()
+    return _raw.to_multisegment(_linear.Union(_raw.from_multisegment(left),
+                                              _raw.from_multisegment(right),
+                                              context=context).compute(),
+                                context=context)
 
 
 def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
