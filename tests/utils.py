@@ -1,5 +1,4 @@
-from numbers import (Number,
-                     Real)
+from numbers import Number
 from operator import itemgetter
 from typing import (Any,
                     Callable,
@@ -15,8 +14,7 @@ from robust.angular import (Orientation,
                             orientation)
 
 from clipping.core.hints import BoundingBox
-from clipping.core.utils import (to_contour_base,
-                                 to_first_boundary_vertex)
+from clipping.core.utils import to_first_boundary_vertex
 from clipping.hints import (Contour,
                             HolelessMix,
                             Mix,
@@ -131,11 +129,7 @@ def to_counterclockwise_contour(contour: Contour) -> Contour:
 
 
 def _to_first_angle_orientation(contour: Contour) -> Orientation:
-    first_angle_vertices = [contour[-1], contour[0], contour[1]]
-    if not issubclass(to_contour_base(first_angle_vertices), Real):
-        first_angle_vertices = [(float(x), float(y))
-                                for x, y in first_angle_vertices]
-    return orientation(*first_angle_vertices)
+    return orientation(contour[-1], contour[0], contour[1])
 
 
 def reverse_sequence(sequence: Domain) -> Domain:
