@@ -1,4 +1,3 @@
-from enum import IntEnum, unique
 from itertools import (chain,
                        groupby)
 from typing import (Any,
@@ -122,19 +121,7 @@ def orientation(first, vertex, second):
                                      point_cls(*second))
 
 
-@unique
-class SegmentsRelation(IntEnum):
-    """
-    Represents relationship between segments based on their intersection.
-    """
-    #: intersection is empty
-    DISJOINT = 0
-    #: intersection is an endpoint of one of segments
-    TOUCH = 1
-    #: intersection is a point which is not an endpoint of any of segments
-    CROSS = 2
-    #: intersection is a segment itself
-    OVERLAP = 3
+SegmentsRelation = Relation
 
 
 def segments_intersection(first, second):
@@ -154,11 +141,7 @@ def segments_relation(first, second):
     second_start, second_end = second
     context = get_context()
     point_cls = context.point_cls
-    result = context.segments_relation(point_cls(*first_start),
-                                       point_cls(*first_end),
-                                       point_cls(*second_start),
-                                       point_cls(*second_end))
-    return (SegmentsRelation.DISJOINT if result is Relation.DISJOINT
-            else (SegmentsRelation.TOUCH if result is Relation.TOUCH
-                  else (SegmentsRelation.CROSS if result is Relation.CROSS
-                        else SegmentsRelation.OVERLAP)))
+    return context.segments_relation(point_cls(*first_start),
+                                     point_cls(*first_end),
+                                     point_cls(*second_start),
+                                     point_cls(*second_end))
