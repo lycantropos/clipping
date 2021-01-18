@@ -15,8 +15,7 @@ from clipping.hints import (Mix,
                             Multisegment)
 from . import bounding_box
 from .event import MixedEvent as Event
-from .events_queue import (BinaryEventsQueueKey as EventsQueueKey,
-                           MixedBinaryEventsQueue as EventsQueue)
+from .events_queue import MixedBinaryEventsQueue as EventsQueue
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     polygon_to_oriented_segments,
@@ -161,7 +160,7 @@ class CompleteIntersection(Operation):
             return [], [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
-                        key=EventsQueueKey)
+                        key=self._events_queue.key)
         multipoint = []  # type: Multipoint
         border_multisegment = []  # type: Multisegment
         for start, same_start_events in groupby(events,

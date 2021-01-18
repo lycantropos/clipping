@@ -110,6 +110,10 @@ class LinearBinaryEventsQueue:
     def __bool__(self) -> bool:
         return bool(self._queue)
 
+    @property
+    def key(self) -> Callable[[BinaryEvent], BinaryEventsQueueKey]:
+        return self._queue.key
+
     def detect_intersection(self,
                             below_event: BinaryEvent,
                             event: BinaryEvent) -> None:
@@ -133,16 +137,14 @@ class LinearBinaryEventsQueue:
             starts_equal = below_event.start == event.start
             if starts_equal:
                 start_min = start_max = None
-            elif (BinaryEventsQueueKey(event)
-                  < BinaryEventsQueueKey(below_event)):
+            elif self.key(event) < self.key(below_event):
                 start_min, start_max = event, below_event
             else:
                 start_min, start_max = below_event, event
             ends_equal = event.end == below_event.end
             if ends_equal:
                 end_min = end_max = None
-            elif (BinaryEventsQueueKey(event.complement)
-                  < BinaryEventsQueueKey(below_event.complement)):
+            elif self.key(event.complement) < self.key(below_event.complement):
                 end_min, end_max = event.complement, below_event.complement
             else:
                 end_min, end_max = below_event.complement, event.complement
@@ -193,6 +195,10 @@ class MixedBinaryEventsQueue:
     def __init__(self) -> None:
         self._queue = PriorityQueue(key=BinaryEventsQueueKey)
 
+    @property
+    def key(self) -> Callable[[MixedEvent], BinaryEventsQueueKey]:
+        return self._queue.key
+
     __repr__ = generate_repr(__init__)
 
     def __bool__(self) -> bool:
@@ -225,16 +231,14 @@ class MixedBinaryEventsQueue:
             starts_equal = below_event.start == event.start
             if starts_equal:
                 start_min = start_max = None
-            elif (BinaryEventsQueueKey(event)
-                  < BinaryEventsQueueKey(below_event)):
+            elif self.key(event) < self.key(below_event):
                 start_min, start_max = event, below_event
             else:
                 start_min, start_max = below_event, event
             ends_equal = event.end == below_event.end
             if ends_equal:
                 end_min = end_max = None
-            elif (BinaryEventsQueueKey(event.complement)
-                  < BinaryEventsQueueKey(below_event.complement)):
+            elif self.key(event.complement) < self.key(below_event.complement):
                 end_min, end_max = event.complement, below_event.complement
             else:
                 end_min, end_max = below_event.complement, event.complement
@@ -297,6 +301,10 @@ class NaryEventsQueue:
     def __bool__(self) -> bool:
         return bool(self._queue)
 
+    @property
+    def key(self) -> Callable[[NaryEvent], NaryEventsQueueKey]:
+        return self._queue.key
+
     def detect_intersection(self,
                             below_event: NaryEvent,
                             event: NaryEvent) -> None:
@@ -317,15 +325,14 @@ class NaryEventsQueue:
             starts_equal = below_event.start == event.start
             if starts_equal:
                 start_min = start_max = None
-            elif NaryEventsQueueKey(event) < NaryEventsQueueKey(below_event):
+            elif self.key(event) < self.key(below_event):
                 start_min, start_max = event, below_event
             else:
                 start_min, start_max = below_event, event
             ends_equal = event.end == below_event.end
             if ends_equal:
                 end_min = end_max = None
-            elif (NaryEventsQueueKey(event.complement)
-                  < NaryEventsQueueKey(below_event.complement)):
+            elif self.key(event.complement) < self.key(below_event.complement):
                 end_min, end_max = event.complement, below_event.complement
             else:
                 end_min, end_max = below_event.complement, event.complement
@@ -379,6 +386,10 @@ class ShapedBinaryEventsQueue(Generic[Event]):
     def __bool__(self) -> bool:
         return bool(self._queue)
 
+    @property
+    def key(self) -> Callable[[Event], BinaryEventsQueueKey]:
+        return self._queue.key
+
     def detect_intersection(self, below_event: Event, event: Event) -> bool:
         below_segment, segment = below_event.segment, event.segment
         relation = segments_relation(below_segment, segment)
@@ -400,16 +411,14 @@ class ShapedBinaryEventsQueue(Generic[Event]):
             starts_equal = below_event.start == event.start
             if starts_equal:
                 start_min = start_max = None
-            elif (BinaryEventsQueueKey(event)
-                  < BinaryEventsQueueKey(below_event)):
+            elif self.key(event) < self.key(below_event):
                 start_min, start_max = event, below_event
             else:
                 start_min, start_max = below_event, event
             ends_equal = event.end == below_event.end
             if ends_equal:
                 end_min = end_max = None
-            elif (BinaryEventsQueueKey(event.complement)
-                  < BinaryEventsQueueKey(below_event.complement)):
+            elif self.key(event.complement) < self.key(below_event.complement):
                 end_min, end_max = event.complement, below_event.complement
             else:
                 end_min, end_max = below_event.complement, event.complement

@@ -16,8 +16,7 @@ from clipping.hints import (HolelessMix,
 from . import bounding_box
 from .event import (ShapedEvent as Event,
                     events_to_connectivity)
-from .events_queue import (BinaryEventsQueueKey as EventsQueueKey,
-                           HolelessEventsQueue as EventsQueue)
+from .events_queue import HolelessEventsQueue as EventsQueue
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     contour_to_oriented_segments,
@@ -58,6 +57,36 @@ class Operation(ABC):
                                                 is below_event.from_left)
                                             else below_event.interior_to_left)
         event.in_result = self.in_result(event)
+
+    def events_to_multiregion(self, events: List[Event]) -> Multiregion:
+        events = sorted([event for event in events if event.primary.in_result],
+                        key=self._events_queue.key)
+        for index, event in enumerate(events):
+            event.position = index
+        processed = [False] * len(events)
+        result = []
+        connectivity = events_to_connectivity(events)
+        for index, event in enumerate(events):
+            if processed[index]:
+                continue
+            contour_start = event.start
+            contour = [contour_start]
+            contour_events = [event]
+            cursor = event
+            complement_position = event.complement.position
+            processed[index] = processed[complement_position] = True
+            while cursor.end != contour_start:
+                contour.append(cursor.end)
+                position = _to_next_position(complement_position, processed,
+                                             connectivity)
+                if position is None:
+                    break
+                cursor = events[position]
+                contour_events.append(cursor)
+                complement_position = cursor.complement.position
+                processed[position] = processed[complement_position] = True
+            result.append(contour)
+        return result
 
     def fill_queue(self) -> None:
         events_queue = self._events_queue
@@ -126,7 +155,7 @@ class CompleteIntersection(Operation):
             return [], [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
-                        key=EventsQueueKey)
+                        key=self._events_queue.key)
         multipoint = []  # type: Multipoint
         multisegment = []  # type: Multisegment
         for start, same_start_events in groupby(events,
@@ -148,7 +177,7 @@ class CompleteIntersection(Operation):
                                             else not event.in_result
                                             for event in same_start_events):
                     multipoint.append(start)
-        return multipoint, multisegment, events_to_multiregion(events)
+        return multipoint, multisegment, self.events_to_multiregion(events)
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -186,7 +215,7 @@ class Intersection(Operation):
         if not (self.left and self.right):
             return []
         self.normalize_operands()
-        return events_to_multiregion(self.sweep())
+        return self.events_to_multiregion(self.sweep())
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -205,37 +234,6 @@ class Intersection(Operation):
     def in_result(self, event: Event) -> bool:
         return (event.inside
                 or not event.from_left and event.is_common_region_boundary)
-
-
-def events_to_multiregion(events: List[Event]) -> Multiregion:
-    events = sorted([event for event in events if event.primary.in_result],
-                    key=EventsQueueKey)
-    for index, event in enumerate(events):
-        event.position = index
-    processed = [False] * len(events)
-    result = []
-    connectivity = events_to_connectivity(events)
-    for index, event in enumerate(events):
-        if processed[index]:
-            continue
-        contour_start = event.start
-        contour = [contour_start]
-        contour_events = [event]
-        cursor = event
-        complement_position = event.complement.position
-        processed[index] = processed[complement_position] = True
-        while cursor.end != contour_start:
-            contour.append(cursor.end)
-            position = _to_next_position(complement_position, processed,
-                                         connectivity)
-            if position is None:
-                break
-            cursor = events[position]
-            contour_events.append(cursor)
-            complement_position = cursor.complement.position
-            processed[position] = processed[complement_position] = True
-        result.append(contour)
-    return result
 
 
 def _to_next_position(position: int,

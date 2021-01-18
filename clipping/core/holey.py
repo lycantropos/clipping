@@ -17,8 +17,7 @@ from clipping.hints import (Contour,
 from . import bounding_box
 from .event import (HoleyEvent as Event,
                     events_to_connectivity)
-from .events_queue import (BinaryEventsQueueKey as EventsQueueKey,
-                           HoleyEventsQueue as EventsQueue)
+from .events_queue import HoleyEventsQueue as EventsQueue
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     pairwise,
@@ -65,6 +64,41 @@ class Operation(ABC):
                                                or below_event.is_vertical)
                                            else below_event)
         event.in_result = self.in_result(event)
+
+    def events_to_multipolygon(self, events: List[Event]) -> Multipolygon:
+        events = sorted([event for event in events if event.primary.in_result],
+                        key=self._events_queue.key)
+        for index, event in enumerate(events):
+            event.position = index
+        are_internal, depths, holes, parents = [], [], [], []
+        processed = [False] * len(events)
+        contours = []
+        connectivity = events_to_connectivity(events)
+        for index, event in enumerate(events):
+            if processed[index]:
+                continue
+            contour_id = len(contours)
+            _compute_relations(event, contour_id, are_internal, depths, holes,
+                               parents)
+            contour = _events_to_contour(event, events, contour_id,
+                                         connectivity, processed)
+            shrink_collinear_vertices(contour)
+            if depths[contour_id] % 2:
+                # holes will be in clockwise order
+                contour.reverse()
+            contours.append(contour)
+        result = []
+        for index, contour in enumerate(contours):
+            if are_internal[index]:
+                # hole of a hole is an external polygon
+                result.extend((contours[hole_index],
+                               [contours[hole_hole_index]
+                                for hole_hole_index in holes[hole_index]])
+                              for hole_index in holes[index])
+            else:
+                result.append((contour, [contours[hole_index]
+                                         for hole_index in holes[index]]))
+        return result
 
     def fill_queue(self) -> None:
         events_queue = self._events_queue
@@ -139,7 +173,7 @@ class Difference(Operation):
         if not self.right:
             return self.left
         self.normalize_operands()
-        return events_to_multipolygon(self.sweep())
+        return self.events_to_multipolygon(self.sweep())
 
     def in_result(self, event: Event) -> bool:
         return (event.outside
@@ -179,7 +213,7 @@ class CompleteIntersection(Operation):
             return [], [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
-                        key=EventsQueueKey)
+                        key=self._events_queue.key)
         multipoint = []  # type: Multipoint
         multisegment = []  # type: Multisegment
         for start, same_start_events in groupby(events,
@@ -199,7 +233,7 @@ class CompleteIntersection(Operation):
                 if no_segment_found and all(not event.primary.in_result
                                             for event in same_start_events):
                     multipoint.append(start)
-        return multipoint, multisegment, events_to_multipolygon(events)
+        return multipoint, multisegment, self.events_to_multipolygon(events)
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -238,7 +272,7 @@ class Intersection(Operation):
         if not (self.left and self.right):
             return []
         self.normalize_operands()
-        return events_to_multipolygon(self.sweep())
+        return self.events_to_multipolygon(self.sweep())
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -273,7 +307,7 @@ class SymmetricDifference(Operation):
             result.sort(key=to_first_boundary_vertex)
             return result
         self.normalize_operands()
-        return events_to_multipolygon(self.sweep())
+        return self.events_to_multipolygon(self.sweep())
 
     def in_result(self, event: Event) -> bool:
         return not event.is_overlap
@@ -292,47 +326,11 @@ class Union(Operation):
             result.sort(key=to_first_boundary_vertex)
             return result
         self.normalize_operands()
-        return events_to_multipolygon(self.sweep())
+        return self.events_to_multipolygon(self.sweep())
 
     def in_result(self, event: Event) -> bool:
         return (event.outside
                 or not event.from_left and event.is_common_region_boundary)
-
-
-def events_to_multipolygon(events: List[Event]) -> Multipolygon:
-    events = sorted([event for event in events if event.primary.in_result],
-                    key=EventsQueueKey)
-    for index, event in enumerate(events):
-        event.position = index
-    are_internal, depths, holes, parents = [], [], [], []
-    processed = [False] * len(events)
-    contours = []
-    connectivity = events_to_connectivity(events)
-    for index, event in enumerate(events):
-        if processed[index]:
-            continue
-        contour_id = len(contours)
-        _compute_relations(event, contour_id, are_internal, depths, holes,
-                           parents)
-        contour = _events_to_contour(event, events, contour_id, connectivity,
-                                     processed)
-        shrink_collinear_vertices(contour)
-        if depths[contour_id] % 2:
-            # holes will be in clockwise order
-            contour.reverse()
-        contours.append(contour)
-    result = []
-    for index, contour in enumerate(contours):
-        if are_internal[index]:
-            # hole of a hole is an external polygon
-            result.extend((contours[hole_index],
-                           [contours[hole_hole_index]
-                            for hole_hole_index in holes[hole_index]])
-                          for hole_index in holes[index])
-        else:
-            result.append((contour, [contours[hole_index]
-                                     for hole_index in holes[index]]))
-    return result
 
 
 def _compute_relations(event: Event,
