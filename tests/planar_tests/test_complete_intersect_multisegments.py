@@ -66,7 +66,9 @@ def test_properties(multisegments_pair: MultisegmentsPair) -> None:
                       for segment in result_multisegment)
                for left_segment in left_multisegment
                if any(segments_relation(left_segment, right_segment)
-                      is SegmentsRelation.OVERLAP
+                      not in (SegmentsRelation.CROSS,
+                              SegmentsRelation.DISJOINT,
+                              SegmentsRelation.TOUCH)
                       for right_segment in right_multisegment))
     assert not result_multipolygon
 

@@ -266,8 +266,9 @@ def segments_intersections(first: Segment, second: Segment
     relation = segments_relation(first, second)
     if relation is SegmentsRelation.DISJOINT:
         return ()
-    elif relation is SegmentsRelation.OVERLAP:
+    elif (relation is SegmentsRelation.TOUCH
+          or relation is SegmentsRelation.CROSS):
+        return segments_intersection(first, second),
+    else:
         _, first_point, second_point, _ = sorted(first + second)
         return first_point, second_point
-    else:
-        return segments_intersection(first, second),

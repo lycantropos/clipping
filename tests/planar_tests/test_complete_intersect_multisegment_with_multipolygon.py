@@ -59,11 +59,13 @@ def test_properties(multipolygon_with_multisegment
                for segment in multisegment
                if (segment_in_multipolygon(segment, multipolygon)
                    is Relation.TOUCH
-                   and not any(
-                    segments_relation(segment, edge)
-                    is SegmentsRelation.OVERLAP
-                    for contour in to_multipolygon_contours(multipolygon)
-                    for edge in contour_to_segments(contour))))
+                   and all(segments_relation(segment, edge)
+                           in (SegmentsRelation.CROSS,
+                               SegmentsRelation.DISJOINT,
+                               SegmentsRelation.TOUCH)
+                           for contour
+                           in to_multipolygon_contours(multipolygon)
+                           for edge in contour_to_segments(contour))))
     assert all(segment_in_multisegment(segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
                for segment in result_multisegment)
