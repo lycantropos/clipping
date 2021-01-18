@@ -16,10 +16,10 @@ from clipping.hints import (Contour,
                             Region,
                             Segment)
 from .hints import BoundingBox
-from .utils import (SegmentsRelationship,
+from .utils import (SegmentsRelation,
                     contour_to_segments,
                     flatten,
-                    segments_relationship)
+                    segments_relation)
 
 
 def from_points(points: Iterable[Point]) -> BoundingBox:
@@ -219,8 +219,8 @@ def intersects_with_segment(bounding_box: BoundingBox,
     segment_bounding_box = from_points(segment)
     return (intersects_with(segment_bounding_box, bounding_box)
             and (is_subset_of(segment_bounding_box, bounding_box)
-                 or any(segments_relationship(edge, segment)
-                        is not SegmentsRelationship.NONE
+                 or any(segments_relation(edge, segment)
+                        is not SegmentsRelation.DISJOINT
                         for edge in to_segments(bounding_box))))
 
 
@@ -232,9 +232,9 @@ def coupled_with_segment(bounding_box: BoundingBox,
     segment_bounding_box = from_points(segment)
     return (coupled_with(segment_bounding_box, bounding_box)
             and (is_subset_of(segment_bounding_box, bounding_box)
-                 or any(segments_relationship(edge, segment)
-                        not in (SegmentsRelationship.TOUCH,
-                                SegmentsRelationship.NONE)
+                 or any(segments_relation(edge, segment)
+                        not in (SegmentsRelation.TOUCH,
+                                SegmentsRelation.DISJOINT)
                         for edge in to_segments(bounding_box))))
 
 
@@ -254,8 +254,8 @@ def within_of_region(bounding_box: BoundingBox, border: Contour) -> bool:
     """
     return (all(point_in_region(vertex, border) is Relation.WITHIN
                 for vertex in to_vertices(bounding_box))
-            and all(segments_relationship(edge, border_edge)
-                    is SegmentsRelationship.NONE
+            and all(segments_relation(edge, border_edge)
+                    is SegmentsRelation.DISJOINT
                     for edge in to_segments(bounding_box)
                     for border_edge in contour_to_segments(border)))
 
@@ -280,15 +280,14 @@ def intersects_with_polygon(bounding_box: BoundingBox,
     if not intersects_with(polygon_bounding_box, bounding_box):
         return False
     elif (is_subset_of(polygon_bounding_box, bounding_box)
-          or any(contains_point(bounding_box, vertex)
-                 for vertex in border)):
+          or any(contains_point(bounding_box, vertex) for vertex in border)):
         return True
     relations = [point_in_region(vertex, border)
                  for vertex in to_vertices(bounding_box)]
     if (within_of(bounding_box, polygon_bounding_box)
             and all(relation is Relation.WITHIN for relation in relations)
-            and all(segments_relationship(edge, border_edge)
-                    is SegmentsRelationship.NONE
+            and all(segments_relation(edge, border_edge)
+                    is SegmentsRelation.DISJOINT
                     for edge in to_segments(bounding_box)
                     for border_edge in contour_to_segments(border))):
         return not any(within_of(bounding_box, from_points(hole))

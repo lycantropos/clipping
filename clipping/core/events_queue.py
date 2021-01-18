@@ -18,10 +18,10 @@ from .event import (BinaryEvent,
                     NaryEvent,
                     ShapedEvent)
 from .utils import (Orientation,
-                    SegmentsRelationship,
+                    SegmentsRelation,
                     orientation,
                     segments_intersection,
-                    segments_relationship)
+                    segments_relation)
 
 
 class BinaryEventsQueueKey:
@@ -114,8 +114,8 @@ class LinearBinaryEventsQueue:
                             below_event: BinaryEvent,
                             event: BinaryEvent) -> None:
         below_segment, segment = below_event.segment, event.segment
-        relationship = segments_relationship(below_segment, segment)
-        if relationship is SegmentsRelationship.OVERLAP:
+        relation = segments_relation(below_segment, segment)
+        if relation is SegmentsRelation.OVERLAP:
             # segments overlap
             if below_event.from_left is event.from_left:
                 raise ValueError('Segments of the same multisegment '
@@ -151,7 +151,7 @@ class LinearBinaryEventsQueue:
                 # no line segment includes the other one
                 self._divide_segment(start_max, end_min.start)
                 self._divide_segment(start_min, start_max.start)
-        elif (relationship is not SegmentsRelationship.NONE
+        elif (relation is not SegmentsRelation.DISJOINT
               and event.start != below_event.start
               and event.end != below_event.end):
             # segments do not intersect_multipolygons at endpoints
@@ -201,8 +201,8 @@ class MixedBinaryEventsQueue:
                             below_event: MixedEvent,
                             event: MixedEvent) -> bool:
         below_segment, segment = below_event.segment, event.segment
-        relationship = segments_relationship(below_segment, segment)
-        if relationship is SegmentsRelationship.OVERLAP:
+        relation = segments_relation(below_segment, segment)
+        if relation is SegmentsRelation.OVERLAP:
             # segments overlap
             if below_event.from_left is event.from_left:
                 raise ValueError('Edges of the {geometry} '
@@ -243,7 +243,7 @@ class MixedBinaryEventsQueue:
                 # no line segment includes the other one
                 self._divide_segment(start_max, end_min.start)
                 self._divide_segment(start_min, start_max.start)
-        elif (relationship is not SegmentsRelationship.NONE
+        elif (relation is not SegmentsRelation.DISJOINT
               and event.start != below_event.start
               and event.end != below_event.end):
             # segments do not intersect_multipolygons at endpoints
@@ -299,8 +299,8 @@ class NaryEventsQueue:
                             below_event: NaryEvent,
                             event: NaryEvent) -> None:
         below_segment, segment = below_event.segment, event.segment
-        relationship = segments_relationship(below_segment, segment)
-        if relationship is SegmentsRelationship.OVERLAP:
+        relation = segments_relation(below_segment, segment)
+        if relation is SegmentsRelation.OVERLAP:
             # segments overlap
             starts_equal = below_event.start == event.start
             if starts_equal:
@@ -332,7 +332,7 @@ class NaryEventsQueue:
                 # no line segment includes the other one
                 self._divide_segment(start_max, end_min.start)
                 self._divide_segment(start_min, start_max.start)
-        elif (relationship is not SegmentsRelationship.NONE
+        elif (relation is not SegmentsRelation.DISJOINT
               and event.start != below_event.start
               and event.end != below_event.end):
             # segments do not intersect_multipolygons at endpoints
@@ -378,8 +378,8 @@ class ShapedBinaryEventsQueue(Generic[Event]):
 
     def detect_intersection(self, below_event: Event, event: Event) -> bool:
         below_segment, segment = below_event.segment, event.segment
-        relationship = segments_relationship(below_segment, segment)
-        if relationship is SegmentsRelationship.OVERLAP:
+        relation = segments_relation(below_segment, segment)
+        if relation is SegmentsRelation.OVERLAP:
             # segments overlap
             if below_event.from_left is event.from_left:
                 raise ValueError('Edges of the same multipolygon '
@@ -420,7 +420,7 @@ class ShapedBinaryEventsQueue(Generic[Event]):
                 # no line segment includes the other one
                 self._divide_segment(start_max, end_min.start)
                 self._divide_segment(start_min, start_max.start)
-        elif (relationship is not SegmentsRelationship.NONE
+        elif (relation is not SegmentsRelation.DISJOINT
               and event.start != below_event.start
               and event.end != below_event.end):
             # segments do not intersect_multipolygons at endpoints

@@ -123,12 +123,12 @@ def orientation(first, vertex, second):
 
 
 @unique
-class SegmentsRelationship(IntEnum):
+class SegmentsRelation(IntEnum):
     """
     Represents relationship between segments based on their intersection.
     """
     #: intersection is empty
-    NONE = 0
+    DISJOINT = 0
     #: intersection is an endpoint of one of segments
     TOUCH = 1
     #: intersection is a point which is not an endpoint of any of segments
@@ -149,7 +149,7 @@ def segments_intersection(first, second):
     return result.x, result.y
 
 
-def segments_relationship(first, second):
+def segments_relation(first, second):
     first_start, first_end = first
     second_start, second_end = second
     context = get_context()
@@ -158,7 +158,7 @@ def segments_relationship(first, second):
                                        point_cls(*first_end),
                                        point_cls(*second_start),
                                        point_cls(*second_end))
-    return (SegmentsRelationship.NONE if result is Relation.DISJOINT
-            else (SegmentsRelationship.TOUCH if result is Relation.TOUCH
-                  else (SegmentsRelationship.CROSS if result is Relation.CROSS
-                        else SegmentsRelationship.OVERLAP)))
+    return (SegmentsRelation.DISJOINT if result is Relation.DISJOINT
+            else (SegmentsRelation.TOUCH if result is Relation.TOUCH
+                  else (SegmentsRelation.CROSS if result is Relation.CROSS
+                        else SegmentsRelation.OVERLAP)))
