@@ -44,7 +44,7 @@ class Operation(ABC):
         :param context: operation context.
         """
         self.context, self.left, self.right = context, left, right
-        self._events_queue = EventsQueue()
+        self._events_queue = EventsQueue(context)
 
     __repr__ = generate_repr(__init__)
 
@@ -84,7 +84,8 @@ class Operation(ABC):
                                parents)
             contour = _events_to_contour(event, events, contour_id,
                                          connectivity, processed)
-            shrink_collinear_vertices(contour)
+            shrink_collinear_vertices(contour,
+                                      context=self.context)
             if depths[contour_id] % 2:
                 # holes will be in clockwise order
                 contour.reverse()
@@ -106,10 +107,12 @@ class Operation(ABC):
         events_queue = self._events_queue
         for polygon in self.left:
             events_queue.register_segments(
-                    polygon_to_oriented_segments(polygon), True)
+                    polygon_to_oriented_segments(polygon,
+                                                 context=self.context), True)
         for polygon in self.right:
             events_queue.register_segments(
-                    polygon_to_oriented_segments(polygon), False)
+                    polygon_to_oriented_segments(polygon,
+                                                 context=self.context), False)
 
     @abstractmethod
     def in_result(self, event: Event) -> bool:

@@ -5,7 +5,7 @@ from typing import (Any,
                     Tuple,
                     TypeVar)
 
-from ground.base import Orientation, Relation, get_context
+from ground.base import Context, Orientation, Relation, get_context
 
 from clipping.hints import (Contour,
                             Coordinate,
@@ -39,21 +39,25 @@ def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:
         yield from holes
 
 
-def polygon_to_oriented_segments(polygon: Polygon) -> Iterable[Segment]:
+def polygon_to_oriented_segments(polygon: Polygon,
+                                 *,
+                                 context: Context) -> Iterable[Segment]:
     border, holes = polygon
-    yield from contour_to_oriented_segments(border,
-                                            clockwise=False)
+    yield from contour_to_oriented_segments(border, clockwise=False,
+                                            context=context)
     for hole in holes:
-        yield from contour_to_oriented_segments(hole,
-                                                clockwise=True)
+        yield from contour_to_oriented_segments(hole, clockwise=True,
+                                                context=context)
 
 
 def contour_to_oriented_segments(contour: Contour,
                                  *,
-                                 clockwise: bool = False) -> Iterable[Segment]:
+                                 clockwise: bool = False,
+                                 context: Context) -> Iterable[Segment]:
     return (((contour[index - 1], contour[index])
              for index in range(len(contour)))
-            if (to_contour_orientation(contour)
+            if (to_contour_orientation(contour,
+                                       context=context)
                 is (Orientation.CLOCKWISE
                     if clockwise
                     else Orientation.COUNTERCLOCKWISE))
@@ -66,10 +70,12 @@ def contour_to_segments(contour: Contour) -> Iterable[Segment]:
             for index in range(len(contour)))
 
 
-def to_contour_orientation(contour: Contour) -> Orientation:
+def to_contour_orientation(contour: Contour,
+                           *,
+                           context: Context) -> Orientation:
     index = min(range(len(contour)),
                 key=contour.__getitem__)
-    return orientation(contour[index], contour[index - 1],
+    return orientation(context, contour[index], contour[index - 1],
                        contour[(index + 1) % len(contour)])
 
 
@@ -93,19 +99,21 @@ def to_multisegment_x_max(multisegment: Multisegment) -> Coordinate:
     return max(x for x, _ in flatten(multisegment))
 
 
-def shrink_collinear_vertices(contour: Contour) -> None:
+def shrink_collinear_vertices(contour: Contour,
+                              *,
+                              context: Context) -> None:
     index = -len(contour) + 1
     while index < 0:
         while (max(2, -index) < len(contour)
-               and (orientation(contour[index + 2], contour[index + 1],
-                                contour[index])
+               and (orientation(context, contour[index + 2],
+                                contour[index + 1], contour[index])
                     is Orientation.COLLINEAR)):
             del contour[index + 1]
         index += 1
     while index < len(contour):
         while (max(2, index) < len(contour)
-               and (orientation(contour[index - 2], contour[index - 1],
-                                contour[index])
+               and (orientation(context, contour[index - 2],
+                                contour[index - 1], contour[index])
                     is Orientation.COLLINEAR)):
             del contour[index - 1]
         index += 1
@@ -114,8 +122,7 @@ def shrink_collinear_vertices(contour: Contour) -> None:
 Orientation = Orientation
 
 
-def orientation(first, vertex, second):
-    context = get_context()
+def orientation(context, first, vertex, second):
     point_cls = context.point_cls
     return context.angle_orientation(point_cls(*vertex), point_cls(*first),
                                      point_cls(*second))

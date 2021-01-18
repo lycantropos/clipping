@@ -28,7 +28,7 @@ def merge_segments(segments: Sequence[Segment],
                    context: Context) -> Iterable[Segment]:
     if not segments:
         return
-    events_queue = NaryEventsQueue()
+    events_queue = NaryEventsQueue(context)
     events_queue.register_segments(segments)
     sweep_line = NarySweepLine(context)
     while events_queue:
@@ -67,7 +67,7 @@ class Operation(ABC):
         :param context: operation context.
         """
         self.context, self.left, self.right = context, left, right
-        self._events_queue = BinaryEventsQueue()
+        self._events_queue = BinaryEventsQueue(context)
 
     __repr__ = generate_repr(__init__)
 

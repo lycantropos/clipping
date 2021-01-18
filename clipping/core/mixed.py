@@ -39,7 +39,7 @@ class Operation(ABC):
         """
         self.context, self.multisegment, self.multipolygon = (
             context, multisegment, multipolygon)
-        self._events_queue = EventsQueue()
+        self._events_queue = EventsQueue(context)
 
     __repr__ = generate_repr(__init__)
 
@@ -63,7 +63,8 @@ class Operation(ABC):
         events_queue.register_segments(self.multisegment, True)
         for polygon in self.multipolygon:
             events_queue.register_segments(
-                    polygon_to_oriented_segments(polygon), False)
+                    polygon_to_oriented_segments(polygon,
+                                                 context=self.context), False)
 
     @abstractmethod
     def in_result(self, event: Event) -> bool:

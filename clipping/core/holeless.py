@@ -41,7 +41,7 @@ class Operation(ABC):
         :param context: operation context.
         """
         self.context, self.left, self.right = context, left, right
-        self._events_queue = EventsQueue()
+        self._events_queue = EventsQueue(context)
 
     __repr__ = generate_repr(__init__)
 
@@ -94,10 +94,12 @@ class Operation(ABC):
         events_queue = self._events_queue
         for region in self.left:
             events_queue.register_segments(
-                    contour_to_oriented_segments(region), True)
+                    contour_to_oriented_segments(region,
+                                                 context=self.context), True)
         for region in self.right:
             events_queue.register_segments(
-                    contour_to_oriented_segments(region), False)
+                    contour_to_oriented_segments(region,
+                                                 context=self.context), False)
 
     @abstractmethod
     def in_result(self, event: Event) -> bool:

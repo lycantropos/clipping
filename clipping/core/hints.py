@@ -1,5 +1,10 @@
-from typing import Tuple
+from typing import (Callable,
+                    Tuple)
 
-from clipping.hints import Coordinate
+from ground.base import Orientation
+
+from clipping.hints import (Coordinate,
+                            Point)
 
 BoundingBox = Tuple[Coordinate, Coordinate, Coordinate, Coordinate]
+Orienteer = Callable[[Point, Point, Point], Orientation]

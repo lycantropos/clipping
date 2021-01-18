@@ -5,6 +5,7 @@ from typing import (Callable,
                     Type,
                     cast)
 
+from ground.base import Context
 from prioq.base import PriorityQueue
 from reprit.base import generate_repr
 
@@ -17,6 +18,7 @@ from .event import (BinaryEvent,
                     MixedEvent,
                     NaryEvent,
                     ShapedEvent)
+from .hints import Orienteer
 from .utils import (Orientation,
                     SegmentsRelation,
                     orientation,
@@ -25,10 +27,10 @@ from .utils import (Orientation,
 
 
 class BinaryEventsQueueKey:
-    __slots__ = 'event',
+    __slots__ = 'event', 'orienteer'
 
-    def __init__(self, event: BinaryEvent) -> None:
-        self.event = event
+    def __init__(self, orienteer: Orienteer, event: BinaryEvent) -> None:
+        self.orienteer, self.event = orienteer, event
 
     __repr__ = generate_repr(__init__)
 
@@ -52,8 +54,8 @@ class BinaryEventsQueueKey:
         # same start, both events are left endpoints
         # or both are right endpoints
         else:
-            other_end_orientation = orientation(event.end, event.start,
-                                                other_event.end)
+            other_end_orientation = self.orienteer(event.end, event.start,
+                                                   other_event.end)
             # the lowest segment is processed first
             return (other_event.from_left
                     if other_end_orientation is Orientation.COLLINEAR
@@ -65,10 +67,10 @@ class BinaryEventsQueueKey:
 
 
 class NaryEventsQueueKey:
-    __slots__ = 'event',
+    __slots__ = 'event', 'orienteer'
 
-    def __init__(self, event: NaryEvent) -> None:
-        self.event = event
+    def __init__(self, orienteer: Orienteer, event: NaryEvent) -> None:
+        self.orienteer, self.event = orienteer, event
 
     __repr__ = generate_repr(__init__)
 
@@ -93,17 +95,19 @@ class NaryEventsQueueKey:
         # or both are right endpoints
         else:
             # the lowest segment is processed first
-            return (orientation(event.start, other_event.end, event.end)
+            return (self.orienteer(event.start, other_event.end, event.end)
                     is (Orientation.CLOCKWISE
                         if event.is_right_endpoint
                         else Orientation.COUNTERCLOCKWISE))
 
 
 class LinearBinaryEventsQueue:
-    __slots__ = '_queue',
+    __slots__ = 'context', '_queue'
 
-    def __init__(self) -> None:
-        self._queue = PriorityQueue(key=BinaryEventsQueueKey)
+    def __init__(self, context: Context) -> None:
+        self.context = context
+        self._queue = PriorityQueue(key=partial(BinaryEventsQueueKey,
+                                                partial(orientation, context)))
 
     __repr__ = generate_repr(__init__)
 
@@ -190,10 +194,12 @@ class LinearBinaryEventsQueue:
 
 
 class MixedBinaryEventsQueue:
-    __slots__ = '_queue'
+    __slots__ = 'context', '_queue'
 
-    def __init__(self) -> None:
-        self._queue = PriorityQueue(key=BinaryEventsQueueKey)
+    def __init__(self, context: Context) -> None:
+        self.context = context
+        self._queue = PriorityQueue(key=partial(BinaryEventsQueueKey,
+                                                partial(orientation, context)))
 
     @property
     def key(self) -> Callable[[MixedEvent], BinaryEventsQueueKey]:
@@ -291,10 +297,12 @@ class MixedBinaryEventsQueue:
 
 
 class NaryEventsQueue:
-    __slots__ = '_queue',
+    __slots__ = 'context', '_queue'
 
-    def __init__(self) -> None:
-        self._queue = PriorityQueue(key=NaryEventsQueueKey)
+    def __init__(self, context: Context) -> None:
+        self.context = context
+        self._queue = PriorityQueue(key=partial(NaryEventsQueueKey,
+                                                partial(orientation, context)))
 
     __repr__ = generate_repr(__init__)
 
@@ -375,11 +383,12 @@ class NaryEventsQueue:
 
 
 class ShapedBinaryEventsQueue(Generic[Event]):
-    __slots__ = 'event_cls', '_queue'
+    __slots__ = 'context', 'event_cls', '_queue'
 
-    def __init__(self, event_cls: Type[Event]) -> None:
-        self.event_cls = event_cls
-        self._queue = PriorityQueue(key=BinaryEventsQueueKey)
+    def __init__(self, event_cls: Type[Event], context: Context) -> None:
+        self.event_cls, self.context = event_cls, context
+        self._queue = PriorityQueue(key=partial(BinaryEventsQueueKey,
+                                                partial(orientation, context)))
 
     __repr__ = generate_repr(__init__)
 
@@ -475,7 +484,9 @@ class ShapedBinaryEventsQueue(Generic[Event]):
         self._queue.push(right_event)
 
 
-HolelessEventsQueue = cast(Callable[[], ShapedBinaryEventsQueue[ShapedEvent]],
+HolelessEventsQueue = cast(Callable[[Context],
+                                    ShapedBinaryEventsQueue[ShapedEvent]],
                            partial(ShapedBinaryEventsQueue, ShapedEvent))
-HoleyEventsQueue = cast(Callable[[], ShapedBinaryEventsQueue[HoleyEvent]],
+HoleyEventsQueue = cast(Callable[[Context],
+                                 ShapedBinaryEventsQueue[HoleyEvent]],
                         partial(ShapedBinaryEventsQueue, HoleyEvent))

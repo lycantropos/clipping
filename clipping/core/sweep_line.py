@@ -1,17 +1,19 @@
 from abc import (ABC,
                  abstractmethod)
+from functools import partial
 from typing import (Generic,
                     Optional)
 
 from dendroid import red_black
-from ground.base import Context
+from ground.base import (Context,
+                         Orientation)
 from reprit.base import generate_repr
 
 from .event import (BinaryEvent,
                     Event,
                     NaryEvent)
-from .utils import (Orientation,
-                    orientation)
+from .hints import Orienteer
+from .utils import orientation
 
 
 class SweepLine(ABC, Generic[Event]):
@@ -43,7 +45,9 @@ class BinarySweepLine(SweepLine):
 
     def __init__(self, context: Context) -> None:
         self.context = context
-        self._ordered_set = red_black.set_(key=BinarySweepLineKey)
+        self._ordered_set = red_black.set_(key=partial(BinarySweepLineKey,
+                                                       partial(orientation,
+                                                               context)))
 
     def __contains__(self, event: Event) -> bool:
         return event in self._ordered_set
@@ -72,7 +76,9 @@ class NarySweepLine(SweepLine):
 
     def __init__(self, context: Context) -> None:
         self.context = context
-        self._ordered_set = red_black.set_(key=NarySweepLineKey)
+        self._ordered_set = red_black.set_(key=partial(NarySweepLineKey,
+                                                       partial(orientation,
+                                                               context)))
 
     def __contains__(self, event: Event) -> bool:
         return event in self._ordered_set
@@ -97,10 +103,10 @@ class NarySweepLine(SweepLine):
 
 
 class BinarySweepLineKey:
-    __slots__ = 'event',
+    __slots__ = 'event', 'orienteer'
 
-    def __init__(self, event: BinaryEvent) -> None:
-        self.event = event
+    def __init__(self, orienteer: Orienteer, event: BinaryEvent) -> None:
+        self.orienteer, self.event = orienteer, event
 
     __repr__ = generate_repr(__init__)
 
@@ -114,8 +120,8 @@ class BinarySweepLineKey:
             return False
         start, other_start = event.start, other_event.start
         end, other_end = event.end, other_event.end
-        other_start_orientation = orientation(end, start, other_start)
-        other_end_orientation = orientation(end, start, other_end)
+        other_start_orientation = self.orienteer(end, start, other_start)
+        other_end_orientation = self.orienteer(end, start, other_end)
         if other_start_orientation is other_end_orientation:
             start_x, start_y = start
             other_start_x, other_start_y = other_start
@@ -142,8 +148,8 @@ class BinarySweepLineKey:
             else:
                 # segments are horizontal
                 return start_x < other_start_x
-        start_orientation = orientation(other_end, other_start, start)
-        end_orientation = orientation(other_end, other_start, end)
+        start_orientation = self.orienteer(other_end, other_start, start)
+        end_orientation = self.orienteer(other_end, other_start, end)
         if start_orientation is end_orientation:
             return start_orientation is Orientation.CLOCKWISE
         elif other_start_orientation is Orientation.COLLINEAR:
@@ -157,10 +163,10 @@ class BinarySweepLineKey:
 
 
 class NarySweepLineKey:
-    __slots__ = 'event',
+    __slots__ = 'event', 'orienteer'
 
-    def __init__(self, event: NaryEvent) -> None:
-        self.event = event
+    def __init__(self, orienteer: Orienteer, event: NaryEvent) -> None:
+        self.orienteer, self.event = orienteer, event
 
     __repr__ = generate_repr(__init__)
 
@@ -174,8 +180,8 @@ class NarySweepLineKey:
             return False
         start, other_start = event.start, other_event.start
         end, other_end = event.end, other_event.end
-        other_start_orientation = orientation(end, start, other_start)
-        other_end_orientation = orientation(end, start, other_end)
+        other_start_orientation = self.orienteer(end, start, other_start)
+        other_end_orientation = self.orienteer(end, start, other_end)
         if other_start_orientation is other_end_orientation:
             start_x, start_y = start
             other_start_x, other_start_y = other_start
@@ -200,8 +206,8 @@ class NarySweepLineKey:
             else:
                 # segments are horizontal
                 return start_x < other_start_x
-        start_orientation = orientation(other_end, other_start, start)
-        end_orientation = orientation(other_end, other_start, end)
+        start_orientation = self.orienteer(other_end, other_start, start)
+        end_orientation = self.orienteer(other_end, other_start, end)
         if start_orientation is end_orientation:
             return start_orientation is Orientation.CLOCKWISE
         elif other_start_orientation is Orientation.COLLINEAR:
