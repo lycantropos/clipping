@@ -139,8 +139,10 @@ class Difference(Operation):
     def compute(self) -> Multisegment:
         if not (self.left and self.right):
             return self.left
-        left_box = bounding.from_multisegment(self.left)
-        right_box = bounding.from_multisegment(self.right)
+        left_box = bounding.from_multisegment(self.left,
+                                              context=self.context)
+        right_box = bounding.from_multisegment(self.right,
+                                               context=self.context)
         if bounding.disjoint_with(left_box, right_box):
             return self.left
         self.right = bounding.to_coupled_segments(left_box, self.right,
@@ -178,8 +180,10 @@ class Intersection(Operation):
     def compute(self) -> Multisegment:
         if not (self.left and self.right):
             return []
-        left_box = bounding.from_multisegment(self.left)
-        right_box = bounding.from_multisegment(self.right)
+        left_box = bounding.from_multisegment(self.left,
+                                              context=self.context)
+        right_box = bounding.from_multisegment(self.right,
+                                               context=self.context)
         if bounding.disjoint_with(left_box, right_box):
             return []
         self.left = bounding.to_coupled_segments(right_box, self.left,
@@ -220,8 +224,10 @@ class CompleteIntersection(Operation):
     def compute(self) -> Mix:
         if not (self.left and self.right):
             return [], [], []
-        left_box = bounding.from_multisegment(self.left)
-        right_box = bounding.from_multisegment(self.right)
+        left_box = bounding.from_multisegment(self.left,
+                                              context=self.context)
+        right_box = bounding.from_multisegment(self.right,
+                                               context=self.context)
         if bounding.disjoint_with(left_box, right_box):
             return [], [], []
         self.left = bounding.to_intersecting_segments(right_box, self.left,
@@ -276,8 +282,11 @@ class SymmetricDifference(Operation):
     def compute(self) -> Multisegment:
         if not (self.left and self.right):
             return self.left or self.right
-        elif bounding.disjoint_with(bounding.from_multisegment(self.left),
-                                    bounding.from_multisegment(self.right)):
+        elif bounding.disjoint_with(
+                bounding.from_multisegment(self.left,
+                                           context=self.context),
+                bounding.from_multisegment(self.right,
+                                           context=self.context)):
             result = self.left + self.right
             result.sort()
             return result
@@ -297,8 +306,11 @@ class Union(Operation):
     def compute(self) -> Multisegment:
         if not (self.left and self.right):
             return self.left or self.right
-        elif bounding.disjoint_with(bounding.from_multisegment(self.left),
-                                    bounding.from_multisegment(self.right)):
+        elif bounding.disjoint_with(
+                bounding.from_multisegment(self.left,
+                                           context=self.context),
+                bounding.from_multisegment(self.right,
+                                           context=self.context)):
             result = self.left + self.right
             result.sort()
             return result

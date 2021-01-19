@@ -112,10 +112,12 @@ class Difference(Operation):
     def compute(self) -> Multisegment:
         if not (self.multisegment and self.multipolygon):
             return self.multisegment
-        multisegment_box = bounding.from_multisegment(self.multisegment)
+        multisegment_box = bounding.from_multisegment(self.multisegment,
+                                                      context=self.context)
         if bounding.disjoint_with(
                 multisegment_box,
-                bounding.from_multipolygon(self.multipolygon)):
+                bounding.from_multipolygon(self.multipolygon,
+                                           context=self.context)):
             return self.multisegment
         self.multipolygon = bounding.to_coupled_polygons(multisegment_box,
                                                          self.multipolygon,
@@ -153,8 +155,10 @@ class CompleteIntersection(Operation):
     def compute(self) -> Mix:
         if not (self.multisegment and self.multipolygon):
             return [], [], []
-        multisegment_box = bounding.from_multisegment(self.multisegment)
-        multipolygon_box = bounding.from_multipolygon(self.multipolygon)
+        multisegment_box = bounding.from_multisegment(self.multisegment,
+                                                      context=self.context)
+        multipolygon_box = bounding.from_multipolygon(self.multipolygon,
+                                                      context=self.context)
         if bounding.disjoint_with(multisegment_box, multipolygon_box):
             return [], [], []
         self.multisegment = bounding.to_intersecting_segments(
@@ -210,8 +214,10 @@ class Intersection(Operation):
     def compute(self) -> Multisegment:
         if not (self.multisegment and self.multipolygon):
             return []
-        multisegment_box = bounding.from_multisegment(self.multisegment)
-        multipolygon_box = bounding.from_multipolygon(self.multipolygon)
+        multisegment_box = bounding.from_multisegment(self.multisegment,
+                                                      context=self.context)
+        multipolygon_box = bounding.from_multipolygon(self.multipolygon,
+                                                      context=self.context)
         if bounding.disjoint_with(multisegment_box,
                                   multipolygon_box):
             return []

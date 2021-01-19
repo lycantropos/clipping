@@ -173,9 +173,12 @@ class Difference(Operation):
     def compute(self) -> Multipolygon:
         if not (self.left and self.right):
             return self.left
-        left_box = bounding.from_multipolygon(self.left)
+        left_box = bounding.from_multipolygon(self.left,
+                                              context=self.context)
         if bounding.disjoint_with(
-                left_box, bounding.from_multipolygon(self.right)):
+                left_box,
+                bounding.from_multipolygon(self.right,
+                                           context=self.context)):
             return self.left
         self.right = bounding.to_coupled_polygons(left_box, self.right,
                                                   context=self.context)
@@ -209,8 +212,10 @@ class CompleteIntersection(Operation):
     def compute(self) -> Mix:
         if not (self.left and self.right):
             return [], [], []
-        left_box = bounding.from_multipolygon(self.left)
-        right_box = bounding.from_multipolygon(self.right)
+        left_box = bounding.from_multipolygon(self.left,
+                                              context=self.context)
+        right_box = bounding.from_multipolygon(self.right,
+                                               context=self.context)
         if bounding.disjoint_with(left_box, right_box):
             return [], [], []
         self.left = bounding.to_intersecting_polygons(right_box, self.left,
@@ -272,8 +277,10 @@ class Intersection(Operation):
     def compute(self) -> Multipolygon:
         if not (self.left and self.right):
             return []
-        left_box = bounding.from_multipolygon(self.left)
-        right_box = bounding.from_multipolygon(self.right)
+        left_box = bounding.from_multipolygon(self.left,
+                                              context=self.context)
+        right_box = bounding.from_multipolygon(self.right,
+                                               context=self.context)
         if bounding.disjoint_with(left_box, right_box):
             return []
         self.left = bounding.to_coupled_polygons(right_box, self.left,
@@ -310,8 +317,11 @@ class SymmetricDifference(Operation):
     def compute(self) -> Multipolygon:
         if not (self.left and self.right):
             return self.left or self.right
-        elif bounding.disjoint_with(bounding.from_multipolygon(self.left),
-                                    bounding.from_multipolygon(self.right)):
+        elif bounding.disjoint_with(
+                bounding.from_multipolygon(self.left,
+                                           context=self.context),
+                bounding.from_multipolygon(self.right,
+                                           context=self.context)):
             result = self.left + self.right
             result.sort(key=to_first_border_vertex)
             return result
@@ -328,8 +338,11 @@ class Union(Operation):
     def compute(self) -> Multipolygon:
         if not (self.left and self.right):
             return self.left or self.right
-        elif bounding.disjoint_with(bounding.from_multipolygon(self.left),
-                                    bounding.from_multipolygon(self.right)):
+        elif bounding.disjoint_with(
+                bounding.from_multipolygon(self.left,
+                                           context=self.context),
+                bounding.from_multipolygon(self.right,
+                                           context=self.context)):
             result = self.left + self.right
             result.sort(key=to_first_border_vertex)
             return result

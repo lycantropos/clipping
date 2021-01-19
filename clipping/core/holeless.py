@@ -150,8 +150,10 @@ class CompleteIntersection(Operation):
     def compute(self) -> HolelessMix:
         if not (self.left and self.right):
             return [], [], []
-        left_box = bounding.from_multiregion(self.left)
-        right_box = bounding.from_multiregion(self.right)
+        left_box = bounding.from_multiregion(self.left,
+                                             context=self.context)
+        right_box = bounding.from_multiregion(self.right,
+                                              context=self.context)
         if bounding.disjoint_with(left_box, right_box):
             return [], [], []
         self.left = bounding.to_intersecting_regions(right_box, self.left,
@@ -214,8 +216,10 @@ class Intersection(Operation):
     def compute(self) -> Multiregion:
         if not (self.left and self.right):
             return []
-        left_box = bounding.from_multiregion(self.left)
-        right_box = bounding.from_multiregion(self.right)
+        left_box = bounding.from_multiregion(self.left,
+                                             context=self.context)
+        right_box = bounding.from_multiregion(self.right,
+                                              context=self.context)
         if bounding.disjoint_with(left_box, right_box):
             return []
         self.left = bounding.to_coupled_regions(right_box, self.left,
