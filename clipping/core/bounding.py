@@ -78,8 +78,8 @@ def disjoint_with(left: Box, right: Box) -> bool:
     """
     left_x_min, left_x_max, left_y_min, left_y_max = left
     right_x_min, right_x_max, right_y_min, right_y_max = right
-    return (left_x_min > right_x_max or left_x_max < right_x_min
-            or left_y_min > right_y_max or left_y_max < right_y_min)
+    return (right_x_max < left_x_min or left_x_max < right_x_min
+            or right_y_max < left_y_min or left_y_max < right_y_min)
 
 
 def intersects_with(left: Box, right: Box) -> bool:
