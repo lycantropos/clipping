@@ -22,7 +22,6 @@ and multipolygon.
 **Holeless mix** --- triplet of disjoint/touching multipoint, multisegment
 and multiregion.
 """
-from itertools import groupby as _groupby
 from typing import Sequence
 
 from ground.base import get_context
@@ -71,10 +70,9 @@ def segments_to_multisegment(segments: Sequence[Segment]) -> Multisegment:
  Segment(Point(1, 0), Point(2, 0)), Segment(Point(2, 0), Point(3, 0))])
     """
     context = get_context()
-    return _raw.to_multisegment(
-            _linear.merge_segments(_raw.from_segments(segments),
-                                   context=context),
-            context=context)
+    return _raw.to_multisegment(_linear.merge_segments(segments,
+                                                       context=context),
+                                context=context)
 
 
 def complete_intersect_multisegments(left: Multisegment,
@@ -682,11 +680,9 @@ def intersect_multiregions(left: Multiregion,
     [Contour([Point(0, 0), Point(1, 0), Point(1, 1), Point(0, 1)]),\
  Contour([Point(1, 1), Point(2, 1), Point(2, 2), Point(1, 2)])]
     """
-    return _raw.to_multiregion(
-            _holeless.Intersection(_raw.from_multiregion(left),
-                                   _raw.from_multiregion(right),
-                                   context=get_context()).compute(),
-            context=get_context())
+    return _holeless.Intersection(_raw.from_multiregion(left),
+                                  _raw.from_multiregion(right),
+                                  context=get_context()).compute()
 
 
 def complete_intersect_multipolygons(left: Multipolygon,
