@@ -71,8 +71,7 @@ def segments_to_multisegment(segments: Sequence[Segment]) -> Multisegment:
     """
     context = get_context()
     return _raw.to_multisegment(_linear.merge_segments(segments,
-                                                       context=context),
-                                context=context)
+                                                       context=context))
 
 
 def complete_intersect_multisegments(left: Multisegment,
@@ -183,10 +182,9 @@ def intersect_multisegments(left: Multisegment,
     """
     context = get_context()
     return _raw.to_multisegment(
-            _linear.Intersection(_raw.from_multisegment(left),
-                                 _raw.from_multisegment(right),
-                                 context=context).compute(),
-            context=context)
+        _linear.Intersection(_raw.from_multisegment(left),
+                             _raw.from_multisegment(right),
+                             context=context).compute())
 
 
 def subtract_multisegments(minuend: Multisegment,
@@ -239,10 +237,9 @@ def subtract_multisegments(minuend: Multisegment,
     """
     context = get_context()
     return _raw.to_multisegment(
-            _linear.Difference(_raw.from_multisegment(minuend),
-                               _raw.from_multisegment(subtrahend),
-                               context=context).compute(),
-            context=context)
+        _linear.Difference(_raw.from_multisegment(minuend),
+                           _raw.from_multisegment(subtrahend),
+                           context=context).compute())
 
 
 def symmetric_subtract_multisegments(left: Multisegment,
@@ -298,10 +295,9 @@ def symmetric_subtract_multisegments(left: Multisegment,
     """
     context = get_context()
     return _raw.to_multisegment(
-            _linear.SymmetricDifference(_raw.from_multisegment(left),
-                                        _raw.from_multisegment(right),
-                                        context=context).compute(),
-            context=context)
+        _linear.SymmetricDifference(_raw.from_multisegment(left),
+                                    _raw.from_multisegment(right),
+                                    context=context).compute())
 
 
 def unite_multisegments(left: Multisegment,
@@ -355,8 +351,7 @@ def unite_multisegments(left: Multisegment,
     context = get_context()
     return _raw.to_multisegment(_linear.Union(_raw.from_multisegment(left),
                                               _raw.from_multisegment(right),
-                                              context=context).compute(),
-                                context=context)
+                                              context=context).compute())
 
 
 def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
@@ -416,10 +411,9 @@ def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
     """
     context = get_context()
     return _raw.to_multisegment(
-            _mixed.Intersection(_raw.from_multisegment(multisegment),
-                                _raw.from_multipolygon(multipolygon),
-                                context=context).compute(),
-            context=context)
+        _mixed.Intersection(_raw.from_multisegment(multisegment),
+                            _raw.from_multipolygon(multipolygon),
+                            context=context).compute())
 
 
 def complete_intersect_multisegment_with_multipolygon(
@@ -481,7 +475,7 @@ def complete_intersect_multisegment_with_multipolygon(
     """
     context = get_context()
     return _raw.to_mix(
-            _mixed.CompleteIntersection(_raw.from_multisegment(multisegment),
+            _mixed.CompleteIntersection(multisegment.segments,
                                         _raw.from_multipolygon(multipolygon),
                                         context=context).compute(),
             context=context)
@@ -544,10 +538,9 @@ def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
     """
     context = get_context()
     return _raw.to_multisegment(
-            _mixed.Difference(_raw.from_multisegment(multisegment),
-                              _raw.from_multipolygon(multipolygon),
-                              context=context).compute(),
-            context=context)
+        _mixed.Difference(_raw.from_multisegment(multisegment),
+                          _raw.from_multipolygon(multipolygon),
+                          context=context).compute())
 
 
 def complete_intersect_multiregions(left: Multiregion,
@@ -620,10 +613,9 @@ def complete_intersect_multiregions(left: Multiregion,
     """
     context = get_context()
     return _raw.to_holeless_mix(
-            _holeless.CompleteIntersection(_raw.from_multiregion(left),
-                                           _raw.from_multiregion(right),
-                                           context=context).compute(),
-            context=context)
+        _holeless.CompleteIntersection(_raw.from_multiregion(left),
+                                       _raw.from_multiregion(right),
+                                       context=context).compute())
 
 
 def intersect_multiregions(left: Multiregion,

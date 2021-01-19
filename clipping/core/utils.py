@@ -13,12 +13,11 @@ from ground.base import (Context,
                          get_context)
 from ground.hints import (Contour,
                           Coordinate,
-                          Multipoint, Point,
+                          Point,
                           Segment)
 
 from .hints import (Multipolygon,
                     Multiregion,
-                    Multisegment,
                     Polygon,
                     SegmentEndpoints)
 
@@ -112,8 +111,8 @@ def to_multiregion_x_max(multiregion: Multiregion) -> Coordinate:
                for vertex in border.vertices)
 
 
-def to_multisegment_x_max(multisegment: Multisegment) -> Coordinate:
-    return max(max(segment.start.x, segment.end.x) for segment in multisegment)
+def to_segments_x_max(segments: Sequence[Segment]) -> Coordinate:
+    return max(max(segment.start.x, segment.end.x) for segment in segments)
 
 
 def shrink_collinear_vertices(vertices: List[Point],
@@ -158,24 +157,13 @@ def segments_relation(first_start, first_end, second_start, second_end):
                                      second_end)
 
 
-def multisegment_to_endpoints(multisegment: Multisegment
-                              ) -> Iterable[SegmentEndpoints]:
-    return segments_to_endpoints(multisegment)
-
-
 def segments_to_endpoints(segments: Sequence[Segment]
                           ) -> Iterable[SegmentEndpoints]:
     return ((segment.start, segment.end) for segment in segments)
 
 
-def endpoints_to_multisegment(endpoints: Iterable[SegmentEndpoints],
-                              *,
-                              context: Context) -> Multisegment:
+def endpoints_to_segments(endpoints: Iterable[SegmentEndpoints],
+                          *,
+                          context: Context) -> Sequence[Segment]:
     segment_cls = context.segment_cls
     return [segment_cls(start, end) for start, end in endpoints]
-
-
-def points_to_multipoint(points: Sequence[Point],
-                         *,
-                         context: Context) -> Multipoint:
-    return context.multipoint_cls(points)

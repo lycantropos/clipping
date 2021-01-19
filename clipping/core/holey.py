@@ -6,10 +6,12 @@ from typing import (Iterable,
                     List,
                     Optional,
                     Sequence,
+                    Tuple,
                     Union as Union_)
 
 from ground.base import Context
-from ground.hints import Point
+from ground.hints import (Point,
+                          Segment)
 from reprit.base import generate_repr
 
 from . import bounding
@@ -19,10 +21,12 @@ from .event import (HoleyEvent as Event,
 from .events_queue import HoleyEventsQueue as EventsQueue
 from .hints import (Mix,
                     Multipolygon,
+                    Polygon,
                     SegmentEndpoints)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
-                    endpoints_to_multisegment, pairwise,
+                    endpoints_to_segments,
+                    pairwise,
                     polygon_to_oriented_edges_endpoints,
                     shrink_collinear_vertices,
                     to_first_border_vertex,
@@ -209,20 +213,44 @@ class CompleteIntersection(Operation):
     __slots__ = ()
 
     def compute(self) -> Mix:
+        points, segments, polygons = self._compute()
+        return (self.context.multipoint_cls(points),
+                self.context.multisegment_cls(segments), polygons)
+
+    def in_result(self, event: Event) -> bool:
+        return (event.inside
+                or not event.from_left and event.is_common_region_boundary)
+
+    def sweep(self) -> Iterable[Event]:
+        self.fill_queue()
+        result = []
+        events_queue = self._events_queue
+        sweep_line = SweepLine(self.context)
+        min_max_x = min(to_multipolygon_x_max(self.left),
+                        to_multipolygon_x_max(self.right))
+        while events_queue:
+            event = events_queue.pop()
+            if min_max_x < event.start.x:
+                break
+            self.process_event(event, result, sweep_line)
+        return result
+
+    def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment],
+                                Sequence[Polygon]]:
         if not (self.left and self.right):
-            return self.context.multipoint_cls([]), [], []
+            return [], [], []
         left_box = bounding.from_multipolygon(self.left,
                                               context=self.context)
         right_box = bounding.from_multipolygon(self.right,
                                                context=self.context)
         if bounding.disjoint_with(left_box, right_box):
-            return self.context.multipoint_cls([]), [], []
+            return [], [], []
         self.left = bounding.to_intersecting_polygons(right_box, self.left,
                                                       context=self.context)
         self.right = bounding.to_intersecting_polygons(left_box, self.right,
                                                        context=self.context)
         if not (self.left and self.right):
-            return self.context.multipoint_cls([]), [], []
+            return [], [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
                         key=self._events_queue.key)
@@ -247,28 +275,10 @@ class CompleteIntersection(Operation):
                 if no_segment_found and all(not event.primary.in_result
                                             for event in same_start_events):
                     points.append(start)
-        return (self.context.multipoint_cls(points),
-                endpoints_to_multisegment(endpoints,
-                                          context=self.context),
+        return (points,
+                endpoints_to_segments(endpoints,
+                                      context=self.context),
                 self.events_to_multipolygon(events))
-
-    def sweep(self) -> Iterable[Event]:
-        self.fill_queue()
-        result = []
-        events_queue = self._events_queue
-        sweep_line = SweepLine(self.context)
-        min_max_x = min(to_multipolygon_x_max(self.left),
-                        to_multipolygon_x_max(self.right))
-        while events_queue:
-            event = events_queue.pop()
-            if min_max_x < event.start.x:
-                break
-            self.process_event(event, result, sweep_line)
-        return result
-
-    def in_result(self, event: Event) -> bool:
-        return (event.inside
-                or not event.from_left and event.is_common_region_boundary)
 
 
 class Intersection(Operation):

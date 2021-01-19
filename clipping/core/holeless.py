@@ -6,15 +6,18 @@ from typing import (Iterable,
                     List,
                     Optional,
                     Sequence,
+                    Tuple,
                     Union as Union_)
 
 from ground.base import Context
-from ground.hints import Point
+from ground.hints import (Point,
+                          Segment)
 from reprit.base import generate_repr
 
 from . import bounding
 from .event import (ShapedEvent as Event,
-                    event_to_segment_endpoints, events_to_connectivity)
+                    event_to_segment_endpoints,
+                    events_to_connectivity)
 from .events_queue import HolelessEventsQueue as EventsQueue
 from .hints import (HolelessMix,
                     Multiregion,
@@ -22,7 +25,8 @@ from .hints import (HolelessMix,
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     contour_to_oriented_edges_endpoints,
-                    endpoints_to_multisegment, pairwise,
+                    endpoints_to_segments,
+                    pairwise,
                     to_multiregion_x_max)
 
 
@@ -148,20 +152,43 @@ class CompleteIntersection(Operation):
     __slots__ = ()
 
     def compute(self) -> HolelessMix:
+        points, segments, multiregion = self._compute()
+        return (self.context.multipoint_cls(points),
+                self.context.multisegment_cls(segments), multiregion)
+
+    def in_result(self, event: Event) -> bool:
+        return (event.inside
+                or not event.from_left and event.is_common_region_boundary)
+
+    def sweep(self) -> Iterable[Event]:
+        self.fill_queue()
+        result = []
+        sweep_line = SweepLine(self.context)
+        min_max_x = min(to_multiregion_x_max(self.left),
+                        to_multiregion_x_max(self.right))
+        while self._events_queue:
+            event = self._events_queue.pop()
+            if min_max_x < event.start.x:
+                break
+            self.process_event(event, result, sweep_line)
+        return result
+
+    def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment],
+                                Multiregion]:
         if not (self.left and self.right):
-            return self.context.multipoint_cls([]), [], []
+            return [], [], []
         left_box = bounding.from_multiregion(self.left,
                                              context=self.context)
         right_box = bounding.from_multiregion(self.right,
                                               context=self.context)
         if bounding.disjoint_with(left_box, right_box):
-            return self.context.multipoint_cls([]), [], []
+            return [], [], []
         self.left = bounding.to_intersecting_regions(right_box, self.left,
                                                      context=self.context)
         self.right = bounding.to_intersecting_regions(left_box, self.right,
                                                       context=self.context)
         if not (self.left and self.right):
-            return self.context.multipoint_cls([]), [], []
+            return [], [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
                         key=self._events_queue.key)
@@ -188,27 +215,9 @@ class CompleteIntersection(Operation):
                                             else not event.in_result
                                             for event in same_start_events):
                     points.append(start)
-        return (self.context.multipoint_cls(points),
-                endpoints_to_multisegment(endpoints,
-                                          context=self.context),
+        return (points, endpoints_to_segments(endpoints,
+                                              context=self.context),
                 self.events_to_multiregion(events))
-
-    def in_result(self, event: Event) -> bool:
-        return (event.inside
-                or not event.from_left and event.is_common_region_boundary)
-
-    def sweep(self) -> Iterable[Event]:
-        self.fill_queue()
-        result = []
-        sweep_line = SweepLine(self.context)
-        min_max_x = min(to_multiregion_x_max(self.left),
-                        to_multiregion_x_max(self.right))
-        while self._events_queue:
-            event = self._events_queue.pop()
-            if min_max_x < event.start.x:
-                break
-            self.process_event(event, result, sweep_line)
-        return result
 
 
 class Intersection(Operation):

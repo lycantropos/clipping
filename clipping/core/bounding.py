@@ -13,7 +13,6 @@ from orient.planar import (Relation,
 
 from .hints import (Multipolygon,
                     Multiregion,
-                    Multisegment,
                     Polygon,
                     Region,
                     SegmentEndpoints)
@@ -33,14 +32,14 @@ def from_contour(contour: Contour,
                        context=context)
 
 
-def from_multisegment(multisegment: Multisegment,
-                      *,
-                      context: Context) -> Box:
+def from_segments(segments: Sequence[Segment],
+                  *,
+                  context: Context) -> Box:
     """
     Builds box from multisegment.
     """
     return from_points(flatten((segment.start, segment.end)
-                               for segment in multisegment),
+                               for segment in segments),
                        context=context)
 
 
@@ -516,21 +515,21 @@ def to_edges(box: Box,
 
 
 def to_intersecting_segments(box: Box,
-                             multisegment: Multisegment,
+                             segments: Sequence[Segment],
                              *,
-                             context: Context) -> Multisegment:
+                             context: Context) -> Sequence[Segment]:
     return [segment
-            for segment in multisegment
+            for segment in segments
             if intersects_with_segment(box, segment.start, segment.end,
                                        context=context)]
 
 
 def to_coupled_segments(box: Box,
-                        multisegment: Multisegment,
+                        segments: Sequence[Segment],
                         *,
-                        context: Context) -> Multisegment:
+                        context: Context) -> Sequence[Segment]:
     return [segment
-            for segment in multisegment
+            for segment in segments
             if coupled_with_segment(box, segment,
                                     context=context)]
 

@@ -1,19 +1,18 @@
 from typing import (Callable,
-                    List,
+                    Sequence,
                     Tuple)
 
 from ground.base import Orientation
 from ground.hints import (Contour as _Contour,
                           Multipoint as _Multipoint,
-                          Point as _Point,
-                          Segment as _Segment)
+                          Multisegment as _Multisegment,
+                          Point as _Point)
 
 SegmentEndpoints = Tuple[_Point, _Point]
-Multisegment = List[_Segment]
 Region = _Contour
-Multiregion = List[Region]
+Multiregion = Sequence[Region]
 Polygon = Tuple[Region, Multiregion]
-Multipolygon = List[Polygon]
-Mix = Tuple[_Multipoint, Multisegment, Multipolygon]
-HolelessMix = Tuple[_Multipoint, Multisegment, Multiregion]
+Multipolygon = Sequence[Polygon]
+Mix = Tuple[_Multipoint, _Multisegment, Multipolygon]
+HolelessMix = Tuple[_Multipoint, _Multisegment, Multiregion]
 Orienteer = Callable[[_Point, _Point, _Point], Orientation]
