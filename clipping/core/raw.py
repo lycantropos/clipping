@@ -12,19 +12,8 @@ def from_multisegment(multisegment: Multisegment):
     return multisegment.segments
 
 
-def from_contour(contour: Contour):
-    return contour
-
-
-from_region = from_contour
-
-
-def from_multiregion(multiregion):
-    return [from_region(region) for region in multiregion]
-
-
 def from_polygon(polygon: Polygon):
-    return from_contour(polygon.border), from_multiregion(polygon.holes)
+    return polygon
 
 
 def from_multipolygon(multipolygon: Multipolygon):
@@ -47,14 +36,12 @@ def to_contour(raw) -> Contour:
     return raw
 
 
-def to_polygon(raw, context: Context) -> Polygon:
-    raw_border, raw_holes = raw
-    return context.polygon_cls(raw_border, raw_holes)
+def to_polygon(raw) -> Polygon:
+    return raw
 
 
 def to_multipolygon(raw, context: Context) -> Multipolygon:
-    return context.multipolygon_cls(list(map(to_polygon, raw,
-                                             repeat(context))))
+    return context.multipolygon_cls(raw)
 
 
 def to_holeless_mix(raw) -> Tuple[Multipoint, Multisegment, Multiregion]:
@@ -67,3 +54,10 @@ def to_mix(raw, context: Context
     return (raw_multipoint,
             to_multisegment(raw_multisegment),
             to_multipolygon(raw_multipolygon, context))
+
+
+def to_linear_mix(raw, context: Context
+                  ) -> Tuple[Multipoint, Multisegment]:
+    raw_multipoint, raw_multisegment = raw
+    return (raw_multipoint,
+            to_multisegment(raw_multisegment))

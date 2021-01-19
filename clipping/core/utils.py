@@ -14,11 +14,11 @@ from ground.base import (Context,
 from ground.hints import (Contour,
                           Coordinate,
                           Point,
+                          Polygon,
                           Segment)
 
 from .hints import (Multipolygon,
                     Multiregion,
-                    Polygon,
                     SegmentEndpoints)
 
 
@@ -48,11 +48,10 @@ def polygon_to_oriented_edges_endpoints(polygon: Polygon,
                                         *,
                                         context: Context
                                         ) -> Iterable[SegmentEndpoints]:
-    border, holes = polygon
-    yield from contour_to_oriented_edges_endpoints(border,
+    yield from contour_to_oriented_edges_endpoints(polygon.border,
                                                    clockwise=False,
                                                    context=context)
-    for hole in holes:
+    for hole in polygon.holes:
         yield from contour_to_oriented_edges_endpoints(hole,
                                                        clockwise=True,
                                                        context=context)
@@ -95,14 +94,13 @@ flatten = chain.from_iterable
 
 
 def to_first_border_vertex(polygon: Polygon) -> Point:
-    border, _ = polygon
-    return border.vertices[0]
+    return polygon.border.vertices[0]
 
 
 def to_multipolygon_x_max(multipolygon: Multipolygon) -> Coordinate:
     return max(vertex.x
-               for border, _ in multipolygon
-               for vertex in border.vertices)
+               for polygon in multipolygon
+               for vertex in polygon.border.vertices)
 
 
 def to_multiregion_x_max(multiregion: Multiregion) -> Coordinate:

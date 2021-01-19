@@ -19,8 +19,7 @@ from .event import (BinaryEvent,
                     event_to_segment_endpoints)
 from .events_queue import (LinearBinaryEventsQueue as BinaryEventsQueue,
                            NaryEventsQueue)
-from .hints import (Mix,
-                    Polygon,
+from .hints import (LinearMix,
                     SegmentEndpoints)
 from .sweep_line import (BinarySweepLine,
                          NarySweepLine)
@@ -89,7 +88,7 @@ class Operation(ABC):
     __repr__ = generate_repr(__init__)
 
     @abstractmethod
-    def compute(self) -> Union_[Multisegment, Mix]:
+    def compute(self) -> Union_[LinearMix, Multisegment]:
         """
         Computes result of the operation.
         """
@@ -229,10 +228,10 @@ class Intersection(Operation):
 class CompleteIntersection(Operation):
     __slots__ = ()
 
-    def compute(self) -> Mix:
-        points, segments, polygons = self._compute()
+    def compute(self) -> LinearMix:
+        points, segments = self._compute()
         return (self.context.multipoint_cls(points),
-                self.context.multisegment_cls(segments), polygons)
+                self.context.multisegment_cls(segments))
 
     def sweep(self) -> Sequence[BinaryEvent]:
         self.fill_queue()
@@ -249,22 +248,21 @@ class CompleteIntersection(Operation):
             result.append(event)
         return result
 
-    def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment],
-                                Sequence[Polygon]]:
+    def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment]]:
         if not (self.left and self.right):
-            return [], [], []
+            return [], []
         left_box = bounding.from_segments(self.left,
                                           context=self.context)
         right_box = bounding.from_segments(self.right,
                                            context=self.context)
         if bounding.disjoint_with(left_box, right_box):
-            return [], [], []
+            return [], []
         self.left = bounding.to_intersecting_segments(right_box, self.left,
                                                       context=self.context)
         self.right = bounding.to_intersecting_segments(left_box, self.right,
                                                        context=self.context)
         if not (self.left and self.right):
-            return [], [], []
+            return [], []
         self.normalize_operands()
         points = []  # type: List[Point]
         endpoints = []  # type: List[SegmentEndpoints]
@@ -285,8 +283,8 @@ class CompleteIntersection(Operation):
                             endpoints.append(event_to_segment_endpoints(event))
                 if no_segment_found:
                     points.append(start)
-        return (points, endpoints_to_segments(endpoints,
-                                              context=self.context), [])
+        return points, endpoints_to_segments(endpoints,
+                                             context=self.context)
 
 
 class SymmetricDifference(Operation):

@@ -5,6 +5,7 @@ from ground.base import Context
 from ground.hints import (Box,
                           Contour,
                           Point,
+                          Polygon,
                           Segment)
 from orient.planar import (Relation,
                            point_in_region,
@@ -13,7 +14,6 @@ from orient.planar import (Relation,
 
 from .hints import (Multipolygon,
                     Multiregion,
-                    Polygon,
                     Region,
                     SegmentEndpoints)
 from .utils import (SegmentsRelation,
@@ -49,7 +49,8 @@ def from_multipolygon(multipolygon: Multipolygon,
     """
     Builds box from multipolygon.
     """
-    return from_points(flatten(border.vertices for border, _ in multipolygon),
+    return from_points(flatten(polygon.border.vertices
+                               for polygon in multipolygon),
                        context=context)
 
 
@@ -347,7 +348,7 @@ def intersects_with_polygon(box: Box,
     """
     Checks if the box intersects the polygon.
     """
-    border, holes = polygon
+    border = polygon.border
     polygon_box = from_contour(border,
                                context=context)
     if not intersects_with(polygon_box, box):
@@ -372,7 +373,7 @@ def intersects_with_polygon(box: Box,
                                                    context=context))
                        and within_of_region(box, hole,
                                             context=context)
-                       for hole in holes)
+                       for hole in polygon.holes)
     else:
         return (any(relation is not Relation.DISJOINT
                     for relation in relations)
@@ -414,7 +415,7 @@ def coupled_with_polygon(box: Box,
     """
     Checks if the box intersects the polygon in continuous points set.
     """
-    border, holes = polygon
+    border = polygon.border
     polygon_box = from_contour(border,
                                context=context)
     if not coupled_with(polygon_box, box):
@@ -427,10 +428,10 @@ def coupled_with_polygon(box: Box,
                                            context=context)]
     if any(relation is Relation.WITHIN for relation in relations):
         return (not all(relation is Relation.WITHIN for relation in relations)
-                or not is_subset_of_multiregion(box, holes,
+                or not is_subset_of_multiregion(box, polygon.holes,
                                                 context=context))
     else:
-        return (not is_subset_of_multiregion(box, holes,
+        return (not is_subset_of_multiregion(box, polygon.holes,
                                              context=context)
                 if (is_subset_of(box, polygon_box)
                     and is_subset_of_region(box, border,

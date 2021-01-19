@@ -16,11 +16,13 @@ Glossary
 **Multiregion** --- possibly empty sequence of regions such
 that intersection of distinct regions is a discrete points set.
 
-**Mix** --- triplet of disjoint/touching multipoint, multisegment
-and multipolygon.
+**Linear mix** --- pair of disjoint/touching multipoint and multisegment.
 
 **Holeless mix** --- triplet of disjoint/touching multipoint, multisegment
 and multiregion.
+
+**Mix** --- triplet of disjoint/touching multipoint, multisegment
+and multipolygon.
 """
 from typing import Sequence
 
@@ -35,6 +37,7 @@ from .core import (holeless as _holeless,
                    mixed as _mixed,
                    raw as _raw)
 from .hints import (HolelessMix,
+                    LinearMix,
                     Mix,
                     Multiregion)
 
@@ -69,13 +72,12 @@ def segments_to_multisegment(segments: Sequence[Segment]) -> Multisegment:
     Multisegment([Segment(Point(0, 0), Point(1, 0)),\
  Segment(Point(1, 0), Point(2, 0)), Segment(Point(2, 0), Point(3, 0))])
     """
-    context = get_context()
-    return _raw.to_multisegment(_linear.merge_segments(segments,
-                                                       context=context))
+    return _linear.merge_segments(segments,
+                                  context=get_context())
 
 
 def complete_intersect_multisegments(left: Multisegment,
-                                     right: Multisegment) -> Mix:
+                                     right: Multisegment) -> LinearMix:
     """
     Returns intersection of multisegments considering cases
     with segments touching each other in points.
@@ -98,38 +100,35 @@ def complete_intersect_multisegments(left: Multisegment,
     >>> Multisegment, Point, Segment = (context.multisegment_cls,
     ...                                 context.point_cls, context.segment_cls)
     >>> complete_intersect_multisegments(Multisegment([]), Multisegment([]))
-    (Multipoint([]), Multisegment([]), Multipolygon([]))
+    (Multipoint([]), Multisegment([]))
     >>> complete_intersect_multisegments(
     ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                   Segment(Point(0, 1), Point(1, 0))]),
     ...     Multisegment([]))
-    (Multipoint([]), Multisegment([]), Multipolygon([]))
+    (Multipoint([]), Multisegment([]))
     >>> complete_intersect_multisegments(
     ...     Multisegment([]),
     ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                   Segment(Point(0, 1), Point(1, 0))]))
-    (Multipoint([]), Multisegment([]), Multipolygon([]))
+    (Multipoint([]), Multisegment([]))
     >>> complete_intersect_multisegments(
     ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                   Segment(Point(0, 1), Point(1, 0))]),
     ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                   Segment(Point(0, 1), Point(1, 0))]))
     (Multipoint([]), Multisegment([Segment(Point(0, 0), Point(1, 0)),\
- Segment(Point(0, 1), Point(1, 0))]), Multipolygon([]))
+ Segment(Point(0, 1), Point(1, 0))]))
     >>> complete_intersect_multisegments(
     ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                   Segment(Point(0, 1), Point(1, 1))]),
     ...     Multisegment([Segment(Point(0, 0), Point(2, 0)),
     ...                   Segment(Point(0, 0), Point(2, 2))]))
     (Multipoint([Point(1, 1)]),\
- Multisegment([Segment(Point(0, 0), Point(1, 0))]), Multipolygon([]))
+ Multisegment([Segment(Point(0, 0), Point(1, 0))]))
     """
     context = get_context()
-    return _raw.to_mix(
-            _linear.CompleteIntersection(_raw.from_multisegment(left),
-                                         _raw.from_multisegment(right),
-                                         context=context).compute(),
-            context=context)
+    return _linear.CompleteIntersection(left.segments, right.segments,
+                                        context=context).compute()
 
 
 def intersect_multisegments(left: Multisegment,
@@ -180,11 +179,8 @@ def intersect_multisegments(left: Multisegment,
     ...                   Segment(Point(0, 0), Point(2, 2))]))
     Multisegment([Segment(Point(0, 0), Point(1, 0))])
     """
-    context = get_context()
-    return _raw.to_multisegment(
-        _linear.Intersection(_raw.from_multisegment(left),
-                             _raw.from_multisegment(right),
-                             context=context).compute())
+    return _linear.Intersection(left.segments, right.segments,
+                                context=get_context()).compute()
 
 
 def subtract_multisegments(minuend: Multisegment,
@@ -235,11 +231,8 @@ def subtract_multisegments(minuend: Multisegment,
     ...                   Segment(Point(0, 0), Point(2, 2))]))
     Multisegment([Segment(Point(0, 1), Point(1, 1))])
     """
-    context = get_context()
-    return _raw.to_multisegment(
-        _linear.Difference(_raw.from_multisegment(minuend),
-                           _raw.from_multisegment(subtrahend),
-                           context=context).compute())
+    return _linear.Difference(minuend.segments, subtrahend.segments,
+                              context=get_context()).compute()
 
 
 def symmetric_subtract_multisegments(left: Multisegment,
@@ -293,11 +286,8 @@ def symmetric_subtract_multisegments(left: Multisegment,
  Segment(Point(0, 1), Point(1, 1)), Segment(Point(1, 0), Point(2, 0)),\
  Segment(Point(1, 1), Point(2, 2))])
     """
-    context = get_context()
-    return _raw.to_multisegment(
-        _linear.SymmetricDifference(_raw.from_multisegment(left),
-                                    _raw.from_multisegment(right),
-                                    context=context).compute())
+    return _linear.SymmetricDifference(left.segments, right.segments,
+                                       context=get_context()).compute()
 
 
 def unite_multisegments(left: Multisegment,
@@ -348,10 +338,8 @@ def unite_multisegments(left: Multisegment,
  Segment(Point(0, 0), Point(1, 1)), Segment(Point(0, 1), Point(1, 1)),\
  Segment(Point(1, 0), Point(2, 0)), Segment(Point(1, 1), Point(2, 2))])
     """
-    context = get_context()
-    return _raw.to_multisegment(_linear.Union(_raw.from_multisegment(left),
-                                              _raw.from_multisegment(right),
-                                              context=context).compute())
+    return _linear.Union(left.segments, right.segments,
+                         context=get_context()).compute()
 
 
 def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
@@ -409,16 +397,14 @@ def intersect_multisegment_with_multipolygon(multisegment: Multisegment,
     ...                                    Point(1, 1), Point(0, 1)]), [])]))
     Multisegment([Segment(Point(0, 0), Point(1, 0))])
     """
-    context = get_context()
-    return _raw.to_multisegment(
-        _mixed.Intersection(_raw.from_multisegment(multisegment),
-                            _raw.from_multipolygon(multipolygon),
-                            context=context).compute())
+    return _mixed.Intersection(multisegment.segments,
+                               _raw.from_multipolygon(multipolygon),
+                               context=get_context()).compute()
 
 
 def complete_intersect_multisegment_with_multipolygon(
         multisegment: Multisegment,
-        multipolygon: Multipolygon) -> Mix:
+        multipolygon: Multipolygon) -> LinearMix:
     """
     Returns intersection of multisegment with multipolygon considering cases
     with geometries touching each other in points/segments.
@@ -447,38 +433,35 @@ def complete_intersect_multisegment_with_multipolygon(
     ...     context.segment_cls)
     >>> complete_intersect_multisegment_with_multipolygon(Multisegment([]),
     ...                                                   Multipolygon([]))
-    (Multipoint([]), Multisegment([]), Multipolygon([]))
+    (Multipoint([]), Multisegment([]))
     >>> complete_intersect_multisegment_with_multipolygon(
     ...     Multisegment([]),
     ...     Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
     ...                                    Point(0, 1)]), [])]))
-    (Multipoint([]), Multisegment([]), Multipolygon([]))
+    (Multipoint([]), Multisegment([]))
     >>> complete_intersect_multisegment_with_multipolygon(
     ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                   Segment(Point(0, 1), Point(1, 0))]),
     ...     Multipolygon([]))
-    (Multipoint([]), Multisegment([]), Multipolygon([]))
+    (Multipoint([]), Multisegment([]))
     >>> complete_intersect_multisegment_with_multipolygon(
     ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                   Segment(Point(0, 1), Point(1, 0))]),
     ...     Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
     ...                                    Point(0, 1)]), [])]))
     (Multipoint([]), Multisegment([Segment(Point(0, 0), Point(1, 0)),\
- Segment(Point(0, 1), Point(1, 0))]), Multipolygon([]))
+ Segment(Point(0, 1), Point(1, 0))]))
     >>> complete_intersect_multisegment_with_multipolygon(
     ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                   Segment(Point(1, 1), Point(2, 2))]),
     ...     Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
     ...                                    Point(1, 1), Point(0, 1)]), [])]))
     (Multipoint([Point(1, 1)]),\
- Multisegment([Segment(Point(0, 0), Point(1, 0))]), Multipolygon([]))
+ Multisegment([Segment(Point(0, 0), Point(1, 0))]))
     """
-    context = get_context()
-    return _raw.to_mix(
-            _mixed.CompleteIntersection(multisegment.segments,
-                                        _raw.from_multipolygon(multipolygon),
-                                        context=context).compute(),
-            context=context)
+    return _mixed.CompleteIntersection(multisegment.segments,
+                                       _raw.from_multipolygon(multipolygon),
+                                       context=get_context()).compute()
 
 
 def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
@@ -536,11 +519,9 @@ def subtract_multipolygon_from_multisegment(multisegment: Multisegment,
     ...                                    Point(1, 1), Point(0, 1)]), [])]))
     Multisegment([Segment(Point(1, 1), Point(2, 2))])
     """
-    context = get_context()
-    return _raw.to_multisegment(
-        _mixed.Difference(_raw.from_multisegment(multisegment),
-                          _raw.from_multipolygon(multipolygon),
-                          context=context).compute())
+    return _mixed.Difference(multisegment.segments,
+                             _raw.from_multipolygon(multipolygon),
+                             context=get_context()).compute()
 
 
 def complete_intersect_multiregions(left: Multiregion,
@@ -611,11 +592,9 @@ def complete_intersect_multiregions(left: Multiregion,
  [Contour([Point(0, 0), Point(1, 0), Point(1, 1), Point(0, 1)]),\
  Contour([Point(1, 1), Point(2, 1), Point(2, 2), Point(1, 2)])])
     """
-    context = get_context()
     return _raw.to_holeless_mix(
-        _holeless.CompleteIntersection(_raw.from_multiregion(left),
-                                       _raw.from_multiregion(right),
-                                       context=context).compute())
+            _holeless.CompleteIntersection(left, right,
+                                           context=get_context()).compute())
 
 
 def intersect_multiregions(left: Multiregion,
@@ -672,8 +651,7 @@ def intersect_multiregions(left: Multiregion,
     [Contour([Point(0, 0), Point(1, 0), Point(1, 1), Point(0, 1)]),\
  Contour([Point(1, 1), Point(2, 1), Point(2, 2), Point(1, 2)])]
     """
-    return _holeless.Intersection(_raw.from_multiregion(left),
-                                  _raw.from_multiregion(right),
+    return _holeless.Intersection(left, right,
                                   context=get_context()).compute()
 
 

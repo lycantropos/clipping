@@ -11,6 +11,7 @@ from typing import (Iterable,
 
 from ground.base import Context
 from ground.hints import (Point,
+                          Polygon,
                           Segment)
 from reprit.base import generate_repr
 
@@ -21,7 +22,6 @@ from .event import (HoleyEvent as Event,
 from .events_queue import HoleyEventsQueue as EventsQueue
 from .hints import (Mix,
                     Multipolygon,
-                    Polygon,
                     SegmentEndpoints)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
@@ -71,7 +71,7 @@ class Operation(ABC):
                                            else below_event)
         event.in_result = self.in_result(event)
 
-    def events_to_multipolygon(self, events: Iterable[Event]) -> Multipolygon:
+    def events_to_polygons(self, events: Iterable[Event]) -> Sequence[Polygon]:
         events = sorted([event for event in events if event.primary.in_result],
                         key=self._events_queue.key)
         for index, event in enumerate(events):
@@ -96,16 +96,19 @@ class Operation(ABC):
                 vertices.reverse()
             contours.append(contour_cls(vertices))
         result = []
+        polygon_cls = self.context.polygon_cls
         for index, contour in enumerate(contours):
             if are_internal[index]:
                 # hole of a hole is an external polygon
-                result.extend((contours[hole_index],
-                               [contours[hole_hole_index]
-                                for hole_hole_index in holes[hole_index]])
-                              for hole_index in holes[index])
+                result.extend(
+                        polygon_cls(contours[hole_index],
+                                    [contours[hole_hole_index]
+                                     for hole_hole_index in holes[hole_index]])
+                        for hole_index in holes[index])
             else:
-                result.append((contour, [contours[hole_index]
-                                         for hole_index in holes[index]]))
+                result.append(polygon_cls(contour,
+                                          [contours[hole_index]
+                                           for hole_index in holes[index]]))
         return result
 
     def fill_queue(self) -> None:
@@ -188,7 +191,7 @@ class Difference(Operation):
         if not self.right:
             return self.left
         self.normalize_operands()
-        return self.events_to_multipolygon(self.sweep())
+        return self.events_to_polygons(self.sweep())
 
     def in_result(self, event: Event) -> bool:
         return (event.outside
@@ -278,7 +281,7 @@ class CompleteIntersection(Operation):
         return (points,
                 endpoints_to_segments(endpoints,
                                       context=self.context),
-                self.events_to_multipolygon(events))
+                self.events_to_polygons(events))
 
 
 class Intersection(Operation):
@@ -300,7 +303,7 @@ class Intersection(Operation):
         if not (self.left and self.right):
             return []
         self.normalize_operands()
-        return self.events_to_multipolygon(self.sweep())
+        return self.events_to_polygons(self.sweep())
 
     def sweep(self) -> Iterable[Event]:
         self.fill_queue()
@@ -336,7 +339,7 @@ class SymmetricDifference(Operation):
             result.sort(key=to_first_border_vertex)
             return result
         self.normalize_operands()
-        return self.events_to_multipolygon(self.sweep())
+        return self.events_to_polygons(self.sweep())
 
     def in_result(self, event: Event) -> bool:
         return not event.is_overlap
@@ -357,7 +360,7 @@ class Union(Operation):
             result.sort(key=to_first_border_vertex)
             return result
         self.normalize_operands()
-        return self.events_to_multipolygon(self.sweep())
+        return self.events_to_polygons(self.sweep())
 
     def in_result(self, event: Event) -> bool:
         return (event.outside
