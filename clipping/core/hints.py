@@ -1,19 +1,16 @@
-from numbers import Real
 from typing import (Callable,
                     List,
-                    Tuple,
-                    Type)
+                    Tuple)
 
 from ground.base import Orientation
-from ground.hints import (Point as _Point,
+from ground.hints import (Contour as _Contour,
+                          Point as _Point,
                           Segment as _Segment)
 
-Coordinate = Real
-Base = Type[Coordinate]
 Multipoint = List[_Point]
 SegmentEndpoints = Tuple[_Point, _Point]
 Multisegment = List[_Segment]
-Contour = Region = List[_Point]
+Region = _Contour
 Multiregion = List[Region]
 Polygon = Tuple[Region, Multiregion]
 Multipolygon = List[Polygon]

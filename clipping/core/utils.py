@@ -12,11 +12,11 @@ from ground.base import (Context,
                          Relation,
                          get_context)
 from ground.hints import (Contour,
+                          Coordinate,
                           Point,
                           Segment)
 
-from .hints import (Coordinate,
-                    Multipolygon,
+from .hints import (Multipolygon,
                     Multiregion,
                     Multisegment,
                     Polygon,
