@@ -12,6 +12,7 @@ from typing import (Iterable,
 from ground.base import Context
 from ground.hints import (Multisegment,
                           Point,
+                          Polygon,
                           Segment)
 from reprit.base import generate_repr
 
@@ -19,33 +20,32 @@ from . import bounding
 from .event import (MixedEvent as Event,
                     event_to_segment_endpoints)
 from .events_queue import MixedBinaryEventsQueue as EventsQueue
-from .hints import (LinearMix,
-                    Multipolygon)
+from .hints import LinearMix
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     endpoints_to_segments,
                     polygon_to_oriented_edges_endpoints,
                     segments_to_endpoints,
-                    to_multipolygon_x_max,
+                    to_polygons_x_max,
                     to_segments_x_max)
 
 
 class Operation(ABC):
-    __slots__ = 'context', 'segments', 'multipolygon', '_events_queue'
+    __slots__ = 'context', 'segments', 'polygons', '_events_queue'
 
     def __init__(self,
                  segments: Sequence[Segment],
-                 multipolygon: Multipolygon,
+                 polygons: Sequence[Polygon],
                  context: Context) -> None:
         """
         Initializes operation.
 
         :param segments: left operand.
-        :param multipolygon: right operand.
+        :param polygons: right operand.
         :param context: operation context.
         """
-        self.context, self.segments, self.multipolygon = (context, segments,
-                                                          multipolygon)
+        self.context, self.segments, self.polygons = (context, segments,
+                                                      polygons)
         self._events_queue = EventsQueue(context)
 
     __repr__ = generate_repr(__init__)
@@ -69,7 +69,7 @@ class Operation(ABC):
         events_queue = self._events_queue
         events_queue.register(segments_to_endpoints(self.segments),
                               True)
-        for polygon in self.multipolygon:
+        for polygon in self.polygons:
             events_queue.register(
                     polygon_to_oriented_edges_endpoints(polygon,
                                                         context=self.context),
@@ -135,19 +135,18 @@ class Difference(Operation):
         return result
 
     def _compute(self) -> Sequence[Segment]:
-        if not (self.segments and self.multipolygon):
+        if not (self.segments and self.polygons):
             return self.segments
-        multisegment_box = bounding.from_segments(self.segments,
-                                                  context=self.context)
+        segments_box = bounding.from_segments(self.segments,
+                                              context=self.context)
         if bounding.disjoint_with(
-                multisegment_box,
-                bounding.from_multipolygon(self.multipolygon,
-                                           context=self.context)):
+                segments_box, bounding.from_polygons(self.polygons,
+                                                     context=self.context)):
             return self.segments
-        self.multipolygon = bounding.to_coupled_polygons(multisegment_box,
-                                                         self.multipolygon,
-                                                         context=self.context)
-        if not self.multipolygon:
+        self.polygons = bounding.to_coupled_polygons(segments_box,
+                                                     self.polygons,
+                                                     context=self.context)
+        if not self.polygons:
             return self.segments
         self.normalize_operands()
         return endpoints_to_segments([event_to_segment_endpoints(event)
@@ -173,7 +172,7 @@ class CompleteIntersection(Operation):
         events_queue = self._events_queue
         sweep_line = SweepLine(self.context)
         min_max_x = min(to_segments_x_max(self.segments),
-                        to_multipolygon_x_max(self.multipolygon))
+                        to_polygons_x_max(self.polygons))
         while events_queue:
             event = events_queue.pop()
             if min_max_x < event.start.x:
@@ -183,21 +182,21 @@ class CompleteIntersection(Operation):
         return result
 
     def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment]]:
-        if not (self.segments and self.multipolygon):
+        if not (self.segments and self.polygons):
             return [], []
         multisegment_box = bounding.from_segments(self.segments,
                                                   context=self.context)
-        multipolygon_box = bounding.from_multipolygon(self.multipolygon,
-                                                      context=self.context)
+        multipolygon_box = bounding.from_polygons(self.polygons,
+                                                  context=self.context)
         if bounding.disjoint_with(multisegment_box, multipolygon_box):
             return [], []
-        self.segments = bounding.to_intersecting_segments(
-                multipolygon_box, self.segments,
-                context=self.context)
-        self.multipolygon = bounding.to_intersecting_polygons(
-                multisegment_box, self.multipolygon,
-                context=self.context)
-        if not (self.segments and self.multipolygon):
+        self.segments = bounding.to_intersecting_segments(multipolygon_box,
+                                                          self.segments,
+                                                          context=self.context)
+        self.polygons = bounding.to_intersecting_polygons(multisegment_box,
+                                                          self.polygons,
+                                                          context=self.context)
+        if not (self.segments and self.polygons):
             return [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
@@ -234,7 +233,7 @@ class Intersection(Operation):
         events_queue = self._events_queue
         sweep_line = SweepLine(self.context)
         min_max_x = min(to_segments_x_max(self.segments),
-                        to_multipolygon_x_max(self.multipolygon))
+                        to_polygons_x_max(self.polygons))
         while events_queue:
             event = events_queue.pop()
             if min_max_x < event.start.x:
@@ -245,22 +244,22 @@ class Intersection(Operation):
         return result
 
     def _compute(self) -> Sequence[Segment]:
-        if not (self.segments and self.multipolygon):
+        if not (self.segments and self.polygons):
             return []
         multisegment_box = bounding.from_segments(self.segments,
                                                   context=self.context)
-        multipolygon_box = bounding.from_multipolygon(self.multipolygon,
-                                                      context=self.context)
+        multipolygon_box = bounding.from_polygons(self.polygons,
+                                                  context=self.context)
         if bounding.disjoint_with(multisegment_box,
                                   multipolygon_box):
             return []
         self.segments = bounding.to_intersecting_segments(
                 multipolygon_box, self.segments,
                 context=self.context)
-        self.multipolygon = bounding.to_intersecting_polygons(
-                multisegment_box, self.multipolygon,
-                context=self.context)
-        if not (self.segments and self.multipolygon):
+        self.polygons = bounding.to_intersecting_polygons(multisegment_box,
+                                                          self.polygons,
+                                                          context=self.context)
+        if not (self.segments and self.polygons):
             return []
         self.normalize_operands()
         return endpoints_to_segments([event_to_segment_endpoints(event)

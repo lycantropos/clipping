@@ -12,8 +12,7 @@ from orient.planar import (Relation,
                            segment_in_contour,
                            segment_in_region)
 
-from .hints import (Multipolygon,
-                    Multiregion,
+from .hints import (Multiregion,
                     Region,
                     SegmentEndpoints)
 from .utils import (SegmentsRelation,
@@ -43,14 +42,14 @@ def from_segments(segments: Sequence[Segment],
                        context=context)
 
 
-def from_multipolygon(multipolygon: Multipolygon,
-                      *,
-                      context: Context) -> Box:
+def from_polygons(polygons: Sequence[Polygon],
+                  *,
+                  context: Context) -> Box:
     """
     Builds box from multipolygon.
     """
     return from_points(flatten(polygon.border.vertices
-                               for polygon in multipolygon),
+                               for polygon in polygons),
                        context=context)
 
 
@@ -536,11 +535,11 @@ def to_coupled_segments(box: Box,
 
 
 def to_intersecting_polygons(box: Box,
-                             multipolygon: Multipolygon,
+                             polygons: Sequence[Polygon],
                              *,
-                             context: Context) -> Multipolygon:
+                             context: Context) -> Sequence[Polygon]:
     return [polygon
-            for polygon in multipolygon
+            for polygon in polygons
             if intersects_with_polygon(box, polygon,
                                        context=context)]
 
@@ -556,11 +555,11 @@ def to_intersecting_regions(box: Box,
 
 
 def to_coupled_polygons(box: Box,
-                        multipolygon: Multipolygon,
+                        polygons: Sequence[Polygon],
                         *,
-                        context: Context) -> Multipolygon:
+                        context: Context) -> Sequence[Polygon]:
     return [polygon
-            for polygon in multipolygon
+            for polygon in polygons
             if coupled_with_polygon(box, polygon,
                                     context=context)]
 

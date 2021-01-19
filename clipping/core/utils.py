@@ -17,8 +17,7 @@ from ground.hints import (Contour,
                           Polygon,
                           Segment)
 
-from .hints import (Multipolygon,
-                    Multiregion,
+from .hints import (Multiregion,
                     SegmentEndpoints)
 
 
@@ -36,12 +35,6 @@ def pairwise(iterable: Iterable[Domain]) -> Iterable[Tuple[Domain, Domain]]:
     for next_element in iterator:
         yield element, next_element
         element = next_element
-
-
-def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:
-    for border, holes in multipolygon:
-        yield border
-        yield from holes
 
 
 def polygon_to_oriented_edges_endpoints(polygon: Polygon,
@@ -97,16 +90,16 @@ def to_first_border_vertex(polygon: Polygon) -> Point:
     return polygon.border.vertices[0]
 
 
-def to_multipolygon_x_max(multipolygon: Multipolygon) -> Coordinate:
-    return max(vertex.x
-               for polygon in multipolygon
-               for vertex in polygon.border.vertices)
-
-
 def to_multiregion_x_max(multiregion: Multiregion) -> Coordinate:
     return max(vertex.x
                for border in multiregion
                for vertex in border.vertices)
+
+
+def to_polygons_x_max(polygons: Sequence[Polygon]) -> Coordinate:
+    return max(vertex.x
+               for polygon in polygons
+               for vertex in polygon.border.vertices)
 
 
 def to_segments_x_max(segments: Sequence[Segment]) -> Coordinate:
