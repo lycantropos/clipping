@@ -1,6 +1,6 @@
+from ground.hints import Multipolygon
 from hypothesis import given
 
-from clipping.hints import Multipolygon
 from clipping.planar import (intersect_multipolygons,
                              subtract_multipolygons,
                              symmetric_subtract_multipolygons,

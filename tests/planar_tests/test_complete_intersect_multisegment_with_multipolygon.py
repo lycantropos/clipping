@@ -8,20 +8,20 @@ from orient.planar import (Relation,
                            segment_in_segment)
 
 from clipping.core.utils import (SegmentsRelation,
-                                 contour_to_segments,
-                                 segments_relation,
-                                 to_multipolygon_contours)
+                                 contour_to_edges_endpoints,
+                                 segments_relation)
 from clipping.planar import (complete_intersect_multisegment_with_multipolygon,
                              intersect_multisegment_with_multipolygon)
 from tests.utils import (MultipolygonWithMultisegment,
                          is_mix,
-                         reverse_multipolygon,
+                         is_mix_empty, reverse_multipolygon,
                          reverse_multipolygon_borders,
                          reverse_multipolygon_holes,
                          reverse_multipolygon_holes_contours,
                          reverse_multisegment,
                          reverse_multisegment_endpoints,
-                         sort_pair)
+                         to_multipolygon_contours,
+                         to_sorted_segment)
 from . import strategies
 
 
@@ -47,41 +47,45 @@ def test_properties(multipolygon_with_multisegment
     result_multipoint, result_multisegment, result_multipolygon = result
     assert all(point_in_multisegment(point, multisegment)
                is Relation.COMPONENT
-               for point in result_multipoint)
+               for point in result_multipoint.points)
     assert all(point_in_multipolygon(point, multipolygon)
                is Relation.COMPONENT
-               for point in result_multipoint)
+               for point in result_multipoint.points)
     assert all(any(point_in_segment(point, segment) is Relation.COMPONENT
-                   for point in result_multipoint)
-               or any(segments_relation(segment, result_segment)
+                   for point in result_multipoint.points)
+               or any(segments_relation(segment.start, segment.end,
+                                        result_segment.start,
+                                        result_segment.end)
                       is SegmentsRelation.TOUCH
-                      for result_segment in result_multisegment)
-               for segment in multisegment
+                      for result_segment in result_multisegment.segments)
+               for segment in multisegment.segments
                if (segment_in_multipolygon(segment, multipolygon)
                    is Relation.TOUCH
-                   and all(segments_relation(segment, edge)
+                   and all(segments_relation(segment.start, segment.end,
+                                             edge_start, edge_end)
                            in (SegmentsRelation.CROSS,
                                SegmentsRelation.DISJOINT,
                                SegmentsRelation.TOUCH)
                            for contour
                            in to_multipolygon_contours(multipolygon)
-                           for edge in contour_to_segments(contour))))
+                           for edge_start, edge_end
+                           in contour_to_edges_endpoints(contour))))
     assert all(segment_in_multisegment(segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
-               for segment in result_multisegment)
+               for segment in result_multisegment.segments)
     assert all(segment_in_multipolygon(segment, multipolygon)
                in (Relation.COMPONENT, Relation.ENCLOSED, Relation.WITHIN)
-               for segment in result_multisegment)
-    assert all(sort_pair(segment) in result_multisegment
+               for segment in result_multisegment.segments)
+    assert all(to_sorted_segment(segment) in result_multisegment.segments
                # in case of cross
                or any(segment_in_segment(result_segment, segment)
                       is Relation.COMPONENT
-                      for result_segment in result_multisegment)
-               for segment in multisegment
+                      for result_segment in result_multisegment.segments)
+               for segment in multisegment.segments
                if (segment_in_multipolygon(segment, multipolygon)
                    in (Relation.CROSS, Relation.COMPONENT, Relation.ENCLOSED,
                        Relation.WITHIN)))
-    assert not result_multipolygon
+    assert not result_multipolygon.polygons
 
 
 @given(strategies.empty_multipolygons_with_multisegments)
@@ -92,7 +96,7 @@ def test_left_absorbing_element(empty_multipolygon_with_multisegment
     result = complete_intersect_multisegment_with_multipolygon(
             multisegment, empty_multipolygon)
 
-    assert not any(result)
+    assert is_mix_empty(result)
 
 
 @given(strategies.multipolygons_with_empty_multisegments)
@@ -103,7 +107,7 @@ def test_right_absorbing_element(multipolygon_with_empty_multisegment
     result = complete_intersect_multisegment_with_multipolygon(
             empty_multisegment, multipolygon)
 
-    assert not any(result)
+    assert is_mix_empty(result)
 
 
 @given(strategies.multipolygons_with_multisegments)

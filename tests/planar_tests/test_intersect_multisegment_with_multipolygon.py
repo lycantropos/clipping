@@ -13,7 +13,7 @@ from tests.utils import (MultipolygonWithMultisegment,
                          reverse_multipolygon_holes_contours,
                          reverse_multisegment,
                          reverse_multisegment_endpoints,
-                         sort_pair)
+                         to_sorted_segment)
 from . import strategies
 
 
@@ -38,16 +38,16 @@ def test_properties(multipolygon_with_multisegment
 
     assert all(segment_in_multisegment(segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
-               for segment in result)
+               for segment in result.segments)
     assert all(segment_in_multipolygon(segment, multipolygon)
                in (Relation.COMPONENT, Relation.ENCLOSED, Relation.WITHIN)
-               for segment in result)
-    assert all(sort_pair(segment) in result
+               for segment in result.segments)
+    assert all(to_sorted_segment(segment) in result.segments
                # in case of cross
                or any(segment_in_segment(result_segment, segment)
                       is Relation.COMPONENT
-                      for result_segment in result)
-               for segment in multisegment
+                      for result_segment in result.segments)
+               for segment in multisegment.segments
                if (segment_in_multipolygon(segment, multipolygon)
                    in (Relation.CROSS, Relation.COMPONENT, Relation.ENCLOSED,
                        Relation.WITHIN)))

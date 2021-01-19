@@ -1,6 +1,6 @@
+from ground.hints import Multisegment
 from hypothesis import given
 
-from clipping.hints import Multisegment
 from clipping.planar import (intersect_multisegments,
                              subtract_multisegments,
                              unite_multisegments)
@@ -48,9 +48,19 @@ def test_right_absorbing_element(empty_multisegment_with_multisegment
     assert not result
 
 
-@given(strategies.rational_multisegments_pairs)
+@given(strategies.multisegments_pairs)
 def test_absorption_identity(multisegments_pair: MultisegmentsPair) -> None:
+    # multisegments_pair = ([((1.0, 1.0), (1.00000000000002, 26.0121956888678))],
+    #                       [((1.0, 1.00000000000002),
+    #                         (3.59127807432821, 7.40977565656075))])
     left_multisegment, right_multisegment = multisegments_pair
+
+    # plot.clf()
+    # plot.draw_multisegment(left_multisegment,
+    #                        color='r')
+    # plot.draw_multisegment(right_multisegment,
+    #                        color='b')
+    # plot.show()
 
     result = intersect_multisegments(left_multisegment,
                                      unite_multisegments(left_multisegment,

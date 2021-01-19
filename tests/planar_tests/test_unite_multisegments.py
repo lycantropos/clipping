@@ -1,6 +1,6 @@
+from ground.hints import Multisegment
 from hypothesis import given
 
-from clipping.hints import Multisegment
 from clipping.planar import (intersect_multisegments,
                              subtract_multisegments,
                              symmetric_subtract_multisegments,

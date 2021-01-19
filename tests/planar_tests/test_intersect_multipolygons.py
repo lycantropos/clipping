@@ -1,6 +1,6 @@
+from ground.hints import Multipolygon
 from hypothesis import given
 
-from clipping.hints import Multipolygon
 from clipping.planar import (intersect_multipolygons,
                              subtract_multipolygons,
                              unite_multipolygons)
@@ -48,7 +48,7 @@ def test_right_absorbing_element(empty_multipolygon_with_multipolygon
 
     result = intersect_multipolygons(multipolygon, empty_multipolygon)
 
-    assert not result
+    assert not result.polygons
 
 
 @given(strategies.multipolygons_pairs)

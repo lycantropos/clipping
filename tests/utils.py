@@ -1,39 +1,42 @@
-from numbers import Number
-from operator import itemgetter
 from typing import (Any,
                     Callable,
+                    Iterable,
                     Sequence,
                     Tuple,
                     TypeVar)
 
 from ground.base import get_context
+from ground.hints import Contour
 from hypothesis import strategies
 from hypothesis.strategies import SearchStrategy
 from orient.planar import (Relation,
                            multisegment_in_multisegment)
 
-from clipping.core.hints import BoundingBox
+from clipping.core.bounding import to_vertices
 from clipping.core.utils import (Orientation,
                                  SegmentsRelation,
                                  orientation,
                                  segments_intersection,
-                                 segments_relation,
-                                 to_first_boundary_vertex)
-from clipping.hints import (Contour,
-                            HolelessMix,
+                                 segments_relation)
+from clipping.hints import (HolelessMix,
+                            LinearMix,
                             Mix,
-                            Multipoint,
-                            Multipolygon,
-                            Multiregion,
-                            Multisegment,
-                            Point,
-                            Segment)
+                            Multiregion)
 
 Strategy = SearchStrategy
 Domain = TypeVar('Domain')
 Key = Callable[[Domain], Any]
-BoundingBoxesPair = Tuple[BoundingBox, BoundingBox]
-BoundingBoxesTriplet = Tuple[BoundingBox, BoundingBox, BoundingBox]
+_context = get_context()
+Box = _context.box_cls
+Contour = _context.contour_cls
+Multipoint = _context.multipoint_cls
+Multipolygon = _context.multipolygon_cls
+Multisegment = _context.multisegment_cls
+Point = _context.point_cls
+Polygon = _context.polygon_cls
+Segment = _context.segment_cls
+BoxesPair = Tuple[Box, Box]
+BoxesTriplet = Tuple[Box, Box, Box]
 MultisegmentsPair = Tuple[Multisegment, Multisegment]
 MultisegmentsTriplet = Tuple[Multisegment, Multisegment, Multisegment]
 MultipolygonWithMultisegment = Tuple[Multipolygon, Multisegment]
@@ -41,7 +44,6 @@ MultiregionsPair = Tuple[Multiregion, Multiregion]
 MultiregionsTriplet = Tuple[Multiregion, Multiregion, Multiregion]
 MultipolygonsPair = Tuple[Multipolygon, Multipolygon]
 MultipolygonsTriplet = Tuple[Multipolygon, Multipolygon, Multipolygon]
-context = get_context()
 
 
 def equivalence(left_statement: bool, right_statement: bool) -> bool:
@@ -57,22 +59,23 @@ def arg_min(values: Sequence[Domain]) -> int:
                key=values.__getitem__)
 
 
-def mix_equivalent_to_multisegment(mix: Mix, other: Multisegment) -> bool:
-    multipoint, multisegment, multipolygon = mix
-    return (not multipoint and not multipolygon
+def linear_mix_equivalent_to_multisegment(mix: LinearMix,
+                                          other: Multisegment) -> bool:
+    multipoint, multisegment = mix
+    return (not multipoint.points
             and are_multisegments_equivalent(multisegment, other))
 
 
 def mix_similar_to_multipolygon(mix: Mix, other: Multipolygon) -> bool:
     multipoint, multisegment, multipolygon = mix
-    return (not multipoint and not multisegment
+    return (not multipoint.points and not multisegment.segments
             and are_multipolygons_similar(multipolygon, other))
 
 
 def holeless_mix_similar_to_multiregion(mix: HolelessMix,
                                         other: Multiregion) -> bool:
     multipoint, multisegment, multiregion = mix
-    return (not multipoint and not multisegment
+    return (not multipoint.points and not multisegment.segments
             and are_multiregions_similar(multiregion, other))
 
 
@@ -98,9 +101,7 @@ def are_multisegments_similar(left: Multisegment, right: Multisegment) -> bool:
 
 def are_multisegments_equivalent(left: Multisegment,
                                  right: Multisegment) -> bool:
-    return (not (left or right)
-            or sorted(map(sort_pair, left)) == sorted(map(sort_pair, right))
-            or multisegment_in_multisegment(left, right) is Relation.EQUAL)
+    return multisegment_in_multisegment(left, right) is Relation.EQUAL
 
 
 def are_multipolygons_similar(left: Multipolygon, right: Multipolygon) -> bool:
@@ -111,32 +112,36 @@ def are_multiregions_similar(left: Multiregion, right: Multiregion) -> bool:
     return normalize_multiregion(left) == normalize_multiregion(right)
 
 
-def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
-    result = [(normalize_region(boundary), normalize_multiregion(holes))
-              for boundary, holes in multipolygon]
-    result.sort(key=to_first_boundary_vertex)
+def normalize_multipolygon(multipolygon: Multipolygon
+                           ) -> Sequence[Tuple[Contour, Sequence[Contour]]]:
+    result = [(normalize_region(polygon.border),
+               normalize_multiregion(polygon.holes))
+              for polygon in multipolygon.polygons]
+    result.sort(key=lambda pair: pair[0].vertices[0])
     return result
 
 
 def normalize_multiregion(multiregion: Multiregion) -> Multiregion:
     result = [normalize_region(region) for region in multiregion]
-    result.sort(key=itemgetter(0))
+    result.sort(key=lambda region: region.vertices[0])
     return result
 
 
 def normalize_region(contour: Contour) -> Contour:
-    return to_counterclockwise_contour(rotate_sequence(contour,
-                                                       arg_min(contour)))
+    return Contour(_to_counterclockwise_vertices(
+            rotate_sequence(contour.vertices,
+                            arg_min(contour.vertices))))
 
 
-def to_counterclockwise_contour(contour: Contour) -> Contour:
-    if _to_first_angle_orientation(contour) is not Orientation.CLOCKWISE:
-        contour = contour[:1] + contour[1:][::-1]
-    return contour
+def _to_counterclockwise_vertices(vertices: Sequence[Point]
+                                  ) -> Sequence[Point]:
+    if _to_first_angle_orientation(vertices) is not Orientation.CLOCKWISE:
+        vertices = vertices[:1] + vertices[1:][::-1]
+    return vertices
 
 
-def _to_first_angle_orientation(contour: Contour) -> Orientation:
-    return orientation(contour[-1], contour[0], contour[1])
+def _to_first_angle_orientation(vertices: Sequence[Point]) -> Orientation:
+    return orientation(_context, vertices[-1], vertices[0], vertices[1])
 
 
 def reverse_sequence(sequence: Domain) -> Domain:
@@ -156,6 +161,9 @@ def to_triplets(strategy: Strategy[Domain]
     return strategies.tuples(strategy, strategy, strategy)
 
 
+is_contour = Contour.__instancecheck__
+
+
 def is_holeless_mix(object_: Any) -> bool:
     return (isinstance(object_, tuple)
             and len(object_) == 3
@@ -172,79 +180,72 @@ def is_mix(object_: Any) -> bool:
             and is_multipolygon(object_[2]))
 
 
-def is_multipoint(object_: Any) -> bool:
-    return isinstance(object_, list) and all(map(is_point, object_))
-
-
-def is_multipolygon(object_: Any) -> bool:
-    return isinstance(object_, list) and all(map(is_polygon, object_))
+is_multipoint = Multipoint.__instancecheck__
+is_multipolygon = Multipolygon.__instancecheck__
 
 
 def is_multiregion(object_: Any) -> bool:
     return isinstance(object_, list) and all(map(is_region, object_))
 
 
-def is_multisegment(object_: Any) -> bool:
-    return isinstance(object_, list) and all(map(is_segment, object_))
-
-
-def is_polygon(object_: Any) -> bool:
-    return (isinstance(object_, tuple)
-            and len(object_) == 2
-            and is_contour(object_[0])
-            and isinstance(object_[1], list)
-            and all(map(is_contour, object_[1])))
-
-
-def is_contour(object_: Any) -> bool:
-    return (isinstance(object_, list)
-            and len(object_) >= 3
-            and all(map(is_point, object_)))
-
-
+is_multisegment = Multisegment.__instancecheck__
+is_polygon = Polygon.__instancecheck__
 is_region = is_contour
 
 
-def is_segment(object_: Any) -> bool:
-    return (isinstance(object_, tuple)
-            and len(object_) == 2
-            and all(map(is_point, object_))
-            and len(set(object_)) == 2)
-
-
-def is_point(object_: Any) -> bool:
-    return (isinstance(object_, tuple)
-            and len(object_) == 2
-            and all(isinstance(coordinate, Number)
-                    for coordinate in object_)
-            and len(set(map(type, object_))) == 1)
+def reverse_contour(contour: Contour) -> Contour:
+    return Contour(reverse_sequence(contour.vertices))
 
 
 def reverse_multipolygon_borders(multipolygon: Multipolygon) -> Multipolygon:
-    return [(reverse_region(border), holes) for border, holes in multipolygon]
+    return Multipolygon([Polygon(reverse_region(polygon.border),
+                                 polygon.holes)
+                         for polygon in multipolygon.polygons])
 
 
 def reverse_multipolygon_holes(multipolygon: Multipolygon) -> Multipolygon:
-    return [(border, reverse_multiregion(holes))
-            for border, holes in multipolygon]
+    return Multipolygon([Polygon(polygon.border,
+                                 reverse_multiregion(polygon.holes))
+                         for polygon in multipolygon.polygons])
 
 
 def reverse_multipolygon_holes_contours(multipolygon: Multipolygon
                                         ) -> Multipolygon:
-    return [(border, [reverse_region(hole) for hole in holes])
-            for border, holes in multipolygon]
+    return Multipolygon([Polygon(polygon.border,
+                                 [reverse_region(hole)
+                                  for hole in polygon.holes])
+                         for polygon in multipolygon.polygons])
 
 
-reverse_multipolygon = reverse_multiregion = reverse_multisegment = \
-    reverse_region = reverse_segment = reverse_sequence
+def reverse_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
+    return Multipolygon(multipolygon.polygons[::-1])
+
+
+reverse_multiregion = reverse_sequence
 
 
 def reverse_multiregion_regions(multiregion: Multiregion) -> Multiregion:
     return [reverse_region(region) for region in multiregion]
 
 
+def reverse_multisegment(multisegment: Multisegment) -> Multisegment:
+    return Multisegment(reverse_sequence(multisegment.segments))
+
+
 def reverse_multisegment_endpoints(multisegment: Multisegment) -> Multisegment:
-    return [reverse_segment(segment) for segment in multisegment]
+    return Multisegment([reverse_segment(segment)
+                         for segment in multisegment.segments])
+
+
+reverse_region = reverse_contour
+
+
+def reverse_segment(segment: Segment) -> Segment:
+    return Segment(segment.end, segment.start)
+
+
+def to_sorted_segment(segment: Segment) -> Segment:
+    return segment if segment.start < segment.end else reverse_segment(segment)
 
 
 def sort_pair(pair: Tuple[Domain, Domain]) -> Tuple[Domain, Domain]:
@@ -263,12 +264,48 @@ def multiregion_to_multipolygon(multiregion: Multiregion) -> Multipolygon:
 
 def segments_intersections(first: Segment, second: Segment
                            ) -> Tuple[Point, ...]:
-    relation = segments_relation(first, second)
+    first_start, first_end = first.start, first.end
+    second_start, second_end = second.start, second.end
+    relation = segments_relation(first_start, first_end, second_start,
+                                 second_end)
     if relation is SegmentsRelation.DISJOINT:
         return ()
     elif (relation is SegmentsRelation.TOUCH
           or relation is SegmentsRelation.CROSS):
-        return segments_intersection(context, first, second),
+        return segments_intersection(_context, first_start, first_end,
+                                     second_start, second_end),
     else:
-        _, first_point, second_point, _ = sorted(first + second)
+        _, first_point, second_point, _ = sorted([first_start, first_end,
+                                                  second_start, second_end])
         return first_point, second_point
+
+
+def is_holeless_mix_empty(mix: HolelessMix) -> bool:
+    multipoint, multisegment, multiregion = mix
+    return not (multipoint.points or multisegment.segments
+                or multiregion)
+
+
+def is_mix_empty(mix: Mix) -> bool:
+    multipoint, multisegment, multipolygon = mix
+    return not (multipoint.points or multisegment.segments
+                or multipolygon.polygons)
+
+
+def box_to_contour(box: Box) -> Contour:
+    return Contour(to_vertices(box,
+                               context=_context))
+
+
+def box_to_polygon(box: Box) -> Polygon:
+    return contour_to_polygon(box_to_contour(box))
+
+
+def contour_to_polygon(contour: Contour) -> Polygon:
+    return Polygon(contour, [])
+
+
+def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:
+    for polygon in multipolygon.polygons:
+        yield polygon.border
+        yield from polygon.holes

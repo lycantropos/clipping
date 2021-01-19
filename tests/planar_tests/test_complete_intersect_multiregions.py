@@ -6,6 +6,7 @@ from clipping.planar import (complete_intersect_multiregions,
 from tests.utils import (MultiregionsPair,
                          holeless_mix_similar_to_multiregion,
                          is_holeless_mix,
+                         is_holeless_mix_empty,
                          reverse_multiregion,
                          reverse_multiregion_regions)
 from . import strategies
@@ -35,7 +36,7 @@ def test_left_absorbing_element(empty_multiregion_with_multiregion
 
     result = complete_intersect_multiregions(empty_multiregion, multiregion)
 
-    assert not any(result)
+    assert is_holeless_mix_empty(result)
 
 
 @given(strategies.empty_multiregions_with_multiregions)
@@ -45,7 +46,7 @@ def test_right_absorbing_element(empty_multiregion_with_multiregion
 
     result = complete_intersect_multiregions(multiregion, empty_multiregion)
 
-    assert not any(result)
+    assert is_holeless_mix_empty(result)
 
 
 @given(strategies.multiregions_pairs)

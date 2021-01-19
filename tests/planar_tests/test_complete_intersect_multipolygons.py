@@ -1,11 +1,12 @@
+from ground.hints import Multipolygon
 from hypothesis import given
 
-from clipping.hints import Multipolygon
 from clipping.planar import (complete_intersect_multipolygons,
                              intersect_multipolygons,
                              unite_multipolygons)
 from tests.utils import (MultipolygonsPair,
                          is_mix,
+                         is_mix_empty,
                          mix_similar_to_multipolygon,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
@@ -38,7 +39,7 @@ def test_left_absorbing_element(empty_multipolygon_with_multipolygon
 
     result = complete_intersect_multipolygons(empty_multipolygon, multipolygon)
 
-    assert not any(result)
+    assert is_mix_empty(result)
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)
@@ -48,7 +49,7 @@ def test_right_absorbing_element(empty_multipolygon_with_multipolygon
 
     result = complete_intersect_multipolygons(multipolygon, empty_multipolygon)
 
-    assert not any(result)
+    assert is_mix_empty(result)
 
 
 @given(strategies.multipolygons_pairs)

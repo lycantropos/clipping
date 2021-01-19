@@ -2,24 +2,25 @@ from itertools import combinations
 from typing import (List,
                     Tuple)
 
+from ground.hints import Coordinate
 from hypothesis import strategies
 from hypothesis_geometry import planar
 
-from clipping.hints import (Coordinate,
-                            Multipolygon,
-                            Multisegment,
-                            Point,
-                            Segment)
 from tests.strategies import (coordinates_strategies,
                               rational_coordinates_strategies)
-from tests.utils import (Strategy,
+from tests.utils import (Multipolygon,
+                         Multisegment,
+                         Point,
+                         Segment,
+                         Strategy,
                          to_pairs,
                          to_triplets)
 
 
 def points_to_nets(points: Strategy[Point]) -> Strategy[List[Segment]]:
     def to_net(points_list: List[Point]) -> List[Segment]:
-        return list(combinations(points_list, 2))
+        return [Segment(start, end)
+                for start, end in combinations(points_list, 2)]
 
     return (strategies.lists(points,
                              min_size=2,
@@ -37,8 +38,9 @@ segments_lists = ((coordinates_strategies.map(planar.segments)
                    .flatmap(strategies.lists))
                   | (coordinates_strategies.map(planar.points)
                      .flatmap(points_to_nets)))
-empty_multipolygons = empty_multiregions = empty_multisegments = (
-    strategies.builds(list))
+empty_multipolygons = strategies.builds(Multipolygon, strategies.builds(list))
+empty_multiregions = strategies.builds(list)
+empty_multisegments = strategies.builds(Multisegment, strategies.builds(list))
 multipolygons = coordinates_strategies.flatmap(planar.multipolygons)
 multiregions = coordinates_strategies.flatmap(planar.multicontours)
 multisegments = coordinates_strategies.flatmap(planar.multisegments)
