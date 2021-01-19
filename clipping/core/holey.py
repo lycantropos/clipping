@@ -9,23 +9,24 @@ from typing import (Iterable,
                     Union as Union_)
 
 from ground.base import Context
+from ground.hints import Point
 from reprit.base import generate_repr
 
 from . import bounding
 from .event import (HoleyEvent as Event,
+                    event_to_segment_endpoints,
                     events_to_connectivity)
 from .events_queue import HoleyEventsQueue as EventsQueue
-from .hints import (Contour,
-                    Mix,
+from .hints import (Mix,
                     Multipoint,
                     Multipolygon,
                     Multisegment)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
-                    pairwise,
-                    polygon_to_oriented_segments,
+                    endpoints_to_multisegment, pairwise,
+                    polygon_to_oriented_edges_endpoints,
                     shrink_collinear_vertices,
-                    to_first_boundary_vertex,
+                    to_first_border_vertex,
                     to_multipolygon_x_max)
 
 
@@ -74,6 +75,7 @@ class Operation(ABC):
             event.position = index
         are_internal, depths, holes, parents = [], [], [], []
         processed = [False] * len(events)
+        contour_cls = self.context.contour_cls
         contours = []
         connectivity = events_to_connectivity(events)
         for index, event in enumerate(events):
@@ -82,14 +84,14 @@ class Operation(ABC):
             contour_id = len(contours)
             _compute_relations(event, contour_id, are_internal, depths, holes,
                                parents)
-            contour = _events_to_contour(event, events, contour_id,
-                                         connectivity, processed)
-            shrink_collinear_vertices(contour,
+            vertices = _events_to_contour_vertices(event, events, contour_id,
+                                                   connectivity, processed)
+            shrink_collinear_vertices(vertices,
                                       context=self.context)
             if depths[contour_id] % 2:
                 # holes will be in clockwise order
-                contour.reverse()
-            contours.append(contour)
+                vertices.reverse()
+            contours.append(contour_cls(vertices))
         result = []
         for index, contour in enumerate(contours):
             if are_internal[index]:
@@ -106,13 +108,15 @@ class Operation(ABC):
     def fill_queue(self) -> None:
         events_queue = self._events_queue
         for polygon in self.left:
-            events_queue.register_segments(
-                    polygon_to_oriented_segments(polygon,
-                                                 context=self.context), True)
+            events_queue.register(
+                    polygon_to_oriented_edges_endpoints(polygon,
+                                                        context=self.context),
+                    True)
         for polygon in self.right:
-            events_queue.register_segments(
-                    polygon_to_oriented_segments(polygon,
-                                                 context=self.context), False)
+            events_queue.register(
+                    polygon_to_oriented_edges_endpoints(polygon,
+                                                        context=self.context),
+                    False)
 
     @abstractmethod
     def in_result(self, event: Event) -> bool:
@@ -173,7 +177,8 @@ class Difference(Operation):
         if bounding.disjoint_with(
                 left_box, bounding.from_multipolygon(self.right)):
             return self.left
-        self.right = bounding.to_coupled_polygons(left_box, self.right)
+        self.right = bounding.to_coupled_polygons(left_box, self.right,
+                                                  context=self.context)
         if not self.right:
             return self.left
         self.normalize_operands()
@@ -192,8 +197,7 @@ class Difference(Operation):
         left_x_max = to_multipolygon_x_max(self.left)
         while events_queue:
             event = events_queue.pop()
-            start_x, _ = event.start
-            if start_x > left_x_max:
+            if left_x_max < event.start.x:
                 break
             self.process_event(event, result, sweep_line)
         return result
@@ -209,15 +213,17 @@ class CompleteIntersection(Operation):
         right_box = bounding.from_multipolygon(self.right)
         if bounding.disjoint_with(left_box, right_box):
             return [], [], []
-        self.left = bounding.to_intersecting_polygons(right_box, self.left)
-        self.right = bounding.to_intersecting_polygons(left_box, self.right)
+        self.left = bounding.to_intersecting_polygons(right_box, self.left,
+                                                      context=self.context)
+        self.right = bounding.to_intersecting_polygons(left_box, self.right,
+                                                       context=self.context)
         if not (self.left and self.right):
             return [], [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
                         key=self._events_queue.key)
         multipoint = []  # type: Multipoint
-        multisegment = []  # type: Multisegment
+        segments_endpoints = []  # type: Multisegment
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
@@ -228,14 +234,18 @@ class CompleteIntersection(Operation):
                 no_segment_found = True
                 for event, next_event in pairwise(same_start_events):
                     if (event.from_left is not next_event.from_left
-                            and event.segment == next_event.segment):
+                            and event.start == next_event.start
+                            and event.end == next_event.end):
                         no_segment_found = False
                         if not event.is_right_endpoint:
-                            multisegment.append(next_event.segment)
+                            segments_endpoints.append(
+                                    event_to_segment_endpoints(next_event))
                 if no_segment_found and all(not event.primary.in_result
                                             for event in same_start_events):
                     multipoint.append(start)
-        return multipoint, multisegment, self.events_to_multipolygon(events)
+        return (multipoint, endpoints_to_multisegment(segments_endpoints,
+                                                      context=self.context),
+                self.events_to_multipolygon(events))
 
     def sweep(self) -> Iterable[Event]:
         self.fill_queue()
@@ -246,8 +256,7 @@ class CompleteIntersection(Operation):
                         to_multipolygon_x_max(self.right))
         while events_queue:
             event = events_queue.pop()
-            start_x, _ = event.start
-            if start_x > min_max_x:
+            if min_max_x < event.start.x:
                 break
             self.process_event(event, result, sweep_line)
         return result
@@ -267,8 +276,10 @@ class Intersection(Operation):
         right_box = bounding.from_multipolygon(self.right)
         if bounding.disjoint_with(left_box, right_box):
             return []
-        self.left = bounding.to_coupled_polygons(right_box, self.left)
-        self.right = bounding.to_coupled_polygons(left_box, self.right)
+        self.left = bounding.to_coupled_polygons(right_box, self.left,
+                                                 context=self.context)
+        self.right = bounding.to_coupled_polygons(left_box, self.right,
+                                                  context=self.context)
         if not (self.left and self.right):
             return []
         self.normalize_operands()
@@ -283,8 +294,7 @@ class Intersection(Operation):
                         to_multipolygon_x_max(self.right))
         while events_queue:
             event = events_queue.pop()
-            start_x, _ = event.start
-            if start_x > min_max_x:
+            if min_max_x < event.start.x:
                 break
             self.process_event(event, result, sweep_line)
         return result
@@ -303,7 +313,7 @@ class SymmetricDifference(Operation):
         elif bounding.disjoint_with(bounding.from_multipolygon(self.left),
                                     bounding.from_multipolygon(self.right)):
             result = self.left + self.right
-            result.sort(key=to_first_boundary_vertex)
+            result.sort(key=to_first_border_vertex)
             return result
         self.normalize_operands()
         return self.events_to_multipolygon(self.sweep())
@@ -321,7 +331,7 @@ class Union(Operation):
         elif bounding.disjoint_with(bounding.from_multipolygon(self.left),
                                     bounding.from_multipolygon(self.right)):
             result = self.left + self.right
-            result.sort(key=to_first_boundary_vertex)
+            result.sort(key=to_first_border_vertex)
             return result
         self.normalize_operands()
         return self.events_to_multipolygon(self.sweep())
@@ -360,11 +370,11 @@ def _compute_relations(event: Event,
     are_internal.append(is_internal)
 
 
-def _events_to_contour(cursor: Event,
-                       events: Sequence[Event],
-                       contour_id: int,
-                       connectivity: Sequence[int],
-                       processed: List[bool]) -> Contour:
+def _events_to_contour_vertices(cursor: Event,
+                                events: Sequence[Event],
+                                contour_id: int,
+                                connectivity: Sequence[int],
+                                processed: List[bool]) -> List[Point]:
     contour_start = cursor.start
     contour = [contour_start]
     contour_events = [cursor]

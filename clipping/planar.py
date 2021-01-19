@@ -72,10 +72,8 @@ def segments_to_multisegment(segments: Sequence[Segment]) -> Multisegment:
     """
     context = get_context()
     return _raw.to_multisegment(
-            sorted(segment
-                   for segment, _ in _groupby(_linear.merge_segments(
-                    _raw.from_segments(segments),
-                    context=context))),
+            _linear.merge_segments(_raw.from_segments(segments),
+                                   context=context),
             context=context)
 
 

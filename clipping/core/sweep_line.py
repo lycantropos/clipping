@@ -123,31 +123,27 @@ class BinarySweepLineKey:
         other_start_orientation = self.orienteer(end, start, other_start)
         other_end_orientation = self.orienteer(end, start, other_end)
         if other_start_orientation is other_end_orientation:
-            start_x, start_y = start
-            other_start_x, other_start_y = other_start
             if other_start_orientation is not Orientation.COLLINEAR:
                 # other segment fully lies on one side
                 return other_start_orientation is Orientation.COUNTERCLOCKWISE
             # segments are collinear
             elif event.from_left is not other_event.from_left:
                 return event.from_left
-            elif start_x == other_start_x:
-                end_x, end_y = end
-                other_end_x, other_end_y = other_end
-                if start_y != other_start_y:
+            elif start.x == other_start.x:
+                if start.y != other_start.y:
                     # segments are vertical
-                    return start_y < other_start_y
+                    return start.y < other_start.y
                 # segments have same start
-                elif end_y != other_end_y:
-                    return end_y < other_end_y
+                elif end.y != other_end.y:
+                    return end.y < other_end.y
                 else:
                     # segments are horizontal
-                    return end_x < other_end_x
-            elif start_y != other_start_y:
-                return start_y < other_start_y
+                    return end.x < other_end.x
+            elif start.y != other_start.y:
+                return start.y < other_start.y
             else:
                 # segments are horizontal
-                return start_x < other_start_x
+                return start.x < other_start.x
         start_orientation = self.orienteer(other_end, other_start, start)
         end_orientation = self.orienteer(other_end, other_start, end)
         if start_orientation is end_orientation:
@@ -183,29 +179,25 @@ class NarySweepLineKey:
         other_start_orientation = self.orienteer(end, start, other_start)
         other_end_orientation = self.orienteer(end, start, other_end)
         if other_start_orientation is other_end_orientation:
-            start_x, start_y = start
-            other_start_x, other_start_y = other_start
             if other_start_orientation is not Orientation.COLLINEAR:
                 # other segment fully lies on one side
                 return other_start_orientation is Orientation.COUNTERCLOCKWISE
             # segments are collinear
-            elif start_x == other_start_x:
-                end_x, end_y = end
-                other_end_x, other_end_y = other_end
-                if start_y != other_start_y:
+            elif start.x == other_start.x:
+                if start.y != other_start.y:
                     # segments are vertical
-                    return start_y < other_start_y
+                    return start.y < other_start.y
                 # segments have same start
-                elif end_y != other_end_y:
-                    return end_y < other_end_y
+                elif end.y != other_end.y:
+                    return end.y < other_end.y
                 else:
                     # segments are horizontal
-                    return end_x < other_end_x
-            elif start_y != other_start_y:
-                return start_y < other_start_y
+                    return end.x < other_end.x
+            elif start.y != other_start.y:
+                return start.y < other_start.y
             else:
                 # segments are horizontal
-                return start_x < other_start_x
+                return start.x < other_start.x
         start_orientation = self.orienteer(other_end, other_start, start)
         end_orientation = self.orienteer(other_end, other_start, end)
         if start_orientation is end_orientation:

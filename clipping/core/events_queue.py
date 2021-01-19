@@ -6,6 +6,7 @@ from typing import (Callable,
                     cast)
 
 from ground.base import Context
+from ground.hints import Point
 from prioq.base import PriorityQueue
 from reprit.base import generate_repr
 
@@ -17,8 +18,7 @@ from .event import (BinaryEvent,
                     NaryEvent,
                     ShapedEvent)
 from .hints import (Orienteer,
-                    Point,
-                    Segment)
+                    SegmentEndpoints)
 from .utils import (Orientation,
                     SegmentsRelation,
                     orientation,
@@ -36,16 +36,15 @@ class BinaryEventsQueueKey:
 
     def __lt__(self, other: 'BinaryEventsQueueKey') -> bool:
         event, other_event = self.event, other.event
-        start_x, start_y = event.start
-        other_start_x, other_start_y = other_event.start
-        if start_x != other_start_x:
+        start, other_start = event.start, other_event.start
+        if start.x != other_start.x:
             # different x-coordinate,
             # the event with lower x-coordinate is processed first
-            return start_x < other_start_x
-        elif start_y != other_start_y:
+            return start.x < other_start.x
+        elif start.y != other_start.y:
             # different points, but same x-coordinate,
             # the event with lower y-coordinate is processed first
-            return start_y < other_start_y
+            return start.y < other_start.y
         elif event.is_right_endpoint is not other_event.is_right_endpoint:
             # same start, but one is a left endpoint
             # and the other a right endpoint,
@@ -76,16 +75,15 @@ class NaryEventsQueueKey:
 
     def __lt__(self, other: 'NaryEventsQueueKey') -> bool:
         event, other_event = self.event, other.event
-        start_x, start_y = event.start
-        other_start_x, other_start_y = other_event.start
-        if start_x != other_start_x:
+        start, other_start = event.start, other_event.start
+        if start.x != other_start.x:
             # different x-coordinate,
             # the event with lower x-coordinate is processed first
-            return start_x < other_start_x
-        elif start_y != other_start_y:
+            return start.x < other_start.x
+        elif start.y != other_start.y:
             # different points, but same x-coordinate,
             # the event with lower y-coordinate is processed first
-            return start_y < other_start_y
+            return start.y < other_start.y
         elif event.is_right_endpoint is not other_event.is_right_endpoint:
             # same start, but one is a left endpoint
             # and the other a right endpoint,
@@ -121,15 +119,20 @@ class LinearBinaryEventsQueue:
     def detect_intersection(self,
                             below_event: BinaryEvent,
                             event: BinaryEvent) -> None:
-        below_segment, segment = below_event.segment, event.segment
-        relation = segments_relation(below_segment, segment)
+        below_segment_start, below_segment_end = (below_event.start,
+                                                  below_event.end)
+        segment_start, segment_end = event.start, event.end
+        relation = segments_relation(below_segment_start, below_segment_end,
+                                     segment_start, segment_end)
         if (relation is SegmentsRelation.CROSS
                 or relation is SegmentsRelation.TOUCH):
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = segments_intersection(self.context, below_segment,
-                                              segment)
+                point = segments_intersection(self.context,
+                                              below_segment_start,
+                                              below_segment_end, segment_start,
+                                              segment_end)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -172,11 +175,11 @@ class LinearBinaryEventsQueue:
     def pop(self) -> BinaryEvent:
         return self._queue.pop()
 
-    def register_segments(self,
-                          segments: Iterable[Segment],
-                          from_left: bool) -> None:
+    def register(self,
+                 endpoints: Iterable[SegmentEndpoints],
+                 from_left: bool) -> None:
         events_queue = self._queue
-        for start, end in segments:
+        for start, end in endpoints:
             if start > end:
                 start, end = end, start
             start_event = BinaryEvent(False, start, None, from_left)
@@ -214,15 +217,20 @@ class MixedBinaryEventsQueue:
     def detect_intersection(self,
                             below_event: MixedEvent,
                             event: MixedEvent) -> bool:
-        below_segment, segment = below_event.segment, event.segment
-        relation = segments_relation(below_segment, segment)
+        below_segment_start, below_segment_end = (below_event.start,
+                                                  below_event.end)
+        segment_start, segment_end = event.start, event.end
+        relation = segments_relation(below_segment_start, below_segment_end,
+                                     segment_start, segment_end)
         if (relation is SegmentsRelation.CROSS
                 or relation is SegmentsRelation.TOUCH):
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = segments_intersection(self.context, below_segment,
-                                              segment)
+                point = segments_intersection(self.context,
+                                              below_segment_start,
+                                              below_segment_end, segment_start,
+                                              segment_end)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -271,9 +279,9 @@ class MixedBinaryEventsQueue:
     def pop(self) -> MixedEvent:
         return self._queue.pop()
 
-    def register_segments(self,
-                          segments: Iterable[Segment],
-                          from_left: bool) -> None:
+    def register(self,
+                 segments: Iterable[SegmentEndpoints],
+                 from_left: bool) -> None:
         queue = self._queue
         for start, end in segments:
             interior_to_left = True
@@ -318,15 +326,20 @@ class NaryEventsQueue:
     def detect_intersection(self,
                             below_event: NaryEvent,
                             event: NaryEvent) -> None:
-        below_segment, segment = below_event.segment, event.segment
-        relation = segments_relation(below_segment, segment)
+        below_segment_start, below_segment_end = (below_event.start,
+                                                  below_event.end)
+        segment_start, segment_end = event.start, event.end
+        relation = segments_relation(below_segment_start, below_segment_end,
+                                     segment_start, segment_end)
         if (relation is SegmentsRelation.CROSS
                 or relation is SegmentsRelation.TOUCH):
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = segments_intersection(self.context, below_segment,
-                                              segment)
+                point = segments_intersection(self.context,
+                                              below_segment_start,
+                                              below_segment_end, segment_start,
+                                              segment_end)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -366,9 +379,9 @@ class NaryEventsQueue:
     def pop(self) -> NaryEvent:
         return self._queue.pop()
 
-    def register_segments(self, segments: Iterable[Segment]) -> None:
+    def register(self, endpoints: Iterable[SegmentEndpoints]) -> None:
         queue = self._queue
-        for start, end in segments:
+        for start, end in endpoints:
             if start > end:
                 start, end = end, start
             start_event = NaryEvent(False, start, None)
@@ -403,15 +416,20 @@ class ShapedBinaryEventsQueue(Generic[Event]):
         return self._queue.key
 
     def detect_intersection(self, below_event: Event, event: Event) -> bool:
-        below_segment, segment = below_event.segment, event.segment
-        relation = segments_relation(below_segment, segment)
+        below_segment_start, below_segment_end = (below_event.start,
+                                                  below_event.end)
+        segment_start, segment_end = event.start, event.end
+        relation = segments_relation(below_segment_start, below_segment_end,
+                                     segment_start, segment_end)
         if (relation is SegmentsRelation.CROSS
                 or relation is SegmentsRelation.TOUCH):
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = segments_intersection(self.context, below_segment,
-                                              segment)
+                point = segments_intersection(self.context,
+                                              below_segment_start,
+                                              below_segment_end, segment_start,
+                                              segment_end)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -460,12 +478,12 @@ class ShapedBinaryEventsQueue(Generic[Event]):
     def pop(self) -> Event:
         return self._queue.pop()
 
-    def register_segments(self,
-                          segments: Iterable[Segment],
-                          from_left: bool) -> None:
+    def register(self,
+                 endpoints: Iterable[SegmentEndpoints],
+                 from_left: bool) -> None:
         event_cls = self.event_cls
         queue = self._queue
-        for start, end in segments:
+        for start, end in endpoints:
             inside_on_left = True
             if start > end:
                 start, end = end, start

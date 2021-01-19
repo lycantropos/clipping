@@ -10,11 +10,11 @@ from .hints import Multiregion
 
 
 def from_point(point: Point):
-    return point.x, point.y
+    return point
 
 
 def from_segment(segment: Segment):
-    return from_point(segment.start), from_point(segment.end)
+    return segment
 
 
 def from_multisegment(multisegment: Multisegment):
@@ -26,7 +26,7 @@ def from_segments(segments: Sequence[Segment]):
 
 
 def from_contour(contour: Contour):
-    return [from_point(vertex) for vertex in contour.vertices]
+    return contour
 
 
 from_region = from_contour
@@ -45,11 +45,11 @@ def from_multipolygon(multipolygon: Multipolygon):
 
 
 def to_point(raw, context: Context) -> Point:
-    return context.point_cls(*raw)
+    return raw
 
 
 def to_segment(raw, context: Context) -> Segment:
-    return context.segment_cls(*map(to_point, raw, repeat(context)))
+    return raw
 
 
 def to_multisegment(raw, context: Context) -> Multisegment:
@@ -58,7 +58,7 @@ def to_multisegment(raw, context: Context) -> Multisegment:
 
 
 def to_contour(raw, context: Context) -> Contour:
-    return context.contour_cls(list(map(to_point, raw, repeat(context))))
+    return raw
 
 
 def to_multiregion(raw, context: Context) -> Multiregion:

@@ -1,13 +1,13 @@
 from reprlib import recursive_repr
 from typing import (Optional,
                     Sequence,
+                    Tuple,
                     TypeVar)
 
+from ground.hints import Point
 from reprit.base import generate_repr
 
 from .enums import OverlapKind
-from .hints import (Point,
-                    Segment)
 
 
 class NaryEvent:
@@ -26,10 +26,6 @@ class NaryEvent:
     @property
     def end(self) -> Point:
         return self.complement.start
-
-    @property
-    def segment(self) -> Segment:
-        return self.start, self.end
 
 
 class BinaryEvent:
@@ -53,17 +49,11 @@ class BinaryEvent:
 
     @property
     def is_vertical(self) -> bool:
-        start_x, _ = self.start
-        end_x, _ = self.end
-        return start_x == end_x
+        return self.start.x == self.end.x
 
     @property
     def primary(self) -> Optional['BinaryEvent']:
         return self.complement if self.is_right_endpoint else self
-
-    @property
-    def segment(self) -> Segment:
-        return self.start, self.end
 
 
 class MixedEvent(BinaryEvent):
@@ -220,3 +210,7 @@ def events_to_connectivity(events: Sequence[BinaryEvent]) -> Sequence[int]:
             result[left_start_index + 1:left_stop_index + 1] = range(
                     left_start_index, left_stop_index)
     return result
+
+
+def event_to_segment_endpoints(event: Event) -> Tuple[Point, Point]:
+    return event.start, event.end

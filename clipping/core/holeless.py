@@ -13,16 +13,16 @@ from reprit.base import generate_repr
 
 from . import bounding
 from .event import (ShapedEvent as Event,
-                    events_to_connectivity)
+                    event_to_segment_endpoints, events_to_connectivity)
 from .events_queue import HolelessEventsQueue as EventsQueue
 from .hints import (HolelessMix,
                     Multipoint,
                     Multiregion,
-                    Multisegment)
+                    SegmentEndpoints)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
-                    contour_to_oriented_segments,
-                    pairwise,
+                    contour_to_oriented_edges_endpoints,
+                    endpoints_to_multisegment, pairwise,
                     to_multiregion_x_max)
 
 
@@ -68,17 +68,18 @@ class Operation(ABC):
         processed = [False] * len(events)
         result = []
         connectivity = events_to_connectivity(events)
+        contour_cls = self.context.contour_cls
         for index, event in enumerate(events):
             if processed[index]:
                 continue
             contour_start = event.start
-            contour = [contour_start]
+            vertices = [contour_start]
             contour_events = [event]
             cursor = event
             complement_position = event.complement.position
             processed[index] = processed[complement_position] = True
             while cursor.end != contour_start:
-                contour.append(cursor.end)
+                vertices.append(cursor.end)
                 position = _to_next_position(complement_position, processed,
                                              connectivity)
                 if position is None:
@@ -87,19 +88,21 @@ class Operation(ABC):
                 contour_events.append(cursor)
                 complement_position = cursor.complement.position
                 processed[position] = processed[complement_position] = True
-            result.append(contour)
+            result.append(contour_cls(vertices))
         return result
 
     def fill_queue(self) -> None:
         events_queue = self._events_queue
         for region in self.left:
-            events_queue.register_segments(
-                    contour_to_oriented_segments(region,
-                                                 context=self.context), True)
+            events_queue.register(
+                    contour_to_oriented_edges_endpoints(region,
+                                                        context=self.context),
+                    True)
         for region in self.right:
-            events_queue.register_segments(
-                    contour_to_oriented_segments(region,
-                                                 context=self.context), False)
+            events_queue.register(
+                    contour_to_oriented_edges_endpoints(region,
+                                                        context=self.context),
+                    False)
 
     @abstractmethod
     def in_result(self, event: Event) -> bool:
@@ -151,15 +154,17 @@ class CompleteIntersection(Operation):
         right_box = bounding.from_multiregion(self.right)
         if bounding.disjoint_with(left_box, right_box):
             return [], [], []
-        self.left = bounding.to_intersecting_regions(right_box, self.left)
-        self.right = bounding.to_intersecting_regions(left_box, self.right)
+        self.left = bounding.to_intersecting_regions(right_box, self.left,
+                                                     context=self.context)
+        self.right = bounding.to_intersecting_regions(left_box, self.right,
+                                                      context=self.context)
         if not (self.left and self.right):
             return [], [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
                         key=self._events_queue.key)
         multipoint = []  # type: Multipoint
-        multisegment = []  # type: Multisegment
+        endpoints = []  # type: List[SegmentEndpoints]
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
@@ -170,16 +175,24 @@ class CompleteIntersection(Operation):
                 no_segment_found = True
                 for event, next_event in pairwise(same_start_events):
                     if (event.from_left is not next_event.from_left
-                            and event.segment == next_event.segment):
+                            and event.start == next_event.start
+                            and event.end == next_event.end):
                         no_segment_found = False
                         if not event.is_right_endpoint:
-                            multisegment.append(next_event.segment)
+                            endpoints.append(
+                                    event_to_segment_endpoints(next_event))
                 if no_segment_found and all(not event.complement.in_result
                                             if event.is_right_endpoint
                                             else not event.in_result
                                             for event in same_start_events):
                     multipoint.append(start)
-        return multipoint, multisegment, self.events_to_multiregion(events)
+        return (multipoint, endpoints_to_multisegment(endpoints,
+                                                      context=self.context),
+                self.events_to_multiregion(events))
+
+    def in_result(self, event: Event) -> bool:
+        return (event.inside
+                or not event.from_left and event.is_common_region_boundary)
 
     def sweep(self) -> Iterable[Event]:
         self.fill_queue()
@@ -189,15 +202,10 @@ class CompleteIntersection(Operation):
                         to_multiregion_x_max(self.right))
         while self._events_queue:
             event = self._events_queue.pop()
-            start_x, _ = event.start
-            if start_x > min_max_x:
+            if min_max_x < event.start.x:
                 break
             self.process_event(event, result, sweep_line)
         return result
-
-    def in_result(self, event: Event) -> bool:
-        return (event.inside
-                or not event.from_left and event.is_common_region_boundary)
 
 
 class Intersection(Operation):
@@ -210,8 +218,10 @@ class Intersection(Operation):
         right_box = bounding.from_multiregion(self.right)
         if bounding.disjoint_with(left_box, right_box):
             return []
-        self.left = bounding.to_coupled_regions(right_box, self.left)
-        self.right = bounding.to_coupled_regions(left_box, self.right)
+        self.left = bounding.to_coupled_regions(right_box, self.left,
+                                                context=self.context)
+        self.right = bounding.to_coupled_regions(left_box, self.right,
+                                                 context=self.context)
         if not (self.left and self.right):
             return []
         self.normalize_operands()
@@ -225,8 +235,7 @@ class Intersection(Operation):
                         to_multiregion_x_max(self.right))
         while self._events_queue:
             event = self._events_queue.pop()
-            start_x, _ = event.start
-            if start_x > min_max_x:
+            if min_max_x < event.start.x:
                 break
             self.process_event(event, result, sweep_line)
         return result

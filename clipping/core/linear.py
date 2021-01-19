@@ -3,34 +3,47 @@ from abc import (ABC,
 from itertools import groupby
 from operator import attrgetter
 from typing import (Iterable,
+                    List,
                     Sequence,
                     Union as Union_)
 
 from ground.base import Context
+from ground.hints import Segment
 from reprit.base import generate_repr
 
 from . import bounding
-from .event import BinaryEvent
+from .event import (BinaryEvent,
+                    event_to_segment_endpoints)
 from .events_queue import (LinearBinaryEventsQueue as BinaryEventsQueue,
                            NaryEventsQueue)
 from .hints import (Mix,
                     Multipoint,
                     Multisegment,
-                    Segment)
+                    SegmentEndpoints)
 from .sweep_line import (BinarySweepLine,
                          NarySweepLine)
 from .utils import (all_equal,
+                    endpoints_to_multisegment, multisegment_to_endpoints,
+                    segments_to_endpoints,
                     to_multisegment_x_max)
 
 
 def merge_segments(segments: Sequence[Segment],
                    *,
-                   context: Context) -> Iterable[Segment]:
+                   context: Context) -> Multisegment:
+    return _merge_segments(segments,
+                           context=context)
+
+
+def _merge_segments(segments: Sequence[Segment],
+                    *,
+                    context: Context) -> Multisegment:
     if not segments:
-        return
+        return []
     events_queue = NaryEventsQueue(context)
-    events_queue.register_segments(segments)
+    events_queue.register(segments_to_endpoints(segments))
     sweep_line = NarySweepLine(context)
+    endpoints = []  # type: List[SegmentEndpoints]
     while events_queue:
         event = events_queue.pop()
         if event.is_right_endpoint:
@@ -41,7 +54,7 @@ def merge_segments(segments: Sequence[Segment],
                 sweep_line.remove(event)
                 if above_event is not None and below_event is not None:
                     events_queue.detect_intersection(below_event, above_event)
-                yield event.segment
+                endpoints.append(event_to_segment_endpoints(event))
         elif event not in sweep_line:
             sweep_line.add(event)
             above_event, below_event = (sweep_line.above(event),
@@ -50,6 +63,8 @@ def merge_segments(segments: Sequence[Segment],
                 events_queue.detect_intersection(event, above_event)
             if below_event is not None:
                 events_queue.detect_intersection(below_event, event)
+    return endpoints_to_multisegment(endpoints,
+                                     context=context)
 
 
 class Operation(ABC):
@@ -78,8 +93,9 @@ class Operation(ABC):
         """
 
     def fill_queue(self) -> None:
-        self._events_queue.register_segments(self.left, True)
-        self._events_queue.register_segments(self.right, False)
+        self._events_queue.register(multisegment_to_endpoints(self.left), True)
+        self._events_queue.register(multisegment_to_endpoints(self.right),
+                                    False)
 
     def normalize_operands(self) -> None:
         pass
@@ -127,14 +143,18 @@ class Difference(Operation):
         right_box = bounding.from_multisegment(self.right)
         if bounding.disjoint_with(left_box, right_box):
             return self.left
-        self.right = bounding.to_coupled_segments(left_box, self.right)
+        self.right = bounding.to_coupled_segments(left_box, self.right,
+                                                  context=self.context)
         if not self.right:
             return self.left
         self.normalize_operands()
-        return sorted(segment
-                      for segment, events in groupby(self.sweep(),
-                                                     key=event_to_segment)
-                      if all(event.from_left for event in events))
+        return endpoints_to_multisegment(
+                sorted(endpoints
+                       for endpoints, events
+                       in groupby(self.sweep(),
+                                  key=event_to_segment_endpoints)
+                       if all(event.from_left for event in events)),
+                context=self.context)
 
     def sweep(self) -> Iterable[BinaryEvent]:
         self.fill_queue()
@@ -144,8 +164,7 @@ class Difference(Operation):
         left_x_max = to_multisegment_x_max(self.left)
         while events_queue:
             event = events_queue.pop()
-            start_x, _ = event.start
-            if start_x > left_x_max:
+            if left_x_max < event.start.x:
                 break
             self.process_event(event, sweep_line)
             if event.is_right_endpoint:
@@ -163,15 +182,20 @@ class Intersection(Operation):
         right_box = bounding.from_multisegment(self.right)
         if bounding.disjoint_with(left_box, right_box):
             return []
-        self.left = bounding.to_coupled_segments(right_box, self.left)
-        self.right = bounding.to_coupled_segments(left_box, self.right)
+        self.left = bounding.to_coupled_segments(right_box, self.left,
+                                                 context=self.context)
+        self.right = bounding.to_coupled_segments(left_box, self.right,
+                                                  context=self.context)
         if not (self.left and self.right):
             return []
         self.normalize_operands()
-        return sorted(segment
-                      for segment, events in groupby(self.sweep(),
-                                                     key=event_to_segment)
-                      if not all_equal(event.from_left for event in events))
+        return endpoints_to_multisegment(
+                sorted(endpoints
+                       for endpoints, events
+                       in groupby(self.sweep(),
+                                  key=event_to_segment_endpoints)
+                       if not all_equal(event.from_left for event in events)),
+                context=self.context)
 
     def sweep(self) -> Sequence[BinaryEvent]:
         self.fill_queue()
@@ -182,8 +206,7 @@ class Intersection(Operation):
                         to_multisegment_x_max(self.right))
         while events_queue:
             event = events_queue.pop()
-            start_x, _ = event.start
-            if start_x > min_max_x:
+            if min_max_x < event.start.x:
                 break
             self.process_event(event, sweep_line)
             if event.is_right_endpoint:
@@ -201,29 +224,35 @@ class CompleteIntersection(Operation):
         right_box = bounding.from_multisegment(self.right)
         if bounding.disjoint_with(left_box, right_box):
             return [], [], []
-        self.left = bounding.to_intersecting_segments(right_box, self.left)
-        self.right = bounding.to_intersecting_segments(left_box, self.right)
+        self.left = bounding.to_intersecting_segments(right_box, self.left,
+                                                      context=self.context)
+        self.right = bounding.to_intersecting_segments(left_box, self.right,
+                                                       context=self.context)
         if not (self.left and self.right):
             return [], [], []
         self.normalize_operands()
         multipoint = []  # type: Multipoint
-        multisegment = []  # type: Multisegment
-        for start, same_start_events in groupby(sorted(self.sweep(),
-                                                       key=event_to_segment),
-                                                key=attrgetter('start')):
+        endpoints = []  # type: List[SegmentEndpoints]
+        for start, same_start_events in groupby(
+                sorted(self.sweep(),
+                       key=event_to_segment_endpoints),
+                key=attrgetter('start')):
             same_start_events = list(same_start_events)
             if not all_equal(event.from_left for event in same_start_events):
                 no_segment_found = True
                 for event, next_event in zip(same_start_events,
                                              same_start_events[1:]):
                     if (event.from_left is not next_event.from_left
-                            and event.segment == next_event.segment):
+                            and event.start == next_event.start
+                            and event.end == next_event.end):
                         no_segment_found = False
                         if not event.is_right_endpoint:
-                            multisegment.append(event.segment)
+                            endpoints.append(event_to_segment_endpoints(event))
                 if no_segment_found:
                     multipoint.append(start)
-        return multipoint, multisegment, []
+        return (multipoint, endpoints_to_multisegment(endpoints,
+                                                      context=self.context),
+                [])
 
     def sweep(self) -> Sequence[BinaryEvent]:
         self.fill_queue()
@@ -234,8 +263,7 @@ class CompleteIntersection(Operation):
                         to_multisegment_x_max(self.right))
         while events_queue:
             event = events_queue.pop()
-            start_x, _ = event.start
-            if start_x > min_max_x:
+            if min_max_x < event.start.x:
                 break
             self.process_event(event, sweep_line)
             result.append(event)
@@ -254,10 +282,13 @@ class SymmetricDifference(Operation):
             result.sort()
             return result
         self.normalize_operands()
-        return sorted(segment
-                      for segment, events in groupby(self.sweep(),
-                                                     key=event_to_segment)
-                      if all_equal(event.from_left for event in events))
+        return endpoints_to_multisegment(
+                sorted(endpoints
+                       for endpoints, events
+                       in groupby(self.sweep(),
+                                  key=event_to_segment_endpoints)
+                       if all_equal(event.from_left for event in events)),
+                context=self.context)
 
 
 class Union(Operation):
@@ -272,9 +303,9 @@ class Union(Operation):
             result.sort()
             return result
         self.normalize_operands()
-        return sorted(segment
-                      for segment, _ in groupby(self.sweep(),
-                                                key=event_to_segment))
-
-
-event_to_segment = attrgetter('segment')
+        return endpoints_to_multisegment(
+                sorted(endpoints
+                       for endpoints, _ in groupby(
+                        self.sweep(),
+                        key=event_to_segment_endpoints)),
+                context=self.context)
