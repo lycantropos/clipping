@@ -18,9 +18,8 @@ from .event import (HoleyEvent as Event,
                     events_to_connectivity)
 from .events_queue import HoleyEventsQueue as EventsQueue
 from .hints import (Mix,
-                    Multipoint,
                     Multipolygon,
-                    Multisegment)
+                    SegmentEndpoints)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     endpoints_to_multisegment, pairwise,
@@ -211,24 +210,24 @@ class CompleteIntersection(Operation):
 
     def compute(self) -> Mix:
         if not (self.left and self.right):
-            return [], [], []
+            return self.context.multipoint_cls([]), [], []
         left_box = bounding.from_multipolygon(self.left,
                                               context=self.context)
         right_box = bounding.from_multipolygon(self.right,
                                                context=self.context)
         if bounding.disjoint_with(left_box, right_box):
-            return [], [], []
+            return self.context.multipoint_cls([]), [], []
         self.left = bounding.to_intersecting_polygons(right_box, self.left,
                                                       context=self.context)
         self.right = bounding.to_intersecting_polygons(left_box, self.right,
                                                        context=self.context)
         if not (self.left and self.right):
-            return [], [], []
+            return self.context.multipoint_cls([]), [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
                         key=self._events_queue.key)
-        multipoint = []  # type: Multipoint
-        segments_endpoints = []  # type: Multisegment
+        points = []  # type: List[Point]
+        endpoints = []  # type: List[SegmentEndpoints]
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
@@ -243,13 +242,14 @@ class CompleteIntersection(Operation):
                             and event.end == next_event.end):
                         no_segment_found = False
                         if not event.is_right_endpoint:
-                            segments_endpoints.append(
+                            endpoints.append(
                                     event_to_segment_endpoints(next_event))
                 if no_segment_found and all(not event.primary.in_result
                                             for event in same_start_events):
-                    multipoint.append(start)
-        return (multipoint, endpoints_to_multisegment(segments_endpoints,
-                                                      context=self.context),
+                    points.append(start)
+        return (self.context.multipoint_cls(points),
+                endpoints_to_multisegment(endpoints,
+                                          context=self.context),
                 self.events_to_multipolygon(events))
 
     def sweep(self) -> Iterable[Event]:

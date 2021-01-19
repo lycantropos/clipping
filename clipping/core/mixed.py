@@ -3,10 +3,12 @@ from abc import (ABC,
 from itertools import groupby
 from operator import attrgetter
 from typing import (Iterable,
+                    List,
                     Optional,
                     Union)
 
 from ground.base import Context
+from ground.hints import Point
 from reprit.base import generate_repr
 
 from . import bounding
@@ -14,13 +16,13 @@ from .event import (MixedEvent as Event,
                     event_to_segment_endpoints)
 from .events_queue import MixedBinaryEventsQueue as EventsQueue
 from .hints import (Mix,
-                    Multipoint,
                     Multipolygon,
                     Multisegment)
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
                     endpoints_to_multisegment,
                     multisegment_to_endpoints,
+                    points_to_multipoint,
                     polygon_to_oriented_edges_endpoints,
                     to_multipolygon_x_max,
                     to_multisegment_x_max)
@@ -154,13 +156,14 @@ class CompleteIntersection(Operation):
 
     def compute(self) -> Mix:
         if not (self.multisegment and self.multipolygon):
-            return [], [], []
+            return points_to_multipoint([], context=self.context), [], []
         multisegment_box = bounding.from_multisegment(self.multisegment,
                                                       context=self.context)
         multipolygon_box = bounding.from_multipolygon(self.multipolygon,
                                                       context=self.context)
         if bounding.disjoint_with(multisegment_box, multipolygon_box):
-            return [], [], []
+            return points_to_multipoint([],
+                                        context=self.context), [], []
         self.multisegment = bounding.to_intersecting_segments(
                 multipolygon_box, self.multisegment,
                 context=self.context)
@@ -168,11 +171,11 @@ class CompleteIntersection(Operation):
                 multisegment_box, self.multipolygon,
                 context=self.context)
         if not (self.multisegment and self.multipolygon):
-            return [], [], []
+            return points_to_multipoint([], context=self.context), [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
                         key=self._events_queue.key)
-        multipoint = []  # type: Multipoint
+        points = []  # type: List[Point]
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
@@ -181,8 +184,9 @@ class CompleteIntersection(Operation):
                     for event in same_start_events)
                     and not all_equal(event.from_left
                                       for event in same_start_events)):
-                multipoint.append(start)
-        return (multipoint,
+                points.append(start)
+        return (points_to_multipoint(points,
+                                     context=self.context),
                 endpoints_to_multisegment([event_to_segment_endpoints(event)
                                            for event in events
                                            if event.in_result],

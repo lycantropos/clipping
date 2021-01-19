@@ -13,7 +13,7 @@ from ground.base import (Context,
                          get_context)
 from ground.hints import (Contour,
                           Coordinate,
-                          Point,
+                          Multipoint, Point,
                           Segment)
 
 from .hints import (Multipolygon,
@@ -173,3 +173,9 @@ def endpoints_to_multisegment(endpoints: Iterable[SegmentEndpoints],
                               context: Context) -> Multisegment:
     segment_cls = context.segment_cls
     return [segment_cls(start, end) for start, end in endpoints]
+
+
+def points_to_multipoint(points: Sequence[Point],
+                         *,
+                         context: Context) -> Multipoint:
+    return context.multipoint_cls(points)

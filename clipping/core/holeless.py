@@ -9,6 +9,7 @@ from typing import (Iterable,
                     Union as Union_)
 
 from ground.base import Context
+from ground.hints import Point
 from reprit.base import generate_repr
 
 from . import bounding
@@ -16,7 +17,6 @@ from .event import (ShapedEvent as Event,
                     event_to_segment_endpoints, events_to_connectivity)
 from .events_queue import HolelessEventsQueue as EventsQueue
 from .hints import (HolelessMix,
-                    Multipoint,
                     Multiregion,
                     SegmentEndpoints)
 from .sweep_line import BinarySweepLine as SweepLine
@@ -149,23 +149,23 @@ class CompleteIntersection(Operation):
 
     def compute(self) -> HolelessMix:
         if not (self.left and self.right):
-            return [], [], []
+            return self.context.multipoint_cls([]), [], []
         left_box = bounding.from_multiregion(self.left,
                                              context=self.context)
         right_box = bounding.from_multiregion(self.right,
                                               context=self.context)
         if bounding.disjoint_with(left_box, right_box):
-            return [], [], []
+            return self.context.multipoint_cls([]), [], []
         self.left = bounding.to_intersecting_regions(right_box, self.left,
                                                      context=self.context)
         self.right = bounding.to_intersecting_regions(left_box, self.right,
                                                       context=self.context)
         if not (self.left and self.right):
-            return [], [], []
+            return self.context.multipoint_cls([]), [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
                         key=self._events_queue.key)
-        multipoint = []  # type: Multipoint
+        points = []  # type: List[Point]
         endpoints = []  # type: List[SegmentEndpoints]
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
@@ -187,9 +187,10 @@ class CompleteIntersection(Operation):
                                             if event.is_right_endpoint
                                             else not event.in_result
                                             for event in same_start_events):
-                    multipoint.append(start)
-        return (multipoint, endpoints_to_multisegment(endpoints,
-                                                      context=self.context),
+                    points.append(start)
+        return (self.context.multipoint_cls(points),
+                endpoints_to_multisegment(endpoints,
+                                          context=self.context),
                 self.events_to_multiregion(events))
 
     def in_result(self, event: Event) -> bool:

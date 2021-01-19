@@ -8,7 +8,7 @@ from typing import (Iterable,
                     Union as Union_)
 
 from ground.base import Context
-from ground.hints import Segment
+from ground.hints import Point, Segment
 from reprit.base import generate_repr
 
 from . import bounding
@@ -17,13 +17,14 @@ from .event import (BinaryEvent,
 from .events_queue import (LinearBinaryEventsQueue as BinaryEventsQueue,
                            NaryEventsQueue)
 from .hints import (Mix,
-                    Multipoint,
                     Multisegment,
                     SegmentEndpoints)
 from .sweep_line import (BinarySweepLine,
                          NarySweepLine)
 from .utils import (all_equal,
-                    endpoints_to_multisegment, multisegment_to_endpoints,
+                    endpoints_to_multisegment,
+                    multisegment_to_endpoints,
+                    points_to_multipoint,
                     segments_to_endpoints,
                     to_multisegment_x_max)
 
@@ -223,21 +224,24 @@ class CompleteIntersection(Operation):
 
     def compute(self) -> Mix:
         if not (self.left and self.right):
-            return [], [], []
+            return points_to_multipoint([],
+                                        context=self.context), [], []
         left_box = bounding.from_multisegment(self.left,
                                               context=self.context)
         right_box = bounding.from_multisegment(self.right,
                                                context=self.context)
         if bounding.disjoint_with(left_box, right_box):
-            return [], [], []
+            return points_to_multipoint([],
+                                        context=self.context), [], []
         self.left = bounding.to_intersecting_segments(right_box, self.left,
                                                       context=self.context)
         self.right = bounding.to_intersecting_segments(left_box, self.right,
                                                        context=self.context)
         if not (self.left and self.right):
-            return [], [], []
+            return points_to_multipoint([],
+                                        context=self.context), [], []
         self.normalize_operands()
-        multipoint = []  # type: Multipoint
+        points = []  # type: List[Point]
         endpoints = []  # type: List[SegmentEndpoints]
         for start, same_start_events in groupby(
                 sorted(self.sweep(),
@@ -255,9 +259,11 @@ class CompleteIntersection(Operation):
                         if not event.is_right_endpoint:
                             endpoints.append(event_to_segment_endpoints(event))
                 if no_segment_found:
-                    multipoint.append(start)
-        return (multipoint, endpoints_to_multisegment(endpoints,
-                                                      context=self.context),
+                    points.append(start)
+        return (points_to_multipoint(points,
+                                     context=self.context),
+                endpoints_to_multisegment(endpoints,
+                                          context=self.context),
                 [])
 
     def sweep(self) -> Sequence[BinaryEvent]:

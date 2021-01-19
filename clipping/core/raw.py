@@ -78,7 +78,7 @@ def to_multipolygon(raw, context: Context) -> Multipolygon:
 
 
 def to_multipoint(raw, context: Context) -> Multipoint:
-    return context.multipoint_cls(list(map(to_point, raw, repeat(context))))
+    return raw
 
 
 def to_holeless_mix(raw, context: Context
