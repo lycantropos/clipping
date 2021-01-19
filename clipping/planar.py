@@ -1125,48 +1125,88 @@ def unite_multipolygons(left: Multipolygon,
     :param right: right operand.
     :returns: union of operands.
 
-    >>> lower_left_square = [(0, 0), (3, 0), (3, 3), (0, 3)]
-    >>> lower_left_triangle = [(2, 1), (2, 2), (1, 2)]
-    >>> lower_right_square = [(3, 0), (6, 0), (6, 3), (3, 3)]
-    >>> lower_right_triangle = [(4, 1), (5, 2), (4, 2)]
-    >>> upper_left_square = [(0, 3), (3, 3), (3, 6), (0, 6)]
-    >>> upper_left_triangle = [(1, 4), (2, 4), (2, 5)]
-    >>> upper_right_square = [(3, 3), (6, 3), (6, 6), (3, 6)]
-    >>> upper_right_triangle = [(4, 4), (5, 4), (4, 5)]
-    >>> unite_multipolygons([], [])
-    []
-    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle])], [])
-    [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 1), (2, 2), (1, 2)]])]
-    >>> unite_multipolygons([], [(lower_left_square, [lower_left_triangle])])
-    [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 1), (2, 2), (1, 2)]])]
-    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle])],
-    ...                     [(lower_left_square, [lower_left_triangle])])
-    [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)]])]
-    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle])],
-    ...                     [(lower_right_square, [lower_right_triangle])])
-    [([(0, 0), (6, 0), (6, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)],\
- [(4, 2), (5, 2), (4, 1)]])]
-    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle])],
-    ...                     [(upper_left_square, [upper_left_triangle])])
-    [([(0, 0), (3, 0), (3, 6), (0, 6)], [[(2, 2), (2, 1), (1, 2)],\
- [(2, 5), (2, 4), (1, 4)]])]
-    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle])],
-    ...                     [(upper_right_square, [upper_right_triangle])])
-    [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)]]),\
- ([(3, 3), (6, 3), (6, 6), (3, 6)], [[(4, 5), (5, 4), (4, 4)]])]
-    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle]),
-    ...                      (upper_right_square, [upper_right_triangle])],
-    ...                     [(upper_left_square, [upper_left_triangle]),
-    ...                      (lower_right_square, [lower_right_triangle])])
-    [([(0, 0), (6, 0), (6, 6), (0, 6)], [[(2, 2), (2, 1), (1, 2)],\
- [(2, 5), (2, 4), (1, 4)], [(4, 2), (5, 2), (4, 1)],\
- [(4, 5), (5, 4), (4, 4)]])]
-    >>> unite_multipolygons([(lower_left_square, [lower_left_triangle]),
-    ...                      (upper_right_square, [upper_right_triangle])],
-    ...                     [(lower_left_square, [lower_left_triangle]),
-    ...                      (upper_right_square, [upper_right_triangle])])
-    [([(0, 0), (3, 0), (3, 3), (0, 3)], [[(2, 2), (2, 1), (1, 2)]]),\
- ([(3, 3), (6, 3), (6, 6), (3, 6)], [[(4, 5), (5, 4), (4, 4)]])]
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> Contour, Multipolygon, Point, Polygon = (context.contour_cls,
+    ...                                          context.multipolygon_cls,
+    ...                                          context.point_cls,
+    ...                                          context.polygon_cls)
+    >>> lower_left_square = Contour([Point(0, 0), Point(3, 0), Point(3, 3),
+    ...                              Point(0, 3)])
+    >>> lower_left_triangle = Contour([Point(2, 1), Point(2, 2), Point(1, 2)])
+    >>> lower_right_square = Contour([Point(3, 0), Point(6, 0), Point(6, 3),
+    ...                               Point(3, 3)])
+    >>> lower_right_triangle = Contour([Point(4, 1), Point(5, 2), Point(4, 2)])
+    >>> upper_left_square = Contour([Point(0, 3), Point(3, 3), Point(3, 6),
+    ...                              Point(0, 6)])
+    >>> upper_left_triangle = Contour([Point(1, 4), Point(2, 4), Point(2, 5)])
+    >>> upper_right_square = Contour([Point(3, 3), Point(6, 3), Point(6, 6),
+    ...                               Point(3, 6)])
+    >>> upper_right_triangle = Contour([Point(4, 4), Point(5, 4), Point(4, 5)])
+    >>> unite_multipolygons(Multipolygon([]), Multipolygon([]))
+    Multipolygon([])
+    >>> unite_multipolygons(
+    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...     Multipolygon([]))
+    Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 3),\
+ Point(0, 3)]), [Contour([Point(2, 1), Point(2, 2), Point(1, 2)])])])
+    >>> unite_multipolygons(
+    ...     Multipolygon([]),
+    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 3),\
+ Point(0, 3)]), [Contour([Point(2, 1), Point(2, 2), Point(1, 2)])])])
+    >>> unite_multipolygons(
+    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 3),\
+ Point(0, 3)]), [Contour([Point(2, 2), Point(2, 1), Point(1, 2)])])])
+    >>> unite_multipolygons(
+    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...     Multipolygon([Polygon(lower_right_square,
+    ...                           [lower_right_triangle])]))
+    Multipolygon([Polygon(Contour([Point(0, 0), Point(6, 0), Point(6, 3),\
+ Point(0, 3)]), [Contour([Point(2, 2), Point(2, 1), Point(1, 2)]),\
+ Contour([Point(4, 2), Point(5, 2), Point(4, 1)])])])
+    >>> unite_multipolygons(
+    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...     Multipolygon([Polygon(upper_left_square, [upper_left_triangle])]))
+    Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 6),\
+ Point(0, 6)]), [Contour([Point(2, 2), Point(2, 1), Point(1, 2)]),\
+ Contour([Point(2, 5), Point(2, 4), Point(1, 4)])])])
+    >>> unite_multipolygons(
+    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...     Multipolygon([Polygon(upper_right_square,
+    ...                           [upper_right_triangle])]))
+    Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 3),\
+ Point(0, 3)]), [Contour([Point(2, 2), Point(2, 1), Point(1, 2)])]),\
+ Polygon(Contour([Point(3, 3), Point(6, 3), Point(6, 6), Point(3, 6)]),\
+ [Contour([Point(4, 5), Point(5, 4), Point(4, 4)])])])
+    >>> unite_multipolygons(
+    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
+    ...                   Polygon(upper_right_square,
+    ...                           [upper_right_triangle])]),
+    ...     Multipolygon([Polygon(upper_left_square, [upper_left_triangle]),
+    ...                   Polygon(lower_right_square,
+    ...                           [lower_right_triangle])]))
+    Multipolygon([Polygon(Contour([Point(0, 0), Point(6, 0), Point(6, 6),\
+ Point(0, 6)]), [Contour([Point(2, 2), Point(2, 1), Point(1, 2)]),\
+ Contour([Point(2, 5), Point(2, 4), Point(1, 4)]), Contour([Point(4, 2),\
+ Point(5, 2), Point(4, 1)]), Contour([Point(4, 5), Point(5, 4),\
+ Point(4, 4)])])])
+    >>> unite_multipolygons(
+    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
+    ...                   Polygon(upper_right_square,
+    ...                           [upper_right_triangle])]),
+    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
+    ...                   Polygon(upper_right_square,
+    ...                           [upper_right_triangle])]))
+    Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 3),\
+ Point(0, 3)]), [Contour([Point(2, 2), Point(2, 1), Point(1, 2)])]),\
+ Polygon(Contour([Point(3, 3), Point(6, 3), Point(6, 6), Point(3, 6)]),\
+ [Contour([Point(4, 5), Point(5, 4), Point(4, 4)])])])
     """
-    return _holey.Union(left, right,
-                        context=get_context()).compute()
+    context = get_context()
+    return _raw.to_multipolygon(_holey.Union(_raw.from_multipolygon(left),
+                                             _raw.from_multipolygon(right),
+                                             context=context).compute(),
+                                context=context)
