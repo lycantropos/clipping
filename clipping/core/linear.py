@@ -65,7 +65,7 @@ def _merge_segments(segments: Sequence[Segment],
             if below_event is not None:
                 events_queue.detect_intersection(below_event, event)
     return endpoints_to_segments(
-            [endpoints for endpoints, _ in groupby(segments_endpoints)],
+            sorted(endpoints for endpoints, _ in groupby(segments_endpoints)),
             context=context)
 
 
