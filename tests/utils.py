@@ -13,6 +13,7 @@ from orient.planar import (Relation,
                            multisegment_in_multisegment)
 
 from clipping.core.bounding import to_vertices
+from clipping.core.linear import segment_to_endpoints
 from clipping.core.utils import (Orientation,
                                  segments_intersection,
                                  segments_relation)
@@ -77,29 +78,18 @@ def holeless_mix_similar_to_multiregion(mix: HolelessMix,
             and are_multiregions_similar(multiregion, other))
 
 
-def are_mixes_similar(left: Mix, right: Mix) -> bool:
-    left_multipoint, left_multisegment, left_multipolygon = left
-    right_multipoint, right_multisegment, right_multipolygon = right
-    return (are_multipoints_similar(left_multipoint, right_multipoint)
-            and are_multisegments_similar(left_multisegment,
-                                          right_multisegment)
-            and are_multipolygons_similar(left_multipolygon,
-                                          right_multipolygon))
-
-
-def are_multipoints_similar(left: Multipoint, right: Multipoint) -> bool:
-    return len(left) == len(right) and frozenset(left) == frozenset(right)
-
-
 def are_multisegments_similar(left: Multisegment, right: Multisegment) -> bool:
-    return (len(left) == len(right)
-            and (frozenset(map(frozenset, left))
-                 == frozenset(map(frozenset, right))))
+    return (len(left.segments) == len(right.segments)
+            and (frozenset(map(segment_to_endpoints,
+                               map(to_sorted_segment, left.segments)))
+                 == frozenset(map(segment_to_endpoints,
+                                  map(to_sorted_segment, right.segments)))))
 
 
 def are_multisegments_equivalent(left: Multisegment,
                                  right: Multisegment) -> bool:
-    return multisegment_in_multisegment(left, right) is Relation.EQUAL
+    return (not (left.segments or right.segments)
+            or multisegment_in_multisegment(left, right) is Relation.EQUAL)
 
 
 def are_multipolygons_similar(left: Multipolygon, right: Multipolygon) -> bool:
@@ -110,13 +100,12 @@ def are_multiregions_similar(left: Multiregion, right: Multiregion) -> bool:
     return normalize_multiregion(left) == normalize_multiregion(right)
 
 
-def normalize_multipolygon(multipolygon: Multipolygon
-                           ) -> Sequence[Tuple[Contour, Sequence[Contour]]]:
-    result = [(normalize_region(polygon.border),
-               normalize_multiregion(polygon.holes))
-              for polygon in multipolygon.polygons]
-    result.sort(key=lambda pair: pair[0].vertices[0])
-    return result
+def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
+    polygons = [Polygon(normalize_region(polygon.border),
+                        normalize_multiregion(polygon.holes))
+                for polygon in multipolygon.polygons]
+    polygons.sort(key=lambda polygon: polygon.border.vertices[0])
+    return Multipolygon(polygons)
 
 
 def normalize_multiregion(multiregion: Multiregion) -> Multiregion:
