@@ -13,7 +13,6 @@ from .event import (BinaryEvent,
                     Event,
                     NaryEvent)
 from .hints import Orienteer
-from .utils import orientation
 
 
 class SweepLine(ABC, Generic[Event]):
@@ -41,63 +40,61 @@ class SweepLine(ABC, Generic[Event]):
 
 
 class BinarySweepLine(SweepLine):
-    __slots__ = 'context', '_ordered_set'
+    __slots__ = 'context', '_set'
 
     def __init__(self, context: Context) -> None:
         self.context = context
-        self._ordered_set = red_black.set_(key=partial(BinarySweepLineKey,
-                                                       partial(orientation,
-                                                               context)))
+        self._set = red_black.set_(key=partial(BinarySweepLineKey,
+                                               context.angle_orientation))
 
     def __contains__(self, event: Event) -> bool:
-        return event in self._ordered_set
+        return event in self._set
 
     def add(self, event: Event) -> None:
-        self._ordered_set.add(event)
+        self._set.add(event)
 
     def remove(self, event: Event) -> None:
-        self._ordered_set.remove(event)
+        self._set.remove(event)
 
     def above(self, event: Event) -> Optional[Event]:
         try:
-            return self._ordered_set.next(event)
+            return self._set.next(event)
         except ValueError:
             return None
 
     def below(self, event: Event) -> Optional[Event]:
         try:
-            return self._ordered_set.prev(event)
+            return self._set.prev(event)
         except ValueError:
             return None
 
 
 class NarySweepLine(SweepLine):
-    __slots__ = 'context', '_ordered_set'
+    __slots__ = 'context', '_set'
 
     def __init__(self, context: Context) -> None:
         self.context = context
-        self._ordered_set = red_black.set_(key=partial(NarySweepLineKey,
-                                                       partial(orientation,
-                                                               context)))
+        self._set = red_black.set_(key=partial(NarySweepLineKey,
+                                               context.angle_orientation))
 
     def __contains__(self, event: Event) -> bool:
-        return event in self._ordered_set
+        return event in self._set
 
     def add(self, event: Event) -> None:
-        self._ordered_set.add(event)
+        self._set.add(event)
 
     def remove(self, event: Event) -> None:
-        self._ordered_set.remove(event)
+        self._set.remove(event)
 
     def above(self, event: Event) -> Optional[Event]:
         try:
-            return self._ordered_set.next(event)
+            return self._set.next(event)
         except ValueError:
             return None
 
     def below(self, event: Event) -> Optional[Event]:
         try:
-            return self._ordered_set.prev(event)
+            return self._set.prev(event)
         except ValueError:
             return None
 
@@ -120,8 +117,8 @@ class BinarySweepLineKey:
             return False
         start, other_start = event.start, other_event.start
         end, other_end = event.end, other_event.end
-        other_start_orientation = self.orienteer(end, start, other_start)
-        other_end_orientation = self.orienteer(end, start, other_end)
+        other_start_orientation = self.orienteer(start, end, other_start)
+        other_end_orientation = self.orienteer(start, end, other_end)
         if other_start_orientation is other_end_orientation:
             if other_start_orientation is not Orientation.COLLINEAR:
                 # other segment fully lies on one side
@@ -144,8 +141,8 @@ class BinarySweepLineKey:
             else:
                 # segments are horizontal
                 return start.x < other_start.x
-        start_orientation = self.orienteer(other_end, other_start, start)
-        end_orientation = self.orienteer(other_end, other_start, end)
+        start_orientation = self.orienteer(other_start, other_end, start)
+        end_orientation = self.orienteer(other_start, other_end, end)
         if start_orientation is end_orientation:
             return start_orientation is Orientation.CLOCKWISE
         elif other_start_orientation is Orientation.COLLINEAR:
@@ -176,8 +173,8 @@ class NarySweepLineKey:
             return False
         start, other_start = event.start, other_event.start
         end, other_end = event.end, other_event.end
-        other_start_orientation = self.orienteer(end, start, other_start)
-        other_end_orientation = self.orienteer(end, start, other_end)
+        other_start_orientation = self.orienteer(start, end, other_start)
+        other_end_orientation = self.orienteer(start, end, other_end)
         if other_start_orientation is other_end_orientation:
             if other_start_orientation is not Orientation.COLLINEAR:
                 # other segment fully lies on one side
@@ -198,8 +195,8 @@ class NarySweepLineKey:
             else:
                 # segments are horizontal
                 return start.x < other_start.x
-        start_orientation = self.orienteer(other_end, other_start, start)
-        end_orientation = self.orienteer(other_end, other_start, end)
+        start_orientation = self.orienteer(other_start, other_end, start)
+        end_orientation = self.orienteer(other_start, other_end, end)
         if start_orientation is end_orientation:
             return start_orientation is Orientation.CLOCKWISE
         elif other_start_orientation is Orientation.COLLINEAR:

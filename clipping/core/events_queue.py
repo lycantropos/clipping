@@ -5,7 +5,8 @@ from typing import (Callable,
                     Type,
                     cast)
 
-from ground.base import Context
+from ground.base import (Context,
+                         Relation)
 from ground.hints import Point
 from prioq.base import PriorityQueue
 from reprit.base import generate_repr
@@ -20,8 +21,6 @@ from .event import (BinaryEvent,
 from .hints import (Orienteer,
                     SegmentEndpoints)
 from .utils import (Orientation,
-                    SegmentsRelation,
-                    orientation,
                     segments_intersection,
                     segments_relation)
 
@@ -53,7 +52,7 @@ class BinaryEventsQueueKey:
         # same start, both events are left endpoints
         # or both are right endpoints
         else:
-            other_end_orientation = self.orienteer(event.end, event.start,
+            other_end_orientation = self.orienteer(event.start, event.end,
                                                    other_event.end)
             # the lowest segment is processed first
             return (other_event.from_left
@@ -93,7 +92,7 @@ class NaryEventsQueueKey:
         # or both are right endpoints
         else:
             # the lowest segment is processed first
-            return (self.orienteer(event.start, other_event.end, event.end)
+            return (self.orienteer(event.start, event.end, other_event.end)
                     is (Orientation.CLOCKWISE
                         if event.is_right_endpoint
                         else Orientation.COUNTERCLOCKWISE))
@@ -105,7 +104,7 @@ class LinearBinaryEventsQueue:
     def __init__(self, context: Context) -> None:
         self.context = context
         self._queue = PriorityQueue(key=partial(BinaryEventsQueueKey,
-                                                partial(orientation, context)))
+                                                context.angle_orientation))
 
     __repr__ = generate_repr(__init__)
 
@@ -124,8 +123,7 @@ class LinearBinaryEventsQueue:
         segment_start, segment_end = event.start, event.end
         relation = segments_relation(below_segment_start, below_segment_end,
                                      segment_start, segment_end)
-        if (relation is SegmentsRelation.CROSS
-                or relation is SegmentsRelation.TOUCH):
+        if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
@@ -137,7 +135,7 @@ class LinearBinaryEventsQueue:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
                     self._divide_segment(event, point)
-        elif relation is not SegmentsRelation.DISJOINT:
+        elif relation is not Relation.DISJOINT:
             # segments overlap
             if below_event.from_left is event.from_left:
                 raise ValueError('Segments of the same multisegment '
@@ -203,7 +201,7 @@ class MixedBinaryEventsQueue:
     def __init__(self, context: Context) -> None:
         self.context = context
         self._queue = PriorityQueue(key=partial(BinaryEventsQueueKey,
-                                                partial(orientation, context)))
+                                                context.angle_orientation))
 
     @property
     def key(self) -> Callable[[MixedEvent], BinaryEventsQueueKey]:
@@ -222,8 +220,7 @@ class MixedBinaryEventsQueue:
         segment_start, segment_end = event.start, event.end
         relation = segments_relation(below_segment_start, below_segment_end,
                                      segment_start, segment_end)
-        if (relation is SegmentsRelation.CROSS
-                or relation is SegmentsRelation.TOUCH):
+        if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
@@ -235,7 +232,7 @@ class MixedBinaryEventsQueue:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
                     self._divide_segment(event, point)
-        elif relation is not SegmentsRelation.DISJOINT:
+        elif relation is not Relation.DISJOINT:
             # segments overlap
             if below_event.from_left is event.from_left:
                 raise ValueError('Edges of the {geometry} '
@@ -312,7 +309,7 @@ class NaryEventsQueue:
     def __init__(self, context: Context) -> None:
         self.context = context
         self._queue = PriorityQueue(key=partial(NaryEventsQueueKey,
-                                                partial(orientation, context)))
+                                                context.angle_orientation))
 
     __repr__ = generate_repr(__init__)
 
@@ -331,8 +328,7 @@ class NaryEventsQueue:
         segment_start, segment_end = event.start, event.end
         relation = segments_relation(below_segment_start, below_segment_end,
                                      segment_start, segment_end)
-        if (relation is SegmentsRelation.CROSS
-                or relation is SegmentsRelation.TOUCH):
+        if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
@@ -344,7 +340,7 @@ class NaryEventsQueue:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
                     self._divide_segment(event, point)
-        elif relation is not SegmentsRelation.DISJOINT:
+        elif relation is not Relation.DISJOINT:
             # segments overlap
             starts_equal = below_event.start == event.start
             if starts_equal:
@@ -404,7 +400,7 @@ class ShapedBinaryEventsQueue(Generic[Event]):
     def __init__(self, event_cls: Type[Event], context: Context) -> None:
         self.event_cls, self.context = event_cls, context
         self._queue = PriorityQueue(key=partial(BinaryEventsQueueKey,
-                                                partial(orientation, context)))
+                                                context.angle_orientation))
 
     __repr__ = generate_repr(__init__)
 
@@ -421,8 +417,7 @@ class ShapedBinaryEventsQueue(Generic[Event]):
         segment_start, segment_end = event.start, event.end
         relation = segments_relation(below_segment_start, below_segment_end,
                                      segment_start, segment_end)
-        if (relation is SegmentsRelation.CROSS
-                or relation is SegmentsRelation.TOUCH):
+        if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
@@ -434,7 +429,7 @@ class ShapedBinaryEventsQueue(Generic[Event]):
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
                     self._divide_segment(event, point)
-        elif relation is not SegmentsRelation.DISJOINT:
+        elif relation is not Relation.DISJOINT:
             # segments overlap
             if below_event.from_left is event.from_left:
                 raise ValueError('Edges of the same multipolygon '

@@ -79,8 +79,8 @@ def to_contour_orientation(contour: Contour,
     vertices = contour.vertices
     index = min(range(len(vertices)),
                 key=vertices.__getitem__)
-    return orientation(context, vertices[index], vertices[index - 1],
-                       vertices[(index + 1) % len(vertices)])
+    return context.angle_orientation(vertices[index - 1], vertices[index],
+                                     vertices[(index + 1) % len(vertices)])
 
 
 flatten = chain.from_iterable
@@ -110,30 +110,22 @@ def shrink_collinear_vertices(vertices: List[Point],
                               *,
                               context: Context) -> None:
     index = -len(vertices) + 1
+    orienteer = context.angle_orientation
     while index < 0:
         while (max(2, -index) < len(vertices)
-               and (orientation(context, vertices[index + 2],
-                                vertices[index + 1], vertices[index])
-                    is Orientation.COLLINEAR)):
+               and orienteer(vertices[index + 1], vertices[index + 2],
+                             vertices[index]) is Orientation.COLLINEAR):
             del vertices[index + 1]
         index += 1
     while index < len(vertices):
         while (max(2, index) < len(vertices)
-               and (orientation(context, vertices[index - 2],
-                                vertices[index - 1], vertices[index])
-                    is Orientation.COLLINEAR)):
+               and orienteer(vertices[index - 1], vertices[index - 2],
+                             vertices[index]) is Orientation.COLLINEAR):
             del vertices[index - 1]
         index += 1
 
 
 Orientation = Orientation
-
-
-def orientation(context, first, vertex, second):
-    return context.angle_orientation(vertex, first, second)
-
-
-SegmentsRelation = Relation
 
 
 def segments_intersection(context: Context, first_start, first_end,

@@ -44,7 +44,7 @@ def _merge_segments(segments: Sequence[Segment],
     events_queue = NaryEventsQueue(context)
     events_queue.register(segments_to_endpoints(segments))
     sweep_line = NarySweepLine(context)
-    endpoints = []  # type: List[SegmentEndpoints]
+    segments_endpoints = []  # type: List[SegmentEndpoints]
     while events_queue:
         event = events_queue.pop()
         if event.is_right_endpoint:
@@ -55,7 +55,7 @@ def _merge_segments(segments: Sequence[Segment],
                 sweep_line.remove(event)
                 if above_event is not None and below_event is not None:
                     events_queue.detect_intersection(below_event, above_event)
-                endpoints.append(event_to_segment_endpoints(event))
+                segments_endpoints.append(event_to_segment_endpoints(event))
         elif event not in sweep_line:
             sweep_line.add(event)
             above_event, below_event = (sweep_line.above(event),
@@ -64,8 +64,9 @@ def _merge_segments(segments: Sequence[Segment],
                 events_queue.detect_intersection(event, above_event)
             if below_event is not None:
                 events_queue.detect_intersection(below_event, event)
-    return endpoints_to_segments(endpoints,
-                                 context=context)
+    return endpoints_to_segments(
+            [endpoints for endpoints, _ in groupby(segments_endpoints)],
+            context=context)
 
 
 class Operation(ABC):
