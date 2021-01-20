@@ -14,8 +14,6 @@ from orient.planar import (Relation,
 
 from clipping.core.bounding import to_vertices
 from clipping.core.utils import (Orientation,
-                                 SegmentsRelation,
-                                 orientation,
                                  segments_intersection,
                                  segments_relation)
 from clipping.hints import (HolelessMix,
@@ -141,7 +139,7 @@ def _to_counterclockwise_vertices(vertices: Sequence[Point]
 
 
 def _to_first_angle_orientation(vertices: Sequence[Point]) -> Orientation:
-    return orientation(_context, vertices[-1], vertices[0], vertices[1])
+    return _context.angle_orientation(vertices[0], vertices[-1], vertices[1])
 
 
 def reverse_sequence(sequence: Domain) -> Domain:
@@ -170,6 +168,18 @@ def is_holeless_mix(object_: Any) -> bool:
             and is_multipoint(object_[0])
             and is_multisegment(object_[1])
             and is_multiregion(object_[2]))
+
+
+def is_linear_mix(object_: Any) -> bool:
+    return (isinstance(object_, tuple)
+            and len(object_) == 2
+            and is_multipoint(object_[0])
+            and is_multisegment(object_[1]))
+
+
+def is_linear_mix_empty(mix: LinearMix) -> bool:
+    multipoint, multisegment = mix
+    return not (multipoint.points or multisegment.segments)
 
 
 def is_mix(object_: Any) -> bool:
@@ -248,18 +258,13 @@ def to_sorted_segment(segment: Segment) -> Segment:
     return segment if segment.start < segment.end else reverse_segment(segment)
 
 
-def sort_pair(pair: Tuple[Domain, Domain]) -> Tuple[Domain, Domain]:
-    first, second = pair
-    return pair if first < second else (second, first)
-
-
 def multipolygon_to_multiregion(multipolygon: Multipolygon) -> Multiregion:
-    assert not any(holes for _, holes in multipolygon)
-    return [border for border, _ in multipolygon]
+    assert not any(polygon.holes for polygon in multipolygon.polygons)
+    return [polygon.border for polygon in multipolygon.polygons]
 
 
 def multiregion_to_multipolygon(multiregion: Multiregion) -> Multipolygon:
-    return [(region, []) for region in multiregion]
+    return Multipolygon([Polygon(region, []) for region in multiregion])
 
 
 def segments_intersections(first: Segment, second: Segment
@@ -268,10 +273,9 @@ def segments_intersections(first: Segment, second: Segment
     second_start, second_end = second.start, second.end
     relation = segments_relation(first_start, first_end, second_start,
                                  second_end)
-    if relation is SegmentsRelation.DISJOINT:
+    if relation is Relation.DISJOINT:
         return ()
-    elif (relation is SegmentsRelation.TOUCH
-          or relation is SegmentsRelation.CROSS):
+    elif relation is Relation.CROSS or relation is Relation.TOUCH:
         return segments_intersection(_context, first_start, first_end,
                                      second_start, second_end),
     else:

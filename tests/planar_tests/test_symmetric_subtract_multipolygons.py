@@ -1,11 +1,11 @@
+from ground.hints import Multipolygon
 from hypothesis import given
 
 from clipping.planar import (intersect_multipolygons,
                              subtract_multipolygons,
                              symmetric_subtract_multipolygons,
                              unite_multipolygons)
-from tests.utils import (Multipolygon,
-                         MultipolygonsPair,
+from tests.utils import (MultipolygonsPair,
                          MultipolygonsTriplet,
                          are_multipolygons_similar,
                          is_multipolygon,
