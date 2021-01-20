@@ -73,7 +73,7 @@ def test_right_absorbing_element(multipolygon_with_empty_multisegment
     result = subtract_multipolygon_from_multisegment(empty_multisegment,
                                                      multipolygon)
 
-    assert not result
+    assert not result.segments
 
 
 @given(strategies.multipolygons_with_multisegments)
