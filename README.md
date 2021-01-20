@@ -46,55 +46,73 @@ python setup.py install
 Usage
 -----
 ```python
->>> left_edge = ((0, 0), (0, 1))
->>> right_edge = ((1, 0), (1, 1))
->>> bottom_edge = ((0, 0), (1, 0))
->>> top_edge = ((0, 1), (1, 1))
->>> main_diagonal = ((0, 0), (1, 1))
->>> trident = [left_edge, main_diagonal, bottom_edge]
->>> square_edges = [bottom_edge, right_edge, top_edge, left_edge]
+>>> from ground.base import get_context
+>>> context = get_context()
+>>> Multipoint, Multisegment, Point, Segment = (context.multipoint_cls,
+...                                             context.multisegment_cls,
+...                                             context.point_cls,
+...                                             context.segment_cls)
+>>> left_edge = Segment(Point(0, 0), Point(0, 1))
+>>> right_edge = Segment(Point(1, 0), Point(1, 1))
+>>> bottom_edge = Segment(Point(0, 0), Point(1, 0))
+>>> top_edge = Segment(Point(0, 1), Point(1, 1))
+>>> main_diagonal = Segment(Point(0, 0), Point(1, 1))
+>>> trident = Multisegment([left_edge, main_diagonal, bottom_edge])
+>>> square_edges = Multisegment([bottom_edge, right_edge, top_edge, left_edge])
 >>> from clipping.planar import intersect_multisegments
 >>> (intersect_multisegments(trident, square_edges)
 ...  == intersect_multisegments(square_edges, trident)
-...  == [left_edge, bottom_edge])
+...  == Multisegment([left_edge, bottom_edge]))
 True
 >>> from clipping.planar import complete_intersect_multisegments
 >>> (complete_intersect_multisegments(trident, square_edges)
 ...  == complete_intersect_multisegments(square_edges, trident)
-...  == ([(1, 1)], intersect_multisegments(trident, square_edges), []))
+...  == (Multipoint([Point(1, 1)]),
+...      intersect_multisegments(trident, square_edges)))
 True
 >>> from clipping.planar import unite_multisegments
 >>> (unite_multisegments(trident, square_edges)
 ...  == unite_multisegments(square_edges, trident)
-...  == [left_edge, bottom_edge, main_diagonal, top_edge, right_edge])
+...  == Multisegment([left_edge, bottom_edge, main_diagonal, top_edge,
+...                   right_edge]))
 True
 >>> from clipping.planar import subtract_multisegments
->>> subtract_multisegments(trident, square_edges) == [main_diagonal]
+>>> (subtract_multisegments(trident, square_edges)
+...  == Multisegment([main_diagonal]))
 True
->>> subtract_multisegments(square_edges, trident) == [top_edge, right_edge]
+>>> (subtract_multisegments(square_edges, trident)
+...  == Multisegment([top_edge, right_edge]))
 True
 >>> from clipping.planar import symmetric_subtract_multisegments
 >>> (symmetric_subtract_multisegments(trident, square_edges)
 ...  == symmetric_subtract_multisegments(square_edges, trident)
-...  == [main_diagonal, top_edge, right_edge])
+...  == Multisegment([main_diagonal, top_edge, right_edge]))
 True
->>> left_triangle = [([(0, 0), (1, 0), (0, 1)], [])]
->>> right_triangle = [([(0, 1), (1, 0), (1, 1)], [])]
->>> square = [([(0, 0), (1, 0), (1, 1), (0, 1)], [])]
+>>> Contour, Multipolygon, Polygon = (context.contour_cls,
+...                                   context.multipolygon_cls,
+...                                   context.polygon_cls)
+>>> left_triangle = Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+...                                                Point(0, 1)]), [])])
+>>> right_triangle = Multipolygon([Polygon(Contour([Point(0, 1), Point(1, 0),
+...                                                 Point(1, 1)]), [])])
+>>> square = Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+...                                         Point(1, 1), Point(0, 1)]), [])])
 >>> from clipping.planar import intersect_multipolygons
 >>> all(intersect_multipolygons(square, triangle)
 ...     == intersect_multipolygons(triangle, square) == triangle
 ...     for triangle in (left_triangle, right_triangle))
 True
->>> intersect_multipolygons(left_triangle, right_triangle) == []
+>>> intersect_multipolygons(left_triangle, right_triangle) == Multipolygon([])
 True
 >>> from clipping.planar import complete_intersect_multipolygons
 >>> all(complete_intersect_multipolygons(square, triangle)
-...     == ([], [], intersect_multipolygons(square, triangle))
+...     == (Multipoint([]), Multisegment([]),
+...         intersect_multipolygons(square, triangle))
 ...     for triangle in (left_triangle, right_triangle))
 True
 >>> (complete_intersect_multipolygons(left_triangle, right_triangle)
-...  == ([], [((0, 1), (1, 0))], []))
+...  == (Multipoint([]), Multisegment([Segment(Point(0, 1), Point(1, 0))]),
+...      Multipolygon([])))
 True
 >>> from clipping.planar import unite_multipolygons
 >>> all(unite_multipolygons(square, triangle)
@@ -107,7 +125,7 @@ True
 ...  == square)
 True
 >>> from clipping.planar import subtract_multipolygons
->>> all(subtract_multipolygons(triangle, square) == []
+>>> all(subtract_multipolygons(triangle, square) == Multipolygon([])
 ...     for triangle in (left_triangle, right_triangle))
 True
 >>> subtract_multipolygons(square, left_triangle) == right_triangle
