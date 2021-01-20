@@ -265,8 +265,8 @@ def segments_intersections(first: Segment, second: Segment
     if relation is Relation.DISJOINT:
         return ()
     elif relation is Relation.CROSS or relation is Relation.TOUCH:
-        return segments_intersection(_context, first_start, first_end,
-                                     second_start, second_end),
+        return segments_intersection(first_start, first_end, second_start,
+                                     second_end),
     else:
         _, first_point, second_point, _ = sorted([first_start, first_end,
                                                   second_start, second_end])
