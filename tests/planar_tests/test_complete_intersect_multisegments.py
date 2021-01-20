@@ -6,8 +6,6 @@ from orient.planar import (Relation,
                            segment_in_multisegment,
                            segment_in_segment)
 
-from clipping.core.utils import (Relation,
-                                 segments_relation)
 from clipping.planar import (complete_intersect_multisegments,
                              intersect_multisegments,
                              unite_multisegments)
@@ -17,6 +15,7 @@ from tests.utils import (MultisegmentsPair,
                          linear_mix_equivalent_to_multisegment,
                          reverse_multisegment,
                          segments_intersections,
+                         segments_relation,
                          to_sorted_segment)
 from . import strategies
 
@@ -68,8 +67,7 @@ def test_properties(multisegments_pair: MultisegmentsPair) -> None:
                for left_segment in left_multisegment.segments
                if any(segments_relation(left_segment.start, left_segment.end,
                                         right_segment.start, right_segment.end)
-                      not in (Relation.CROSS,
-                              Relation.DISJOINT,
+                      not in (Relation.CROSS, Relation.DISJOINT,
                               Relation.TOUCH)
                       for right_segment in right_multisegment.segments))
 

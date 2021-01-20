@@ -8,9 +8,7 @@ from typing import (Any,
                     TypeVar)
 
 from ground.base import (Context,
-                         Orientation,
-                         Relation,
-                         get_context)
+                         Orientation)
 from ground.hints import (Contour,
                           Coordinate,
                           Point,
@@ -123,21 +121,6 @@ def shrink_collinear_vertices(vertices: List[Point],
                              vertices[index]) is Orientation.COLLINEAR):
             del vertices[index - 1]
         index += 1
-
-
-Orientation = Orientation
-
-
-def segments_intersection(context: Context, first_start, first_end,
-                          second_start, second_end):
-    return context.segments_intersection(first_start, first_end, second_start,
-                                         second_end)
-
-
-def segments_relation(first_start, first_end, second_start, second_end):
-    context = get_context()
-    return context.segments_relation(first_start, first_end, second_start,
-                                     second_end)
 
 
 def segments_to_endpoints(segments: Sequence[Segment]

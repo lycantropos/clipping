@@ -7,8 +7,7 @@ from orient.planar import (Relation,
                            segment_in_multisegment,
                            segment_in_segment)
 
-from clipping.core.utils import (contour_to_edges_endpoints,
-                                 segments_relation)
+from clipping.core.utils import contour_to_edges_endpoints
 from clipping.planar import (complete_intersect_multisegment_with_multipolygon,
                              intersect_multisegment_with_multipolygon)
 from tests.utils import (MultipolygonWithMultisegment,
@@ -20,6 +19,7 @@ from tests.utils import (MultipolygonWithMultisegment,
                          reverse_multipolygon_holes_contours,
                          reverse_multisegment,
                          reverse_multisegment_endpoints,
+                         segments_relation,
                          to_multipolygon_contours,
                          to_sorted_segment)
 from . import strategies

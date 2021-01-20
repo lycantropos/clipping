@@ -5,18 +5,16 @@ from typing import (Any,
                     Tuple,
                     TypeVar)
 
-from ground.base import get_context
+from ground.base import (Orientation,
+                         Relation,
+                         get_context)
 from ground.hints import Contour
 from hypothesis import strategies
 from hypothesis.strategies import SearchStrategy
-from orient.planar import (Relation,
-                           multisegment_in_multisegment)
+from orient.planar import multisegment_in_multisegment
 
 from clipping.core.bounding import to_vertices
 from clipping.core.linear import segment_to_endpoints
-from clipping.core.utils import (Orientation,
-                                 segments_intersection,
-                                 segments_relation)
 from clipping.hints import (HolelessMix,
                             LinearMix,
                             Mix,
@@ -43,6 +41,8 @@ MultiregionsPair = Tuple[Multiregion, Multiregion]
 MultiregionsTriplet = Tuple[Multiregion, Multiregion, Multiregion]
 MultipolygonsPair = Tuple[Multipolygon, Multipolygon]
 MultipolygonsTriplet = Tuple[Multipolygon, Multipolygon, Multipolygon]
+segments_intersection = _context.segments_intersection
+segments_relation = _context.segments_relation
 
 
 def equivalence(left_statement: bool, right_statement: bool) -> bool:

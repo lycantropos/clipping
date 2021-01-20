@@ -6,6 +6,7 @@ from typing import (Callable,
                     cast)
 
 from ground.base import (Context,
+                         Orientation,
                          Relation)
 from ground.hints import Point
 from prioq.base import PriorityQueue
@@ -20,9 +21,6 @@ from .event import (BinaryEvent,
                     ShapedEvent)
 from .hints import (Orienteer,
                     SegmentEndpoints)
-from .utils import (Orientation,
-                    segments_intersection,
-                    segments_relation)
 
 
 class BinaryEventsQueueKey:
@@ -121,16 +119,16 @@ class LinearBinaryEventsQueue:
         below_segment_start, below_segment_end = (below_event.start,
                                                   below_event.end)
         segment_start, segment_end = event.start, event.end
-        relation = segments_relation(below_segment_start, below_segment_end,
-                                     segment_start, segment_end)
+        relation = self.context.segments_relation(below_segment_start,
+                                                  below_segment_end,
+                                                  segment_start, segment_end)
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = segments_intersection(self.context,
-                                              below_segment_start,
-                                              below_segment_end, segment_start,
-                                              segment_end)
+                point = self.context.segments_intersection(
+                        below_segment_start, below_segment_end, segment_start,
+                        segment_end)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -218,16 +216,16 @@ class MixedBinaryEventsQueue:
         below_segment_start, below_segment_end = (below_event.start,
                                                   below_event.end)
         segment_start, segment_end = event.start, event.end
-        relation = segments_relation(below_segment_start, below_segment_end,
-                                     segment_start, segment_end)
+        relation = self.context.segments_relation(below_segment_start,
+                                                  below_segment_end,
+                                                  segment_start, segment_end)
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = segments_intersection(self.context,
-                                              below_segment_start,
-                                              below_segment_end, segment_start,
-                                              segment_end)
+                point = self.context.segments_intersection(
+                        below_segment_start, below_segment_end, segment_start,
+                        segment_end)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -326,16 +324,16 @@ class NaryEventsQueue:
         below_segment_start, below_segment_end = (below_event.start,
                                                   below_event.end)
         segment_start, segment_end = event.start, event.end
-        relation = segments_relation(below_segment_start, below_segment_end,
-                                     segment_start, segment_end)
+        relation = self.context.segments_relation(below_segment_start,
+                                                  below_segment_end,
+                                                  segment_start, segment_end)
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = segments_intersection(self.context,
-                                              below_segment_start,
-                                              below_segment_end, segment_start,
-                                              segment_end)
+                point = self.context.segments_intersection(
+                        below_segment_start, below_segment_end, segment_start,
+                        segment_end)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -415,16 +413,16 @@ class ShapedBinaryEventsQueue(Generic[Event]):
         below_segment_start, below_segment_end = (below_event.start,
                                                   below_event.end)
         segment_start, segment_end = event.start, event.end
-        relation = segments_relation(below_segment_start, below_segment_end,
-                                     segment_start, segment_end)
+        relation = self.context.segments_relation(below_segment_start,
+                                                  below_segment_end,
+                                                  segment_start, segment_end)
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = segments_intersection(self.context,
-                                              below_segment_start,
-                                              below_segment_end, segment_start,
-                                              segment_end)
+                point = self.context.segments_intersection(
+                        below_segment_start, below_segment_end, segment_start,
+                        segment_end)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:

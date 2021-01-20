@@ -16,8 +16,7 @@ from .hints import (Multiregion,
                     Region,
                     SegmentEndpoints)
 from .utils import (contour_to_edges_endpoints,
-                    flatten,
-                    segments_relation)
+                    flatten)
 
 
 def from_contour(contour: Contour,
@@ -265,8 +264,8 @@ def intersects_with_segment(box: Box,
                               context=context)
     return (intersects_with(segment_box, box)
             and (is_subset_of(segment_box, box)
-                 or any(segments_relation(edge_start, edge_end, start, end)
-                        is not Relation.DISJOINT
+                 or any(context.segments_relation(edge_start, edge_end, start,
+                                                  end) is not Relation.DISJOINT
                         for edge_start, edge_end
                         in to_edges_endpoints(box,
                                               context=context))))
@@ -279,11 +278,12 @@ def coupled_with_segment(box: Box,
     """
     Checks if the box intersects the segment at more than one point.
     """
-    segment_box = from_segment(segment, context=context)
+    segment_box = from_segment(segment,
+                               context=context)
     return (coupled_with(segment_box, box)
             and (is_subset_of(segment_box, box)
-                 or any(segments_relation(edge_start, edge_end, segment.start,
-                                          segment.end)
+                 or any(context.segments_relation(edge_start, edge_end,
+                                                  segment.start, segment.end)
                         not in (Relation.TOUCH, Relation.DISJOINT)
                         for edge_start, edge_end
                         in to_edges_endpoints(box,
@@ -314,8 +314,10 @@ def within_of_region(box: Box,
     return (all(point_in_region(vertex, border) is Relation.WITHIN
                 for vertex in to_vertices(box,
                                           context=context))
-            and all(segments_relation(edge_start, edge_end, border_edge_start,
-                                      border_edge_end) is Relation.DISJOINT
+            and all(context.segments_relation(edge_start, edge_end,
+                                              border_edge_start,
+                                              border_edge_end)
+                    is Relation.DISJOINT
                     for edge_start, edge_end
                     in to_edges_endpoints(box,
                                           context=context)
@@ -357,8 +359,10 @@ def intersects_with_polygon(box: Box,
                                            context=context)]
     if (within_of(box, polygon_box)
             and all(relation is Relation.WITHIN for relation in relations)
-            and all(segments_relation(edge_start, edge_end, border_edge_start,
-                                      border_edge_end) is Relation.DISJOINT
+            and all(context.segments_relation(edge_start, edge_end,
+                                              border_edge_start,
+                                              border_edge_end)
+                    is Relation.DISJOINT
                     for edge_start, edge_end
                     in to_edges_endpoints(box,
                                           context=context)
