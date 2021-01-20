@@ -35,7 +35,7 @@ def test_left_absorbing_element(empty_multisegment_with_multisegment
 
     result = intersect_multisegments(empty_multisegment, multisegment)
 
-    assert not result
+    assert not result.segments
 
 
 @given(strategies.empty_multisegments_with_multisegments)
@@ -45,22 +45,12 @@ def test_right_absorbing_element(empty_multisegment_with_multisegment
 
     result = intersect_multisegments(multisegment, empty_multisegment)
 
-    assert not result
+    assert not result.segments
 
 
 @given(strategies.multisegments_pairs)
 def test_absorption_identity(multisegments_pair: MultisegmentsPair) -> None:
-    # multisegments_pair = ([((1.0, 1.0), (1.00000000000002, 26.0121956888678))],
-    #                       [((1.0, 1.00000000000002),
-    #                         (3.59127807432821, 7.40977565656075))])
     left_multisegment, right_multisegment = multisegments_pair
-
-    # plot.clf()
-    # plot.draw_multisegment(left_multisegment,
-    #                        color='r')
-    # plot.draw_multisegment(right_multisegment,
-    #                        color='b')
-    # plot.show()
 
     result = intersect_multisegments(left_multisegment,
                                      unite_multisegments(left_multisegment,

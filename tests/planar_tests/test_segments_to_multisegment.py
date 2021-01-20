@@ -25,6 +25,7 @@ def test_properties(segments: List[Segment]) -> None:
 
     assert not segments_cross_or_overlap(result.segments)
     assert equivalence(not segments_cross_or_overlap(segments),
-                       result.segments == sorted(map(to_sorted_segment,
-                                                     segments),
-                                                 key=segment_to_endpoints))
+                       sorted(result.segments,
+                              key=segment_to_endpoints)
+                       == sorted(map(to_sorted_segment, segments),
+                                 key=segment_to_endpoints))

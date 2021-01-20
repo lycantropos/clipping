@@ -12,8 +12,8 @@ from clipping.planar import (complete_intersect_multisegments,
                              intersect_multisegments,
                              unite_multisegments)
 from tests.utils import (MultisegmentsPair,
-                         is_mix,
-                         is_mix_empty,
+                         is_linear_mix,
+                         is_linear_mix_empty,
                          linear_mix_equivalent_to_multisegment,
                          reverse_multisegment,
                          segments_intersections,
@@ -28,7 +28,7 @@ def test_basic(multisegments_pair: MultisegmentsPair) -> None:
     result = complete_intersect_multisegments(left_multisegment,
                                               right_multisegment)
 
-    assert is_mix(result)
+    assert is_linear_mix(result)
 
 
 @given(strategies.rational_multisegments_pairs)
@@ -38,7 +38,7 @@ def test_properties(multisegments_pair: MultisegmentsPair) -> None:
     result = complete_intersect_multisegments(left_multisegment,
                                               right_multisegment)
 
-    result_multipoint, result_multisegment, result_multipolygon = result
+    result_multipoint, result_multisegment = result
     assert all(point_in_multisegment(point, left_multisegment)
                is point_in_multisegment(point, right_multisegment)
                is Relation.COMPONENT
@@ -72,7 +72,6 @@ def test_properties(multisegments_pair: MultisegmentsPair) -> None:
                               Relation.DISJOINT,
                               Relation.TOUCH)
                       for right_segment in right_multisegment.segments))
-    assert not result_multipolygon
 
 
 @given(strategies.multisegments)
@@ -89,7 +88,7 @@ def test_left_absorbing_element(empty_multisegment_with_multisegment
 
     result = complete_intersect_multisegments(empty_multisegment, multisegment)
 
-    assert is_mix_empty(result)
+    assert is_linear_mix_empty(result)
 
 
 @given(strategies.empty_multisegments_with_multisegments)
@@ -99,7 +98,7 @@ def test_right_absorbing_element(empty_multisegment_with_multisegment
 
     result = complete_intersect_multisegments(multisegment, empty_multisegment)
 
-    assert is_mix_empty(result)
+    assert is_linear_mix_empty(result)
 
 
 @given(strategies.rational_multisegments_pairs)
@@ -132,7 +131,7 @@ def test_connection_with_intersect(multisegments_pair: MultisegmentsPair
     result = complete_intersect_multisegments(left_multisegment,
                                               right_multisegment)
 
-    _, multisegment, _ = result
+    _, multisegment = result
     assert multisegment == intersect_multisegments(left_multisegment,
                                                    right_multisegment)
 

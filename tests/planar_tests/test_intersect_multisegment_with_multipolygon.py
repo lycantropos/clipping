@@ -61,7 +61,7 @@ def test_left_absorbing_element(empty_multipolygon_with_multisegment
     result = intersect_multisegment_with_multipolygon(multisegment,
                                                       empty_multipolygon)
 
-    assert not result
+    assert not result.segments
 
 
 @given(strategies.multipolygons_with_empty_multisegments)
@@ -72,7 +72,7 @@ def test_right_absorbing_element(multipolygon_with_empty_multisegment
     result = intersect_multisegment_with_multipolygon(empty_multisegment,
                                                       multipolygon)
 
-    assert not result
+    assert not result.segments
 
 
 @given(strategies.multipolygons_with_multisegments)

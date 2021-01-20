@@ -113,7 +113,7 @@ def test_connection_with_intersect(multipolygon_with_multisegment
     result = complete_intersect_multisegment_with_multipolygon(multisegment,
                                                                multipolygon)
 
-    _, multisegment, _ = result
+    _, multisegment = result
     assert multisegment == intersect_multisegment_with_multipolygon(
             multisegment, multipolygon)
 

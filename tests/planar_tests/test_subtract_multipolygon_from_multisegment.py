@@ -39,16 +39,17 @@ def test_properties(multipolygon_with_multisegment
 
     assert all(segment_in_multisegment(segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
-               for segment in result)
+               for segment in result.segments)
     assert all(segment_in_multipolygon(segment, multipolygon)
                in (Relation.DISJOINT, Relation.TOUCH)
-               for segment in result)
-    assert all(segment in result or reverse_segment(segment) in result
+               for segment in result.segments)
+    assert all(segment in result.segments
+               or reverse_segment(segment) in result.segments
                # in case of cross
                or any(segment_in_segment(result_segment, segment)
                       is Relation.COMPONENT
-                      for result_segment in result)
-               for segment in multisegment
+                      for result_segment in result.segments)
+               for segment in multisegment.segments
                if (segment_in_multipolygon(segment, multipolygon)
                    in (Relation.DISJOINT, Relation.CROSS)))
 

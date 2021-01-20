@@ -38,7 +38,7 @@ def test_left_absorbing_element(empty_multipolygon_with_multipolygon
 
     result = intersect_multipolygons(empty_multipolygon, multipolygon)
 
-    assert not result
+    assert not result.polygons
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)

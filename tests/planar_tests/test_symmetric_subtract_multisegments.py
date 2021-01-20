@@ -28,7 +28,7 @@ def test_basic(multisegments_pair: MultisegmentsPair) -> None:
 def test_self_inverse(multisegment: Multisegment) -> None:
     result = symmetric_subtract_multisegments(multisegment, multisegment)
 
-    assert not result
+    assert not result.segments
 
 
 @given(strategies.empty_multisegments_with_multisegments)

@@ -30,7 +30,7 @@ def test_basic(multipolygons_pair: MultipolygonsPair) -> None:
 def test_self_inverse(multipolygon: Multipolygon) -> None:
     result = symmetric_subtract_multipolygons(multipolygon, multipolygon)
 
-    assert not result
+    assert not result.polygons
 
 
 @given(strategies.empty_multipolygons_with_multipolygons)

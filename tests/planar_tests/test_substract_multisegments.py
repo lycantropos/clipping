@@ -29,7 +29,7 @@ def test_left_absorbing_element(empty_multisegment_with_multisegment
 
     result = subtract_multisegments(empty_multisegment, multisegment)
 
-    assert not result
+    assert not result.segments
 
 
 @given(strategies.empty_multisegments_with_multisegments)
