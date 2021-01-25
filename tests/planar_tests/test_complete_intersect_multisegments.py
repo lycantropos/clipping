@@ -44,9 +44,9 @@ def test_properties(multisegments_pair: MultisegmentsPair) -> None:
                for point in result_multipoint.points)
     assert (multisegment_in_multisegment(left_multisegment, right_multisegment)
             is not Relation.TOUCH
-            or bool(result_multipoint))
-    assert all(all(point in result_multipoint
-                   or any(point in segment
+            or bool(result_multipoint.points))
+    assert all(all(point in result_multipoint.points
+                   or any(point == segment.start or point == segment.end
                           for segment in result_multisegment.segments)
                    for right_segment in right_multisegment.segments
                    for point in segments_intersections(left_segment,
