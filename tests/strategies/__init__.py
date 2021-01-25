@@ -1,2 +1,1 @@
-from .base import (coordinates_strategies,
-                   rational_coordinates_strategies)
+from .base import coordinates_strategies

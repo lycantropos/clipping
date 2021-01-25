@@ -54,7 +54,7 @@ def test_commutative_case(multisegments_pair: MultisegmentsPair) -> None:
                                                     right_multisegment))
 
 
-@given(strategies.rational_multisegments_triplets)
+@given(strategies.multisegments_triplets)
 def test_difference_subtrahend(multisegments_triplet: MultisegmentsTriplet
                                ) -> None:
     (left_multisegment, mid_multisegment,
@@ -87,7 +87,7 @@ def test_intersection_minuend(multisegments_triplet: MultisegmentsTriplet
                                                       right_multisegment))
 
 
-@given(strategies.rational_multisegments_triplets)
+@given(strategies.multisegments_triplets)
 def test_intersection_subtrahend(multisegments_triplet: MultisegmentsTriplet
                                  ) -> None:
     (left_multisegment, mid_multisegment,

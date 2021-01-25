@@ -6,8 +6,7 @@ from ground.hints import Coordinate
 from hypothesis import strategies
 from hypothesis_geometry import planar
 
-from tests.strategies import (coordinates_strategies,
-                              rational_coordinates_strategies)
+from tests.strategies import coordinates_strategies
 from tests.utils import (Multipolygon,
                          Multisegment,
                          Point,
@@ -29,11 +28,6 @@ def points_to_nets(points: Strategy[Point]) -> Strategy[List[Segment]]:
             .map(to_net))
 
 
-rational_segments_lists = (
-        (rational_coordinates_strategies.map(planar.segments)
-         .flatmap(strategies.lists))
-        | (rational_coordinates_strategies.map(planar.points)
-           .flatmap(points_to_nets)))
 segments_lists = ((coordinates_strategies.map(planar.segments)
                    .flatmap(strategies.lists))
                   | (coordinates_strategies.map(planar.points)
@@ -46,12 +40,6 @@ multiregions = coordinates_strategies.flatmap(planar.multicontours)
 multisegments = coordinates_strategies.flatmap(planar.multisegments)
 empty_multisegments_with_multisegments = strategies.tuples(empty_multisegments,
                                                            multisegments)
-rational_multisegments_strategies = (rational_coordinates_strategies
-                                     .map(planar.multisegments))
-rational_multisegments_pairs = (rational_multisegments_strategies
-                                .flatmap(to_pairs))
-rational_multisegments_triplets = (rational_multisegments_strategies
-                                   .flatmap(to_triplets))
 multisegments_strategies = coordinates_strategies.map(planar.multisegments)
 multisegments_pairs = multisegments_strategies.flatmap(to_pairs)
 multisegments_triplets = multisegments_strategies.flatmap(to_triplets)
@@ -68,9 +56,6 @@ def coordinates_to_multipolygons_with_multisegments(
                              planar.multisegments(coordinates))
 
 
-rational_multipolygons_with_multisegments = (
-    rational_coordinates_strategies.flatmap(
-            coordinates_to_multipolygons_with_multisegments))
 multipolygons_with_multisegments = coordinates_strategies.flatmap(
         coordinates_to_multipolygons_with_multisegments)
 empty_multipolygons_with_multipolygons = strategies.tuples(empty_multipolygons,

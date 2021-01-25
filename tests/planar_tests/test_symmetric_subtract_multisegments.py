@@ -62,7 +62,7 @@ def test_commutativity(multisegments_pair: MultisegmentsPair) -> None:
                                                       left_multisegment)
 
 
-@given(strategies.rational_multisegments_triplets)
+@given(strategies.multisegments_triplets)
 def test_associativity(multisegments_triplet: MultisegmentsTriplet) -> None:
     (left_multisegment, mid_multisegment,
      right_multisegment) = multisegments_triplet
@@ -80,7 +80,7 @@ def test_associativity(multisegments_triplet: MultisegmentsTriplet) -> None:
                                                      right_multisegment)))
 
 
-@given(strategies.rational_multisegments_triplets)
+@given(strategies.multisegments_triplets)
 def test_repeated(multisegments_triplet: MultisegmentsTriplet) -> None:
     (left_multisegment, mid_multisegment,
      right_multisegment) = multisegments_triplet

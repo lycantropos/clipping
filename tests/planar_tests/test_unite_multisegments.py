@@ -86,7 +86,7 @@ def test_associativity(multisegments_triplet: MultisegmentsTriplet) -> None:
                                                     right_multisegment)))
 
 
-@given(strategies.rational_multisegments_triplets)
+@given(strategies.multisegments_triplets)
 def test_difference_operand(multisegments_triplet: MultisegmentsTriplet
                             ) -> None:
     (left_multisegment, mid_multisegment,
@@ -104,7 +104,7 @@ def test_difference_operand(multisegments_triplet: MultisegmentsTriplet
                                                           right_multisegment)))
 
 
-@given(strategies.rational_multisegments_triplets)
+@given(strategies.multisegments_triplets)
 def test_distribution_over_intersection(multisegments_triplet
                                         : MultisegmentsTriplet) -> None:
     (left_multisegment, mid_multisegment,

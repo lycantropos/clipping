@@ -19,7 +19,7 @@ def test_basic(segments: List[Segment]) -> None:
     assert is_multisegment(result)
 
 
-@given(strategies.rational_segments_lists)
+@given(strategies.segments_lists)
 def test_properties(segments: List[Segment]) -> None:
     result = segments_to_multisegment(segments)
 

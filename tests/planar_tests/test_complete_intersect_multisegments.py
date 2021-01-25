@@ -30,7 +30,7 @@ def test_basic(multisegments_pair: MultisegmentsPair) -> None:
     assert is_linear_mix(result)
 
 
-@given(strategies.rational_multisegments_pairs)
+@given(strategies.multisegments_pairs)
 def test_properties(multisegments_pair: MultisegmentsPair) -> None:
     left_multisegment, right_multisegment = multisegments_pair
 
@@ -99,7 +99,7 @@ def test_right_absorbing_element(empty_multisegment_with_multisegment
     assert is_linear_mix_empty(result)
 
 
-@given(strategies.rational_multisegments_pairs)
+@given(strategies.multisegments_pairs)
 def test_absorption_identity(multisegments_pair: MultisegmentsPair) -> None:
     left_multisegment, right_multisegment = multisegments_pair
 

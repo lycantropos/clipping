@@ -36,7 +36,7 @@ def test_basic(multipolygon_with_multisegment: MultipolygonWithMultisegment
     assert is_linear_mix(result)
 
 
-@given(strategies.rational_multipolygons_with_multisegments)
+@given(strategies.multipolygons_with_multisegments)
 def test_properties(multipolygon_with_multisegment
                     : MultipolygonWithMultisegment) -> None:
     multipolygon, multisegment = multipolygon_with_multisegment
