@@ -1,7 +1,7 @@
+from ground.base import Relation
 from ground.hints import Multisegment
 from hypothesis import given
-from orient.planar import (Relation,
-                           multisegment_in_multisegment,
+from orient.planar import (multisegment_in_multisegment,
                            point_in_multisegment,
                            segment_in_multisegment,
                            segment_in_segment)

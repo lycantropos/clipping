@@ -1,6 +1,6 @@
+from ground.base import Relation
 from hypothesis import given
-from orient.planar import (Relation,
-                           segment_in_multipolygon,
+from orient.planar import (segment_in_multipolygon,
                            segment_in_multisegment,
                            segment_in_segment)
 
