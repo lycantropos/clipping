@@ -1,14 +1,14 @@
 from typing import (Iterable,
                     Sequence)
 
-from ground.base import Context
+from ground.base import (Context,
+                         Relation)
 from ground.hints import (Box,
                           Contour,
                           Point,
                           Polygon,
                           Segment)
-from orient.planar import (Relation,
-                           point_in_region,
+from orient.planar import (point_in_region,
                            segment_in_contour,
                            segment_in_region)
 
