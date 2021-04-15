@@ -143,8 +143,8 @@ def complete_intersect_multisegments(left: _Multisegment,
 def intersect_multisegments(left: _Multisegment,
                             right: _Multisegment,
                             *,
-                            context: _Optional[
-                                _Context] = None) -> _Multisegment:
+                            context: _Optional[_Context] = None
+                            ) -> _Multisegment:
     """
     Returns intersection of multisegments.
 
@@ -200,8 +200,8 @@ def intersect_multisegments(left: _Multisegment,
 def subtract_multisegments(minuend: _Multisegment,
                            subtrahend: _Multisegment,
                            *,
-                           context: _Optional[
-                               _Context] = None) -> _Multisegment:
+                           context: _Optional[_Context] = None
+                           ) -> _Multisegment:
     """
     Returns difference of multisegments.
 
@@ -370,12 +370,11 @@ def unite_multisegments(left: _Multisegment,
             _get_context() if context is None else context).compute()
 
 
-def intersect_multisegment_with_multipolygon(multisegment: _Multisegment,
-                                             multipolygon: _Multipolygon,
-                                             *,
-                                             context: _Optional[
-                                                 _Context] = None
-                                             ) -> _Multisegment:
+def intersect_multisegment_with_multipolygon(
+        multisegment: _Multisegment,
+        multipolygon: _Multipolygon,
+        *,
+        context: _Optional[_Context] = None) -> _Multisegment:
     """
     Returns intersection of multisegment with multipolygon.
 
@@ -642,7 +641,8 @@ def complete_intersect_multiregions(left: _Multiregion,
 def intersect_multiregions(left: _Multiregion,
                            right: _Multiregion,
                            *,
-                           context: _Optional[_Context] = None) -> _Multiregion:
+                           context: _Optional[_Context] = None
+                           ) -> _Multiregion:
     """
     Returns intersection of multiregions.
 
@@ -704,8 +704,8 @@ def intersect_multiregions(left: _Multiregion,
 def complete_intersect_multipolygons(left: _Multipolygon,
                                      right: _Multipolygon,
                                      *,
-                                     context: _Optional[
-                                         _Context] = None) -> _Mix:
+                                     context: _Optional[_Context] = None
+                                     ) -> _Mix:
     """
     Returns intersection of multipolygons considering cases
     with polygons touching each other in points/segments.
@@ -810,8 +810,8 @@ def complete_intersect_multipolygons(left: _Multipolygon,
 def intersect_multipolygons(left: _Multipolygon,
                             right: _Multipolygon,
                             *,
-                            context: _Optional[
-                                _Context] = None) -> _Multipolygon:
+                            context: _Optional[_Context] = None
+                            ) -> _Multipolygon:
     """
     Returns intersection of multipolygons.
 
@@ -909,8 +909,8 @@ def intersect_multipolygons(left: _Multipolygon,
 def subtract_multipolygons(minuend: _Multipolygon,
                            subtrahend: _Multipolygon,
                            *,
-                           context: _Optional[
-                               _Context] = None) -> _Multipolygon:
+                           context: _Optional[_Context] = None
+                           ) -> _Multipolygon:
     """
     Returns difference of multipolygons.
 
