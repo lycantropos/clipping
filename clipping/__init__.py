@@ -1,3 +1,3 @@
 """Polygons clipping based on algorithm by F. Martinez et al."""
 
-__version__ = '1.1.0'
+__version__ = '1.2.0-alpha'
