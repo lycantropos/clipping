@@ -30,14 +30,11 @@ from .utils import (all_equal,
 
 
 def merge_segments(segments: Sequence[Segment],
-                   *,
                    context: Context) -> Multisegment:
-    return context.multisegment_cls(_merge_segments(segments,
-                                                    context=context))
+    return context.multisegment_cls(_merge_segments(segments, context))
 
 
 def _merge_segments(segments: Sequence[Segment],
-                    *,
                     context: Context) -> Sequence[Segment]:
     if not segments:
         return []
@@ -66,7 +63,7 @@ def _merge_segments(segments: Sequence[Segment],
                 events_queue.detect_intersection(below_event, event)
     return endpoints_to_segments(
             sorted(endpoints for endpoints, _ in groupby(segments_endpoints)),
-            context=context)
+            context)
 
 
 class Operation(ABC):
@@ -159,14 +156,12 @@ class Difference(Operation):
     def _compute(self) -> Sequence[Segment]:
         if not (self.left and self.right):
             return self.left
-        left_box = bounding.from_segments(self.left,
-                                          context=self.context)
-        right_box = bounding.from_segments(self.right,
-                                           context=self.context)
+        left_box = bounding.from_segments(self.left, self.context)
+        right_box = bounding.from_segments(self.right, self.context)
         if bounding.disjoint_with(left_box, right_box):
             return self.left
         self.right = bounding.to_coupled_segments(left_box, self.right,
-                                                  context=self.context)
+                                                  self.context)
         if not self.right:
             return self.left
         self.normalize_operands()
@@ -176,7 +171,7 @@ class Difference(Operation):
                        in groupby(self.sweep(),
                                   key=event_to_segment_endpoints)
                        if all(event.from_left for event in events)),
-                context=self.context)
+                self.context)
 
 
 class Intersection(Operation):
@@ -204,16 +199,14 @@ class Intersection(Operation):
     def _compute(self) -> Sequence[Segment]:
         if not (self.left and self.right):
             return []
-        left_box = bounding.from_segments(self.left,
-                                          context=self.context)
-        right_box = bounding.from_segments(self.right,
-                                           context=self.context)
+        left_box = bounding.from_segments(self.left, self.context)
+        right_box = bounding.from_segments(self.right, self.context)
         if bounding.disjoint_with(left_box, right_box):
             return []
         self.left = bounding.to_coupled_segments(right_box, self.left,
-                                                 context=self.context)
+                                                 self.context)
         self.right = bounding.to_coupled_segments(left_box, self.right,
-                                                  context=self.context)
+                                                  self.context)
         if not (self.left and self.right):
             return []
         self.normalize_operands()
@@ -223,7 +216,7 @@ class Intersection(Operation):
                        in groupby(self.sweep(),
                                   key=event_to_segment_endpoints)
                        if not all_equal(event.from_left for event in events)),
-                context=self.context)
+                self.context)
 
 
 class CompleteIntersection(Operation):
@@ -252,16 +245,14 @@ class CompleteIntersection(Operation):
     def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment]]:
         if not (self.left and self.right):
             return [], []
-        left_box = bounding.from_segments(self.left,
-                                          context=self.context)
-        right_box = bounding.from_segments(self.right,
-                                           context=self.context)
+        left_box = bounding.from_segments(self.left, self.context)
+        right_box = bounding.from_segments(self.right, self.context)
         if bounding.disjoint_with(left_box, right_box):
             return [], []
         self.left = bounding.to_intersecting_segments(right_box, self.left,
-                                                      context=self.context)
+                                                      self.context)
         self.right = bounding.to_intersecting_segments(left_box, self.right,
-                                                       context=self.context)
+                                                       self.context)
         if not (self.left and self.right):
             return [], []
         self.normalize_operands()
@@ -284,8 +275,7 @@ class CompleteIntersection(Operation):
                             endpoints.append(event_to_segment_endpoints(event))
                 if no_segment_found:
                     points.append(start)
-        return points, endpoints_to_segments(endpoints,
-                                             context=self.context)
+        return points, endpoints_to_segments(endpoints, self.context)
 
 
 class SymmetricDifference(Operation):
@@ -297,11 +287,10 @@ class SymmetricDifference(Operation):
     def _compute(self) -> Sequence[Segment]:
         if not (self.left and self.right):
             return self.left or self.right
-        elif bounding.disjoint_with(
-                bounding.from_segments(self.left,
-                                       context=self.context),
-                bounding.from_segments(self.right,
-                                       context=self.context)):
+        elif bounding.disjoint_with(bounding.from_segments(self.left,
+                                                           self.context),
+                                    bounding.from_segments(self.right,
+                                                           self.context)):
             result = []
             result += self.left
             result += self.right
@@ -314,7 +303,7 @@ class SymmetricDifference(Operation):
                        in groupby(self.sweep(),
                                   key=event_to_segment_endpoints)
                        if all_equal(event.from_left for event in events)),
-                context=self.context)
+                self.context)
 
 
 class Union(Operation):
@@ -326,11 +315,10 @@ class Union(Operation):
     def _compute(self) -> Sequence[Segment]:
         if not (self.left and self.right):
             return self.left or self.right
-        elif bounding.disjoint_with(
-                bounding.from_segments(self.left,
-                                       context=self.context),
-                bounding.from_segments(self.right,
-                                       context=self.context)):
+        elif bounding.disjoint_with(bounding.from_segments(self.left,
+                                                           self.context),
+                                    bounding.from_segments(self.right,
+                                                           self.context)):
             result = []
             result += self.left
             result += self.right
@@ -339,10 +327,10 @@ class Union(Operation):
         self.normalize_operands()
         return endpoints_to_segments(
                 sorted(endpoints
-                       for endpoints, _ in groupby(
-                        self.sweep(),
-                        key=event_to_segment_endpoints)),
-                context=self.context)
+                       for endpoints, _
+                       in groupby(self.sweep(),
+                                  key=event_to_segment_endpoints)),
+                self.context)
 
 
 segment_to_endpoints = attrgetter('start', 'end')

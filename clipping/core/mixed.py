@@ -71,8 +71,7 @@ class Operation(ABC):
                               True)
         for polygon in self.polygons:
             events_queue.register(
-                    polygon_to_oriented_edges_endpoints(polygon,
-                                                        context=self.context),
+                    polygon_to_oriented_edges_endpoints(polygon, self.context),
                     False)
 
     @abstractmethod
@@ -137,22 +136,20 @@ class Difference(Operation):
     def _compute(self) -> Sequence[Segment]:
         if not (self.segments and self.polygons):
             return self.segments
-        segments_box = bounding.from_segments(self.segments,
-                                              context=self.context)
+        segments_box = bounding.from_segments(self.segments, self.context)
         if bounding.disjoint_with(
                 segments_box, bounding.from_polygons(self.polygons,
-                                                     context=self.context)):
+                                                     self.context)):
             return self.segments
         self.polygons = bounding.to_coupled_polygons(segments_box,
                                                      self.polygons,
-                                                     context=self.context)
+                                                     self.context)
         if not self.polygons:
             return self.segments
         self.normalize_operands()
         return endpoints_to_segments([event_to_segment_endpoints(event)
                                       for event in self.sweep()
-                                      if event.in_result],
-                                     context=self.context)
+                                      if event.in_result], self.context)
 
 
 class CompleteIntersection(Operation):
@@ -184,18 +181,14 @@ class CompleteIntersection(Operation):
     def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment]]:
         if not (self.segments and self.polygons):
             return [], []
-        multisegment_box = bounding.from_segments(self.segments,
-                                                  context=self.context)
-        multipolygon_box = bounding.from_polygons(self.polygons,
-                                                  context=self.context)
+        multisegment_box = bounding.from_segments(self.segments, self.context)
+        multipolygon_box = bounding.from_polygons(self.polygons, self.context)
         if bounding.disjoint_with(multisegment_box, multipolygon_box):
             return [], []
-        self.segments = bounding.to_intersecting_segments(multipolygon_box,
-                                                          self.segments,
-                                                          context=self.context)
-        self.polygons = bounding.to_intersecting_polygons(multisegment_box,
-                                                          self.polygons,
-                                                          context=self.context)
+        self.segments = bounding.to_intersecting_segments(
+                multipolygon_box, self.segments, self.context)
+        self.polygons = bounding.to_intersecting_polygons(
+                multisegment_box, self.polygons, self.context)
         if not (self.segments and self.polygons):
             return [], []
         self.normalize_operands()
@@ -214,8 +207,7 @@ class CompleteIntersection(Operation):
         return (points,
                 endpoints_to_segments([event_to_segment_endpoints(event)
                                        for event in events
-                                       if event.in_result],
-                                      context=self.context))
+                                       if event.in_result], self.context))
 
 
 class Intersection(Operation):
@@ -246,23 +238,19 @@ class Intersection(Operation):
     def _compute(self) -> Sequence[Segment]:
         if not (self.segments and self.polygons):
             return []
-        multisegment_box = bounding.from_segments(self.segments,
-                                                  context=self.context)
-        multipolygon_box = bounding.from_polygons(self.polygons,
-                                                  context=self.context)
+        multisegment_box = bounding.from_segments(self.segments, self.context)
+        multipolygon_box = bounding.from_polygons(self.polygons, self.context)
         if bounding.disjoint_with(multisegment_box,
                                   multipolygon_box):
             return []
         self.segments = bounding.to_intersecting_segments(
-                multipolygon_box, self.segments,
-                context=self.context)
+                multipolygon_box, self.segments, self.context)
         self.polygons = bounding.to_intersecting_polygons(multisegment_box,
                                                           self.polygons,
-                                                          context=self.context)
+                                                          self.context)
         if not (self.segments and self.polygons):
             return []
         self.normalize_operands()
         return endpoints_to_segments([event_to_segment_endpoints(event)
                                       for event in self.sweep()
-                                      if event.in_result],
-                                     context=self.context)
+                                      if event.in_result], self.context)

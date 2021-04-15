@@ -99,13 +99,11 @@ class Operation(ABC):
         events_queue = self._events_queue
         for region in self.left:
             events_queue.register(
-                    contour_to_oriented_edges_endpoints(region,
-                                                        context=self.context),
+                    contour_to_oriented_edges_endpoints(region, self.context),
                     True)
         for region in self.right:
             events_queue.register(
-                    contour_to_oriented_edges_endpoints(region,
-                                                        context=self.context),
+                    contour_to_oriented_edges_endpoints(region, self.context),
                     False)
 
     @abstractmethod
@@ -177,16 +175,14 @@ class CompleteIntersection(Operation):
                                 Multiregion]:
         if not (self.left and self.right):
             return [], [], []
-        left_box = bounding.from_multiregion(self.left,
-                                             context=self.context)
-        right_box = bounding.from_multiregion(self.right,
-                                              context=self.context)
+        left_box = bounding.from_multiregion(self.left, self.context)
+        right_box = bounding.from_multiregion(self.right, self.context)
         if bounding.disjoint_with(left_box, right_box):
             return [], [], []
         self.left = bounding.to_intersecting_regions(right_box, self.left,
-                                                     context=self.context)
+                                                     self.context)
         self.right = bounding.to_intersecting_regions(left_box, self.right,
-                                                      context=self.context)
+                                                      self.context)
         if not (self.left and self.right):
             return [], [], []
         self.normalize_operands()
@@ -215,8 +211,7 @@ class CompleteIntersection(Operation):
                                             else not event.in_result
                                             for event in same_start_events):
                     points.append(start)
-        return (points, endpoints_to_segments(endpoints,
-                                              context=self.context),
+        return (points, endpoints_to_segments(endpoints, self.context),
                 self.events_to_multiregion(events))
 
 
@@ -226,16 +221,14 @@ class Intersection(Operation):
     def compute(self) -> Multiregion:
         if not (self.left and self.right):
             return []
-        left_box = bounding.from_multiregion(self.left,
-                                             context=self.context)
-        right_box = bounding.from_multiregion(self.right,
-                                              context=self.context)
+        left_box = bounding.from_multiregion(self.left, self.context)
+        right_box = bounding.from_multiregion(self.right, self.context)
         if bounding.disjoint_with(left_box, right_box):
             return []
         self.left = bounding.to_coupled_regions(right_box, self.left,
-                                                context=self.context)
+                                                self.context)
         self.right = bounding.to_coupled_regions(left_box, self.right,
-                                                 context=self.context)
+                                                 self.context)
         if not (self.left and self.right):
             return []
         self.normalize_operands()
