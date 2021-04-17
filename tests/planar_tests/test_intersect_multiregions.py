@@ -11,6 +11,7 @@ from tests.utils import (MultiregionsPair,
                          multipolygon_to_multiregion,
                          multiregion_to_multipolygon,
                          reverse_multiregion,
+                         reverse_multiregion_coordinates,
                          reverse_multiregion_regions)
 from . import strategies
 
@@ -110,3 +111,8 @@ def test_reversals(multiregions_pair: MultiregionsPair) -> None:
             reverse_multiregion_regions(left_multiregion), right_multiregion)
     assert result == intersect_multiregions(
             left_multiregion, reverse_multiregion_regions(right_multiregion))
+    assert are_multiregions_similar(
+            result,
+            reverse_multiregion_coordinates(intersect_multiregions(
+                    reverse_multiregion_coordinates(left_multiregion),
+                    reverse_multiregion_coordinates(right_multiregion))))
