@@ -10,6 +10,7 @@ from tests.utils import (MultipolygonsPair,
                          is_multipolygon,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
+                         reverse_multipolygon_coordinates,
                          reverse_multipolygon_holes,
                          reverse_multipolygon_holes_contours)
 from . import strategies
@@ -156,3 +157,7 @@ def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
     assert result == intersect_multipolygons(
             left_multipolygon,
             reverse_multipolygon_holes_contours(right_multipolygon))
+    assert are_multipolygons_similar(
+            result, reverse_multipolygon_coordinates(intersect_multipolygons(
+                    reverse_multipolygon_coordinates(left_multipolygon),
+                    reverse_multipolygon_coordinates(right_multipolygon))))
