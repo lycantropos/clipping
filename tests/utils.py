@@ -77,6 +77,15 @@ def holeless_mix_similar_to_multiregion(mix: HolelessMix,
             and are_multiregions_similar(multiregion, other))
 
 
+def are_holeless_mixes_similar(left: HolelessMix, right: HolelessMix) -> bool:
+    left_multipoint, left_multisegment, left_multiregion = left
+    right_multipoint, right_multisegment, right_multiregion = right
+    return (are_multipoints_similar(left_multipoint, right_multipoint)
+            and are_multisegments_similar(left_multisegment,
+                                          right_multisegment)
+            and are_multiregions_similar(left_multiregion, right_multiregion))
+
+
 def are_linear_mixes_similar(left: LinearMix, right: LinearMix) -> bool:
     left_multipoint, left_multisegment = left
     right_multipoint, right_multisegment = right
@@ -223,6 +232,13 @@ def reverse_contour(contour: Contour) -> Contour:
 def reverse_contour_coordinates(contour: Contour) -> Contour:
     return Contour([reverse_point_coordinates(vertex)
                     for vertex in contour.vertices])
+
+
+def reverse_holeless_mix_coordinates(mix: HolelessMix) -> HolelessMix:
+    multipoint, multisegment, multiregion = mix
+    return (reverse_multipoint_coordinates(multipoint),
+            reverse_multisegment_coordinates(multisegment),
+            reverse_multiregion_coordinates(multiregion))
 
 
 def reverse_linear_mix_coordinates(mix: LinearMix) -> LinearMix:

@@ -4,10 +4,13 @@ from clipping.hints import Multiregion
 from clipping.planar import (complete_intersect_multiregions,
                              intersect_multiregions)
 from tests.utils import (MultiregionsPair,
+                         are_holeless_mixes_similar,
                          holeless_mix_similar_to_multiregion,
                          is_holeless_mix,
                          is_holeless_mix_empty,
+                         reverse_holeless_mix_coordinates,
                          reverse_multiregion,
+                         reverse_multiregion_coordinates,
                          reverse_multiregion_regions)
 from . import strategies
 
@@ -88,3 +91,8 @@ def test_reversals(multiregions_pair: MultiregionsPair) -> None:
             reverse_multiregion_regions(left_multiregion), right_multiregion)
     assert result == complete_intersect_multiregions(
             left_multiregion, reverse_multiregion_regions(right_multiregion))
+    assert are_holeless_mixes_similar(
+            result,
+            reverse_holeless_mix_coordinates(complete_intersect_multiregions(
+                    reverse_multiregion_coordinates(left_multiregion),
+                    reverse_multiregion_coordinates(right_multiregion))))
