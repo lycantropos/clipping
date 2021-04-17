@@ -1,5 +1,6 @@
 from typing import (Any,
                     Callable,
+                    Iterable,
                     Sequence,
                     Tuple,
                     TypeVar)
@@ -382,6 +383,12 @@ def is_mix_empty(mix: Mix) -> bool:
     multipoint, multisegment, multipolygon = mix
     return not (multipoint.points or multisegment.segments
                 or multipolygon.polygons)
+
+
+def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:
+    for polygon in multipolygon.polygons:
+        yield polygon.border
+        yield from polygon.holes
 
 
 def _to_counterclockwise_vertices(vertices: Sequence[Point]
