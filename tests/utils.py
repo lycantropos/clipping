@@ -77,6 +77,12 @@ def holeless_mix_similar_to_multiregion(mix: HolelessMix,
             and are_multiregions_similar(multiregion, other))
 
 
+def are_multisegments_equivalent(left: Multisegment,
+                                 right: Multisegment) -> bool:
+    return (not (left.segments or right.segments)
+            or multisegment_in_multisegment(left, right) is Relation.EQUAL)
+
+
 def are_multisegments_similar(left: Multisegment, right: Multisegment) -> bool:
     return (len(left.segments) == len(right.segments)
             and (frozenset(map(segment_to_endpoints,
@@ -85,18 +91,18 @@ def are_multisegments_similar(left: Multisegment, right: Multisegment) -> bool:
                                   map(to_sorted_segment, right.segments)))))
 
 
-def are_multisegments_equivalent(left: Multisegment,
-                                 right: Multisegment) -> bool:
-    return (not (left.segments or right.segments)
-            or multisegment_in_multisegment(left, right) is Relation.EQUAL)
-
-
 def are_multipolygons_similar(left: Multipolygon, right: Multipolygon) -> bool:
     return normalize_multipolygon(left) == normalize_multipolygon(right)
 
 
 def are_multiregions_similar(left: Multiregion, right: Multiregion) -> bool:
     return normalize_multiregion(left) == normalize_multiregion(right)
+
+
+def are_segments_sequences_similar(left: Sequence[Segment],
+                                   right: Sequence[Segment]) -> bool:
+    return (normalize_segments_sequence(left)
+            == normalize_segments_sequence(right))
 
 
 def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
@@ -117,6 +123,12 @@ def normalize_region(contour: Contour) -> Contour:
     return Contour(_to_counterclockwise_vertices(
             rotate_sequence(contour.vertices,
                             arg_min(contour.vertices))))
+
+
+def normalize_segments_sequence(segments: Sequence[Segment]
+                                ) -> Sequence[Segment]:
+    return sorted([to_sorted_segment(segment) for segment in segments],
+                  key=segment_to_endpoints)
 
 
 def _to_counterclockwise_vertices(vertices: Sequence[Point]
@@ -247,13 +259,12 @@ def reverse_multisegment(multisegment: Multisegment) -> Multisegment:
 
 def reverse_multisegment_coordinates(multisegment: Multisegment
                                      ) -> Multisegment:
-    return Multisegment([reverse_segment_coordinates(segment)
-                         for segment in multisegment.segments])
+    return Multisegment(reverse_segments_sequence_coordinates(
+            multisegment.segments))
 
 
 def reverse_multisegment_endpoints(multisegment: Multisegment) -> Multisegment:
-    return Multisegment([reverse_segment(segment)
-                         for segment in multisegment.segments])
+    return Multisegment(reverse_segments_sequence_endpoints(multisegment))
 
 
 def reverse_point_coordinates(point: Point) -> Point:
@@ -276,6 +287,19 @@ def reverse_segment(segment: Segment) -> Segment:
 def reverse_segment_coordinates(segment: Segment) -> Segment:
     return Segment(reverse_point_coordinates(segment.start),
                    reverse_point_coordinates(segment.end))
+
+
+reverse_segments_sequence = reverse_sequence
+
+
+def reverse_segments_sequence_coordinates(segments: Sequence[Segment]
+                                          ) -> Sequence[Segment]:
+    return [reverse_segment_coordinates(segment) for segment in segments]
+
+
+def reverse_segments_sequence_endpoints(segments: Sequence[Segment]
+                                        ) -> Sequence[Segment]:
+    return [reverse_segment(segment) for segment in segments]
 
 
 def to_sorted_segment(segment: Segment) -> Segment:
