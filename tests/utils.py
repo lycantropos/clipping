@@ -1,6 +1,5 @@
 from typing import (Any,
                     Callable,
-                    Iterable,
                     Sequence,
                     Tuple,
                     TypeVar)
@@ -12,7 +11,6 @@ from hypothesis import strategies
 from hypothesis.strategies import SearchStrategy
 from orient.planar import multisegment_in_multisegment
 
-from clipping.core.bounding import to_vertices
 from clipping.core.linear import segment_to_endpoints
 from clipping.hints import (HolelessMix,
                             LinearMix,
@@ -46,10 +44,6 @@ segments_relation = _context.segments_relation
 
 def equivalence(left_statement: bool, right_statement: bool) -> bool:
     return left_statement is right_statement
-
-
-def implication(antecedent: bool, consequent: bool) -> bool:
-    return not antecedent or consequent
 
 
 def arg_min(values: Sequence[Domain]) -> int:
@@ -163,17 +157,6 @@ def normalize_segments_sequence(segments: Sequence[Segment]
                   key=segment_to_endpoints)
 
 
-def _to_counterclockwise_vertices(vertices: Sequence[Point]
-                                  ) -> Sequence[Point]:
-    if _to_first_angle_orientation(vertices) is not Orientation.CLOCKWISE:
-        vertices = vertices[:1] + vertices[1:][::-1]
-    return vertices
-
-
-def _to_first_angle_orientation(vertices: Sequence[Point]) -> Orientation:
-    return _context.angle_orientation(vertices[0], vertices[-1], vertices[1])
-
-
 def reverse_sequence(sequence: Domain) -> Domain:
     return sequence[::-1]
 
@@ -231,7 +214,6 @@ def is_multiregion(object_: Any) -> bool:
 
 
 is_multisegment = Multisegment.__instancecheck__
-is_polygon = Polygon.__instancecheck__
 is_region = is_contour
 
 
@@ -402,20 +384,12 @@ def is_mix_empty(mix: Mix) -> bool:
                 or multipolygon.polygons)
 
 
-def box_to_contour(box: Box) -> Contour:
-    return Contour(to_vertices(box,
-                               context=_context))
+def _to_counterclockwise_vertices(vertices: Sequence[Point]
+                                  ) -> Sequence[Point]:
+    if _to_first_angle_orientation(vertices) is not Orientation.CLOCKWISE:
+        vertices = vertices[:1] + vertices[1:][::-1]
+    return vertices
 
 
-def box_to_polygon(box: Box) -> Polygon:
-    return contour_to_polygon(box_to_contour(box))
-
-
-def contour_to_polygon(contour: Contour) -> Polygon:
-    return Polygon(contour, [])
-
-
-def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:
-    for polygon in multipolygon.polygons:
-        yield polygon.border
-        yield from polygon.holes
+def _to_first_angle_orientation(vertices: Sequence[Point]) -> Orientation:
+    return _context.angle_orientation(vertices[0], vertices[-1], vertices[1])
