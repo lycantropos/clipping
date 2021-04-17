@@ -109,7 +109,7 @@ def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
 
 def normalize_multiregion(multiregion: Multiregion) -> Multiregion:
     result = [normalize_region(region) for region in multiregion]
-    result.sort(key=lambda region: region.vertices[0])
+    result.sort(key=lambda region: region.vertices[:2])
     return result
 
 
