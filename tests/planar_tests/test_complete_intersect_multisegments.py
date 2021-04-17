@@ -10,10 +10,13 @@ from clipping.planar import (complete_intersect_multisegments,
                              intersect_multisegments,
                              unite_multisegments)
 from tests.utils import (MultisegmentsPair,
+                         are_linear_mixes_similar,
                          is_linear_mix,
                          is_linear_mix_empty,
                          linear_mix_equivalent_to_multisegment,
+                         reverse_linear_mix_coordinates,
                          reverse_multisegment,
+                         reverse_multisegment_coordinates,
                          segments_intersections,
                          segments_relation,
                          to_sorted_segment)
@@ -144,3 +147,8 @@ def test_reversals(multisegments_pair: MultisegmentsPair) -> None:
             reverse_multisegment(left_multisegment), right_multisegment)
     assert result == complete_intersect_multisegments(
             left_multisegment, reverse_multisegment(right_multisegment))
+    assert are_linear_mixes_similar(
+            result,
+            reverse_linear_mix_coordinates(complete_intersect_multisegments(
+                    reverse_multisegment_coordinates(left_multisegment),
+                    reverse_multisegment_coordinates(right_multisegment))))

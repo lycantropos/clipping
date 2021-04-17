@@ -77,6 +77,19 @@ def holeless_mix_similar_to_multiregion(mix: HolelessMix,
             and are_multiregions_similar(multiregion, other))
 
 
+def are_linear_mixes_similar(left: LinearMix, right: LinearMix) -> bool:
+    left_multipoint, left_multisegment = left
+    right_multipoint, right_multisegment = right
+    return (are_multipoints_similar(left_multipoint, right_multipoint)
+            and are_multisegments_similar(left_multisegment,
+                                          right_multisegment))
+
+
+def are_multipoints_similar(left: Multipoint, right: Multipoint) -> bool:
+    return (len(left.points) == len(right.points)
+            and set(left.points) == set(right.points))
+
+
 def are_multisegments_equivalent(left: Multisegment,
                                  right: Multisegment) -> bool:
     return (not (left.segments or right.segments)
@@ -212,9 +225,30 @@ def reverse_contour_coordinates(contour: Contour) -> Contour:
                     for vertex in contour.vertices])
 
 
+def reverse_linear_mix_coordinates(mix: LinearMix) -> LinearMix:
+    multipoint, multisegment = mix
+    return (reverse_multipoint_coordinates(multipoint),
+            reverse_multisegment_coordinates(multisegment))
+
+
+def reverse_multipoint_coordinates(multipoint: Multipoint) -> Multipoint:
+    return Multipoint([reverse_point_coordinates(point)
+                       for point in multipoint.points])
+
+
+def reverse_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
+    return Multipolygon(multipolygon.polygons[::-1])
+
+
 def reverse_multipolygon_borders(multipolygon: Multipolygon) -> Multipolygon:
     return Multipolygon([Polygon(reverse_region(polygon.border),
                                  polygon.holes)
+                         for polygon in multipolygon.polygons])
+
+
+def reverse_multipolygon_coordinates(multipolygon: Multipolygon
+                                     ) -> Multipolygon:
+    return Multipolygon([reverse_polygon_coordinates(polygon)
                          for polygon in multipolygon.polygons])
 
 
@@ -229,16 +263,6 @@ def reverse_multipolygon_holes_contours(multipolygon: Multipolygon
     return Multipolygon([Polygon(polygon.border,
                                  [reverse_region(hole)
                                   for hole in polygon.holes])
-                         for polygon in multipolygon.polygons])
-
-
-def reverse_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
-    return Multipolygon(multipolygon.polygons[::-1])
-
-
-def reverse_multipolygon_coordinates(multipolygon: Multipolygon
-                                     ) -> Multipolygon:
-    return Multipolygon([reverse_polygon_coordinates(polygon)
                          for polygon in multipolygon.polygons])
 
 
