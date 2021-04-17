@@ -264,7 +264,8 @@ def reverse_multisegment_coordinates(multisegment: Multisegment
 
 
 def reverse_multisegment_endpoints(multisegment: Multisegment) -> Multisegment:
-    return Multisegment(reverse_segments_sequence_endpoints(multisegment))
+    return Multisegment(reverse_segments_sequence_endpoints(
+            multisegment.segments))
 
 
 def reverse_point_coordinates(point: Point) -> Point:
