@@ -9,7 +9,8 @@ from tests.utils import (MultisegmentsPair,
                          are_multisegments_similar,
                          equivalence,
                          is_multisegment,
-                         reverse_multisegment)
+                         reverse_multisegment,
+                         reverse_multisegment_coordinates)
 from . import strategies
 
 
@@ -134,3 +135,8 @@ def test_reversals(multisegments_pair: MultisegmentsPair) -> None:
                                    right_multisegment))
     assert result == subtract_multisegments(
             left_multisegment, reverse_multisegment(right_multisegment))
+    assert are_multisegments_similar(
+            result,
+            reverse_multisegment_coordinates(subtract_multisegments(
+                    reverse_multisegment_coordinates(left_multisegment),
+                    reverse_multisegment_coordinates(right_multisegment))))
