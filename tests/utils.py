@@ -94,6 +94,16 @@ def are_linear_mixes_similar(left: LinearMix, right: LinearMix) -> bool:
                                           right_multisegment))
 
 
+def are_mixes_similar(left: Mix, right: Mix) -> bool:
+    left_multipoint, left_multisegment, left_multipolygon = left
+    right_multipoint, right_multisegment, right_multipolygon = right
+    return (are_multipoints_similar(left_multipoint, right_multipoint)
+            and are_multisegments_similar(left_multisegment,
+                                          right_multisegment)
+            and are_multipolygons_similar(left_multipolygon,
+                                          right_multipolygon))
+
+
 def are_multipoints_similar(left: Multipoint, right: Multipoint) -> bool:
     return (len(left.points) == len(right.points)
             and set(left.points) == set(right.points))
@@ -239,6 +249,13 @@ def reverse_holeless_mix_coordinates(mix: HolelessMix) -> HolelessMix:
     return (reverse_multipoint_coordinates(multipoint),
             reverse_multisegment_coordinates(multisegment),
             reverse_multiregion_coordinates(multiregion))
+
+
+def reverse_mix_coordinates(mix: Mix) -> Mix:
+    multipoint, multisegment, multipolygon = mix
+    return (reverse_multipoint_coordinates(multipoint),
+            reverse_multisegment_coordinates(multisegment),
+            reverse_multipolygon_coordinates(multipolygon))
 
 
 def reverse_linear_mix_coordinates(mix: LinearMix) -> LinearMix:

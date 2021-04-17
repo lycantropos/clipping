@@ -5,11 +5,14 @@ from clipping.planar import (complete_intersect_multipolygons,
                              intersect_multipolygons,
                              unite_multipolygons)
 from tests.utils import (MultipolygonsPair,
+                         are_mixes_similar,
                          is_mix,
                          is_mix_empty,
                          mix_similar_to_multipolygon,
+                         reverse_mix_coordinates,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
+                         reverse_multipolygon_coordinates,
                          reverse_multipolygon_holes,
                          reverse_multipolygon_holes_contours)
 from . import strategies
@@ -116,3 +119,7 @@ def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
     assert result == complete_intersect_multipolygons(
             left_multipolygon,
             reverse_multipolygon_holes_contours(right_multipolygon))
+    assert are_mixes_similar(
+            result, reverse_mix_coordinates(complete_intersect_multipolygons(
+                    reverse_multipolygon_coordinates(left_multipolygon),
+                    reverse_multipolygon_coordinates(right_multipolygon))))
