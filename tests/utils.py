@@ -196,6 +196,11 @@ def reverse_contour(contour: Contour) -> Contour:
     return Contour(reverse_sequence(contour.vertices))
 
 
+def reverse_contour_coordinates(contour: Contour) -> Contour:
+    return Contour([reverse_point_coordinates(vertex)
+                    for vertex in contour.vertices])
+
+
 def reverse_multipolygon_borders(multipolygon: Multipolygon) -> Multipolygon:
     return Multipolygon([Polygon(reverse_region(polygon.border),
                                  polygon.holes)
@@ -220,7 +225,17 @@ def reverse_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
     return Multipolygon(multipolygon.polygons[::-1])
 
 
+def reverse_multipolygon_coordinates(multipolygon: Multipolygon
+                                     ) -> Multipolygon:
+    return Multipolygon([reverse_polygon_coordinates(polygon)
+                         for polygon in multipolygon.polygons])
+
+
 reverse_multiregion = reverse_sequence
+
+
+def reverse_multiregion_coordinates(multiregion: Multiregion) -> Multiregion:
+    return [reverse_region_coordinates(region) for region in multiregion]
 
 
 def reverse_multiregion_regions(multiregion: Multiregion) -> Multiregion:
@@ -246,7 +261,13 @@ def reverse_point_coordinates(point: Point) -> Point:
     return Point(point.y, point.x)
 
 
+def reverse_polygon_coordinates(polygon: Polygon) -> Polygon:
+    return Polygon(reverse_contour_coordinates(polygon.border),
+                   reverse_multiregion_coordinates(polygon.holes))
+
+
 reverse_region = reverse_contour
+reverse_region_coordinates = reverse_contour_coordinates
 
 
 def reverse_segment(segment: Segment) -> Segment:
