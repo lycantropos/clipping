@@ -231,9 +231,19 @@ def reverse_multisegment(multisegment: Multisegment) -> Multisegment:
     return Multisegment(reverse_sequence(multisegment.segments))
 
 
+def reverse_multisegment_coordinates(multisegment: Multisegment
+                                     ) -> Multisegment:
+    return Multisegment([reverse_segment_coordinates(segment)
+                         for segment in multisegment.segments])
+
+
 def reverse_multisegment_endpoints(multisegment: Multisegment) -> Multisegment:
     return Multisegment([reverse_segment(segment)
                          for segment in multisegment.segments])
+
+
+def reverse_point_coordinates(point: Point) -> Point:
+    return Point(point.y, point.x)
 
 
 reverse_region = reverse_contour
@@ -241,6 +251,11 @@ reverse_region = reverse_contour
 
 def reverse_segment(segment: Segment) -> Segment:
     return Segment(segment.end, segment.start)
+
+
+def reverse_segment_coordinates(segment: Segment) -> Segment:
+    return Segment(reverse_point_coordinates(segment.start),
+                   reverse_point_coordinates(segment.end))
 
 
 def to_sorted_segment(segment: Segment) -> Segment:
