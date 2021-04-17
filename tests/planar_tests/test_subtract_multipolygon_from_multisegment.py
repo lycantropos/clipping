@@ -10,9 +10,11 @@ from tests.utils import (MultipolygonWithMultisegment,
                          is_multisegment,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
+                         reverse_multipolygon_coordinates,
                          reverse_multipolygon_holes,
                          reverse_multipolygon_holes_contours,
                          reverse_multisegment,
+                         reverse_multisegment_coordinates,
                          reverse_multisegment_endpoints,
                          reverse_segment)
 from . import strategies
@@ -99,3 +101,8 @@ def test_reversals(multipolygon_with_multisegment: MultipolygonWithMultisegment
             result, subtract_multipolygon_from_multisegment(
                     reverse_multisegment_endpoints(multisegment),
                     multipolygon))
+    assert are_multisegments_similar(
+            result, reverse_multisegment_coordinates(
+                    subtract_multipolygon_from_multisegment(
+                            reverse_multisegment_coordinates(multisegment),
+                            reverse_multipolygon_coordinates(multipolygon))))
