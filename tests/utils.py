@@ -8,7 +8,6 @@ from typing import (Any,
 from ground.base import (Orientation,
                          Relation,
                          get_context)
-from ground.hints import Contour
 from hypothesis import strategies
 from hypothesis.strategies import SearchStrategy
 from orient.planar import multisegment_in_multisegment
