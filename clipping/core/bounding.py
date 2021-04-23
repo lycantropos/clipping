@@ -1,5 +1,4 @@
-from typing import (Iterable,
-                    Sequence)
+from typing import Sequence
 
 from ground.base import (Context,
                          Relation)
@@ -15,71 +14,7 @@ from orient.planar import (point_in_region,
 from .hints import (Multiregion,
                     Region,
                     SegmentEndpoints)
-from .utils import (contour_to_edges_endpoints,
-                    flatten)
-
-
-def from_contour(contour: Contour, context: Context) -> Box:
-    """
-    Builds box from contour.
-    """
-    return from_points(contour.vertices, context)
-
-
-def from_segments(segments: Sequence[Segment], context: Context) -> Box:
-    """
-    Builds box from multisegment.
-    """
-    return from_points(flatten((segment.start, segment.end)
-                               for segment in segments), context)
-
-
-def from_polygons(polygons: Sequence[Polygon], context: Context) -> Box:
-    """
-    Builds box from multipolygon.
-    """
-    return from_points(flatten(polygon.border.vertices
-                               for polygon in polygons),
-                       context)
-
-
-def from_multiregion(multiregion: Multiregion,
-                     context: Context) -> Box:
-    """
-    Builds box from multiregion.
-    """
-    return from_points(flatten(region.vertices for region in multiregion),
-                       context)
-
-
-def from_points(points: Iterable[Point],
-                context: Context) -> Box:
-    """
-    Builds box from points.
-    """
-    points = iter(points)
-    point = next(points)
-    min_x, min_y = max_x, max_y = point.x, point.y
-    for point in points:
-        x, y = point.x, point.y
-        if x < min_x:
-            min_x = x
-        elif x > max_x:
-            max_x = x
-        if y < min_y:
-            min_y = y
-        elif y > max_y:
-            max_y = y
-    return context.box_cls(min_x, max_x, min_y, max_y)
-
-
-def from_segment(segment: Segment,
-                 context: Context) -> Box:
-    """
-    Builds box from segment.
-    """
-    return from_points((segment.start, segment.end),
-                       context)
+from .utils import contour_to_edges_endpoints
 
 
 def disjoint_with(left: Box, right: Box) -> bool:
@@ -248,8 +183,7 @@ def intersects_with_segment(box: Box,
     """
     Checks if the box intersects the segment.
     """
-    segment_box = from_points((start, end),
-                              context)
+    segment_box = context.points_box((start, end))
     return (intersects_with(segment_box, box)
             and (is_subset_of(segment_box, box)
                  or any(context.segments_relation(edge_start, edge_end, start,
@@ -265,8 +199,7 @@ def coupled_with_segment(box: Box,
     """
     Checks if the box intersects the segment at more than one point.
     """
-    segment_box = from_segment(segment,
-                               context)
+    segment_box = context.segment_box(segment)
     return (coupled_with(segment_box, box)
             and (is_subset_of(segment_box, box)
                  or any(context.segments_relation(edge_start, edge_end,
@@ -316,10 +249,8 @@ def is_subset_of_multiregion(box: Box,
     """
     Checks if the box is the subset of the multiregion.
     """
-    return any(is_subset_of(box, from_contour(region,
-                                              context))
-               and is_subset_of_region(box, region,
-                                       context)
+    return any(is_subset_of(box, context.contour_box(region))
+               and is_subset_of_region(box, region, context)
                for region in multiregion)
 
 
@@ -330,8 +261,7 @@ def intersects_with_polygon(box: Box,
     Checks if the box intersects the polygon.
     """
     border = polygon.border
-    polygon_box = from_contour(border,
-                               context)
+    polygon_box = context.contour_box(border)
     if not intersects_with(polygon_box, box):
         return False
     elif (is_subset_of(polygon_box, box)
@@ -351,8 +281,7 @@ def intersects_with_polygon(box: Box,
                                           context)
                     for border_edge_start, border_edge_end
                     in contour_to_edges_endpoints(border))):
-        return not any(within_of(box, from_contour(hole,
-                                                   context))
+        return not any(within_of(box, context.contour_box(hole))
                        and within_of_region(box, hole,
                                             context)
                        for hole in polygon.holes)
@@ -372,8 +301,7 @@ def intersects_with_region(box: Box,
     """
     Checks if the box intersects the region.
     """
-    region_box = from_contour(region,
-                              context)
+    region_box = context.contour_box(region)
     return (intersects_with(region_box, box)
             and (is_subset_of(region_box, box)
                  or any(contains_point(box, vertex)
@@ -396,8 +324,7 @@ def coupled_with_polygon(box: Box,
     Checks if the box intersects the polygon in continuous points set.
     """
     border = polygon.border
-    polygon_box = from_contour(border,
-                               context)
+    polygon_box = context.contour_box(border)
     if not coupled_with(polygon_box, box):
         return False
     elif (is_subset_of(polygon_box, box)
@@ -431,8 +358,7 @@ def coupled_with_region(box: Box,
     """
     Checks if the box intersects the region in continuous points set.
     """
-    region_box = from_contour(region,
-                              context)
+    region_box = context.contour_box(region)
     if not coupled_with(region_box, box):
         return False
     elif (is_subset_of(region_box, box)
@@ -523,8 +449,7 @@ def to_intersecting_regions(box: Box,
                             context: Context) -> Multiregion:
     return [region
             for region in multiregion
-            if intersects_with_region(box, region,
-                                      context)]
+            if intersects_with_region(box, region, context)]
 
 
 def to_coupled_polygons(box: Box,

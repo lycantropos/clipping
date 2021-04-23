@@ -175,8 +175,8 @@ class CompleteIntersection(Operation):
                                 Multiregion]:
         if not (self.left and self.right):
             return [], [], []
-        left_box = bounding.from_multiregion(self.left, self.context)
-        right_box = bounding.from_multiregion(self.right, self.context)
+        left_box, right_box = (self.context.contours_box(self.left),
+                               self.context.contours_box(self.right))
         if bounding.disjoint_with(left_box, right_box):
             return [], [], []
         self.left = bounding.to_intersecting_regions(right_box, self.left,
@@ -221,8 +221,8 @@ class Intersection(Operation):
     def compute(self) -> Multiregion:
         if not (self.left and self.right):
             return []
-        left_box = bounding.from_multiregion(self.left, self.context)
-        right_box = bounding.from_multiregion(self.right, self.context)
+        left_box, right_box = (self.context.contours_box(self.left),
+                               self.context.contours_box(self.right))
         if bounding.disjoint_with(left_box, right_box):
             return []
         self.left = bounding.to_coupled_regions(right_box, self.left,

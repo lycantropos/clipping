@@ -156,8 +156,8 @@ class Difference(Operation):
     def _compute(self) -> Sequence[Segment]:
         if not (self.left and self.right):
             return self.left
-        left_box = bounding.from_segments(self.left, self.context)
-        right_box = bounding.from_segments(self.right, self.context)
+        left_box, right_box = (self.context.segments_box(self.left),
+                               self.context.segments_box(self.right))
         if bounding.disjoint_with(left_box, right_box):
             return self.left
         self.right = bounding.to_coupled_segments(left_box, self.right,
@@ -199,8 +199,8 @@ class Intersection(Operation):
     def _compute(self) -> Sequence[Segment]:
         if not (self.left and self.right):
             return []
-        left_box = bounding.from_segments(self.left, self.context)
-        right_box = bounding.from_segments(self.right, self.context)
+        left_box, right_box = (self.context.segments_box(self.left),
+                               self.context.segments_box(self.right))
         if bounding.disjoint_with(left_box, right_box):
             return []
         self.left = bounding.to_coupled_segments(right_box, self.left,
@@ -245,8 +245,8 @@ class CompleteIntersection(Operation):
     def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment]]:
         if not (self.left and self.right):
             return [], []
-        left_box = bounding.from_segments(self.left, self.context)
-        right_box = bounding.from_segments(self.right, self.context)
+        left_box, right_box = (self.context.segments_box(self.left),
+                               self.context.segments_box(self.right))
         if bounding.disjoint_with(left_box, right_box):
             return [], []
         self.left = bounding.to_intersecting_segments(right_box, self.left,
@@ -287,10 +287,8 @@ class SymmetricDifference(Operation):
     def _compute(self) -> Sequence[Segment]:
         if not (self.left and self.right):
             return self.left or self.right
-        elif bounding.disjoint_with(bounding.from_segments(self.left,
-                                                           self.context),
-                                    bounding.from_segments(self.right,
-                                                           self.context)):
+        elif bounding.disjoint_with(self.context.segments_box(self.left),
+                                    self.context.segments_box(self.right)):
             result = []
             result += self.left
             result += self.right
@@ -315,10 +313,8 @@ class Union(Operation):
     def _compute(self) -> Sequence[Segment]:
         if not (self.left and self.right):
             return self.left or self.right
-        elif bounding.disjoint_with(bounding.from_segments(self.left,
-                                                           self.context),
-                                    bounding.from_segments(self.right,
-                                                           self.context)):
+        elif bounding.disjoint_with(self.context.segments_box(self.left),
+                                    self.context.segments_box(self.right)):
             result = []
             result += self.left
             result += self.right

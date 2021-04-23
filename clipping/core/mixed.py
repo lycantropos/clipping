@@ -136,10 +136,9 @@ class Difference(Operation):
     def _compute(self) -> Sequence[Segment]:
         if not (self.segments and self.polygons):
             return self.segments
-        segments_box = bounding.from_segments(self.segments, self.context)
-        if bounding.disjoint_with(
-                segments_box, bounding.from_polygons(self.polygons,
-                                                     self.context)):
+        segments_box = self.context.segments_box(self.segments)
+        if bounding.disjoint_with(segments_box,
+                                  self.context.polygons_box(self.polygons)):
             return self.segments
         self.polygons = bounding.to_coupled_polygons(segments_box,
                                                      self.polygons,
@@ -181,8 +180,8 @@ class CompleteIntersection(Operation):
     def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment]]:
         if not (self.segments and self.polygons):
             return [], []
-        multisegment_box = bounding.from_segments(self.segments, self.context)
-        multipolygon_box = bounding.from_polygons(self.polygons, self.context)
+        multisegment_box = self.context.segments_box(self.segments)
+        multipolygon_box = self.context.polygons_box(self.polygons)
         if bounding.disjoint_with(multisegment_box, multipolygon_box):
             return [], []
         self.segments = bounding.to_intersecting_segments(
@@ -238,8 +237,8 @@ class Intersection(Operation):
     def _compute(self) -> Sequence[Segment]:
         if not (self.segments and self.polygons):
             return []
-        multisegment_box = bounding.from_segments(self.segments, self.context)
-        multipolygon_box = bounding.from_polygons(self.polygons, self.context)
+        multisegment_box = self.context.segments_box(self.segments)
+        multipolygon_box = self.context.polygons_box(self.polygons)
         if bounding.disjoint_with(multisegment_box,
                                   multipolygon_box):
             return []

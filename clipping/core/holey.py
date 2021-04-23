@@ -197,10 +197,9 @@ class Difference(Operation):
     def _compute(self) -> Sequence[Polygon]:
         if not (self.left and self.right):
             return self.left
-        left_box = bounding.from_polygons(self.left, self.context)
+        left_box = self.context.polygons_box(self.left)
         if bounding.disjoint_with(left_box,
-                                  bounding.from_polygons(self.right,
-                                                         self.context)):
+                                  self.context.polygons_box(self.right)):
             return self.left
         self.right = bounding.to_coupled_polygons(left_box, self.right,
                                                   self.context)
@@ -242,8 +241,8 @@ class CompleteIntersection(Operation):
                                 Sequence[Polygon]]:
         if not (self.left and self.right):
             return [], [], []
-        left_box = bounding.from_polygons(self.left, self.context)
-        right_box = bounding.from_polygons(self.right, self.context)
+        left_box, right_box = (self.context.polygons_box(self.left),
+                               self.context.polygons_box(self.right))
         if bounding.disjoint_with(left_box, right_box):
             return [], [], []
         self.left = bounding.to_intersecting_polygons(right_box, self.left,
@@ -307,8 +306,8 @@ class Intersection(Operation):
     def _compute(self) -> Sequence[Polygon]:
         if not (self.left and self.right):
             return []
-        left_box = bounding.from_polygons(self.left, self.context)
-        right_box = bounding.from_polygons(self.right, self.context)
+        left_box, right_box = (self.context.polygons_box(self.left),
+                               self.context.polygons_box(self.right))
         if bounding.disjoint_with(left_box, right_box):
             return []
         self.left = bounding.to_coupled_polygons(right_box, self.left,
@@ -333,10 +332,8 @@ class SymmetricDifference(Operation):
     def _compute(self) -> Sequence[Polygon]:
         if not (self.left and self.right):
             return self.left or self.right
-        elif bounding.disjoint_with(bounding.from_polygons(self.left,
-                                                           self.context),
-                                    bounding.from_polygons(self.right,
-                                                           self.context)):
+        elif bounding.disjoint_with(self.context.polygons_box(self.left),
+                                    self.context.polygons_box(self.right)):
             result = []
             result += self.left
             result += self.right
@@ -355,10 +352,8 @@ class Union(Operation):
     def _compute(self) -> Sequence[Polygon]:
         if not (self.left and self.right):
             return self.left or self.right
-        elif bounding.disjoint_with(bounding.from_polygons(self.left,
-                                                           self.context),
-                                    bounding.from_polygons(self.right,
-                                                           self.context)):
+        elif bounding.disjoint_with(self.context.polygons_box(self.left),
+                                    self.context.polygons_box(self.right)):
             result = []
             result += self.left
             result += self.right
