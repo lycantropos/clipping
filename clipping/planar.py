@@ -350,7 +350,6 @@ def unite_multisegments(left: _Multisegment,
 
     >>> from ground.base import get_context
     >>> context = get_context()
-    >>> Contour = context.contour_cls
     >>> Multisegment = context.multisegment_cls
     >>> Point = context.point_cls
     >>> Segment = context.segment_cls
