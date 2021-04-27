@@ -111,34 +111,42 @@ def complete_intersect_multisegments(left: _Multisegment,
 
     >>> from ground.base import get_context
     >>> context = get_context()
-    >>> Multisegment, Point, Segment = (context.multisegment_cls,
-    ...                                 context.point_cls, context.segment_cls)
-    >>> complete_intersect_multisegments(Multisegment([]), Multisegment([]))
-    (Multipoint([]), Multisegment([]))
-    >>> complete_intersect_multisegments(
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(0, 1), Point(1, 0))]),
-    ...     Multisegment([]))
-    (Multipoint([]), Multisegment([]))
-    >>> complete_intersect_multisegments(
-    ...     Multisegment([]),
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(0, 1), Point(1, 0))]))
-    (Multipoint([]), Multisegment([]))
-    >>> complete_intersect_multisegments(
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(0, 1), Point(1, 0))]),
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(0, 1), Point(1, 0))]))
-    (Multipoint([]), Multisegment([Segment(Point(0, 0), Point(1, 0)),\
- Segment(Point(0, 1), Point(1, 0))]))
-    >>> complete_intersect_multisegments(
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(0, 1), Point(1, 1))]),
-    ...     Multisegment([Segment(Point(0, 0), Point(2, 0)),
-    ...                   Segment(Point(0, 0), Point(2, 2))]))
-    (Multipoint([Point(1, 1)]),\
- Multisegment([Segment(Point(0, 0), Point(1, 0))]))
+    >>> Multipoint = context.multipoint_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Segment = context.segment_cls
+    >>> (complete_intersect_multisegments(Multisegment([]), Multisegment([]))
+    ...  == (Multipoint([]), Multisegment([])))
+    True
+    >>> (complete_intersect_multisegments(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multisegment([]))
+    ...  == (Multipoint([]), Multisegment([])))
+    True
+    >>> (complete_intersect_multisegments(
+    ...      Multisegment([]),
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]))
+    ...  ==  (Multipoint([]), Multisegment([])))
+    True
+    >>> (complete_intersect_multisegments(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]))
+    ...  == (Multipoint([]),
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))])))
+    True
+    >>> (complete_intersect_multisegments(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 1))]),
+    ...      Multisegment([Segment(Point(0, 0), Point(2, 0)),
+    ...                    Segment(Point(0, 0), Point(2, 2))]))
+    ...  == (Multipoint([Point(1, 1)]),
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0))])))
+    True
     """
     return _linear.CompleteIntersection(
             left.segments, right.segments,
