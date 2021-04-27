@@ -92,7 +92,7 @@ class Operation(ABC):
             shrink_collinear_vertices(vertices, self.context)
             if depths[contour_id] % 2:
                 # holes will be in clockwise order
-                vertices.reverse()
+                vertices[:] = vertices[:1] + vertices[:0:-1]
             contours.append(contour_cls(vertices))
         result = []
         polygon_cls = self.context.polygon_cls
