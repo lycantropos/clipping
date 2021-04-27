@@ -1086,73 +1086,80 @@ def symmetric_subtract_multipolygons(left: _Multipolygon,
     ...                                          context.polygon_cls)
     >>> lower_left_square = Contour([Point(0, 0), Point(3, 0), Point(3, 3),
     ...                              Point(0, 3)])
-    >>> lower_left_triangle = Contour([Point(2, 1), Point(2, 2), Point(1, 2)])
+    >>> lower_left_triangle = Contour([Point(1, 2), Point(2, 2), Point(2, 1)])
     >>> lower_right_square = Contour([Point(3, 0), Point(6, 0), Point(6, 3),
     ...                               Point(3, 3)])
-    >>> lower_right_triangle = Contour([Point(4, 1), Point(5, 2), Point(4, 2)])
+    >>> lower_right_triangle = Contour([Point(4, 1), Point(4, 2), Point(5, 2)])
     >>> upper_left_square = Contour([Point(0, 3), Point(3, 3), Point(3, 6),
     ...                              Point(0, 6)])
-    >>> upper_left_triangle = Contour([Point(1, 4), Point(2, 4), Point(2, 5)])
+    >>> upper_left_triangle = Contour([Point(1, 4), Point(2, 5), Point(2, 4)])
     >>> upper_right_square = Contour([Point(3, 3), Point(6, 3), Point(6, 6),
     ...                               Point(3, 6)])
-    >>> upper_right_triangle = Contour([Point(4, 4), Point(5, 4), Point(4, 5)])
+    >>> upper_right_triangle = Contour([Point(4, 4), Point(4, 5), Point(5, 4)])
     >>> symmetric_subtract_multipolygons(Multipolygon([]), Multipolygon([]))
     Multipolygon([])
-    >>> symmetric_subtract_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
-    ...     Multipolygon([]))
-    Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 3),\
- Point(0, 3)]), [Contour([Point(2, 1), Point(2, 2), Point(1, 2)])])])
-    >>> symmetric_subtract_multipolygons(
-    ...     Multipolygon([]),
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
-    Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 3),\
- Point(0, 3)]), [Contour([Point(2, 1), Point(2, 2), Point(1, 2)])])])
-    >>> symmetric_subtract_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
-    Multipolygon([])
-    >>> symmetric_subtract_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
-    ...     Multipolygon([Polygon(lower_right_square,
-    ...                           [lower_right_triangle])]))
-    Multipolygon([Polygon(Contour([Point(0, 0), Point(6, 0), Point(6, 3),\
- Point(0, 3)]), [Contour([Point(2, 2), Point(2, 1), Point(1, 2)]),\
- Contour([Point(4, 2), Point(5, 2), Point(4, 1)])])])
-    >>> symmetric_subtract_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
-    ...     Multipolygon([Polygon(upper_left_square, [upper_left_triangle])]))
-    Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 6),\
- Point(0, 6)]), [Contour([Point(2, 2), Point(2, 1), Point(1, 2)]),\
- Contour([Point(2, 5), Point(2, 4), Point(1, 4)])])])
-    >>> symmetric_subtract_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
-    ...     Multipolygon([Polygon(upper_right_square,
-    ...                           [upper_right_triangle])]))
-    Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 3),\
- Point(0, 3)]), [Contour([Point(2, 2), Point(2, 1), Point(1, 2)])]),\
- Polygon(Contour([Point(3, 3), Point(6, 3), Point(6, 6), Point(3, 6)]),\
- [Contour([Point(4, 5), Point(5, 4), Point(4, 4)])])])
-    >>> symmetric_subtract_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
-    ...                   Polygon(upper_right_square,
-    ...                           [upper_right_triangle])]),
-    ...     Multipolygon([Polygon(upper_left_square, [upper_left_triangle]),
-    ...                   Polygon(lower_right_square,
-    ...                           [lower_right_triangle])]))
-    Multipolygon([Polygon(Contour([Point(0, 0), Point(6, 0), Point(6, 6),\
- Point(0, 6)]), [Contour([Point(2, 2), Point(2, 1), Point(1, 2)]),\
- Contour([Point(2, 5), Point(2, 4), Point(1, 4)]), Contour([Point(4, 2),\
- Point(5, 2), Point(4, 1)]), Contour([Point(4, 5), Point(5, 4),\
- Point(4, 4)])])])
-    >>> symmetric_subtract_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
-    ...                   Polygon(upper_right_square,
-    ...                           [upper_right_triangle])]),
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
+    >>> (symmetric_subtract_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([]))
+    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    True
+    >>> (symmetric_subtract_multipolygons(
+    ...      Multipolygon([]),
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    True
+    >>> (symmetric_subtract_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == Multipolygon([]))
+    True
+    >>> (symmetric_subtract_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([Polygon(lower_right_square,
+    ...                            [lower_right_triangle])]))
+    ...  == Multipolygon([Polygon(Contour([Point(0, 0), Point(6, 0),
+    ...                                    Point(6, 3), Point(0, 3)]),
+    ...                           [lower_left_triangle,
+    ...                            lower_right_triangle])]))
+    True
+    >>> (symmetric_subtract_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle])]))
+    ...  == Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0),
+    ...                                    Point(3, 6), Point(0, 6)]),
+    ...                           [lower_left_triangle,
+    ...                            upper_left_triangle])]))
+    True
+    >>> (symmetric_subtract_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([Polygon(upper_right_square,
+    ...                            [upper_right_triangle])]))
+    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
     ...                   Polygon(upper_right_square,
     ...                           [upper_right_triangle])]))
-    Multipolygon([])
+    True
+    >>> (symmetric_subtract_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
+    ...                    Polygon(upper_right_square,
+    ...                            [upper_right_triangle])]),
+    ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle]),
+    ...                    Polygon(lower_right_square,
+    ...                            [lower_right_triangle])]))
+    ...  == Multipolygon([Polygon(Contour([Point(0, 0), Point(6, 0),
+    ...                                    Point(6, 6), Point(0, 6)]),
+    ...                           [lower_left_triangle, upper_left_triangle,
+    ...                            lower_right_triangle,
+    ...                            upper_right_triangle])]))
+    True
+    >>> (symmetric_subtract_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
+    ...                    Polygon(upper_right_square,
+    ...                            [upper_right_triangle])]),
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
+    ...                    Polygon(upper_right_square,
+    ...                            [upper_right_triangle])]))
+    ...  == Multipolygon([]))
+    True
     """
     return _holey.SymmetricDifference(
             left.polygons, right.polygons,
