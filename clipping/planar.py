@@ -538,36 +538,44 @@ def subtract_multipolygon_from_multisegment(multisegment: _Multisegment,
 
     >>> from ground.base import get_context
     >>> context = get_context()
-    >>> Contour, Multipolygon, Multisegment, Point, Polygon, Segment = (
-    ...     context.contour_cls, context.multipolygon_cls,
-    ...     context.multisegment_cls, context.point_cls, context.polygon_cls,
-    ...     context.segment_cls)
-    >>> subtract_multipolygon_from_multisegment(Multisegment([]),
-    ...                                         Multipolygon([]))
-    Multisegment([])
-    >>> subtract_multipolygon_from_multisegment(
-    ...     Multisegment([]),
-    ...     Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
-    ...                                    Point(0, 1)]), [])]))
-    Multisegment([])
-    >>> subtract_multipolygon_from_multisegment(
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(0, 1), Point(1, 0))]),
-    ...     Multipolygon([]))
-    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
- Segment(Point(0, 1), Point(1, 0))])
-    >>> subtract_multipolygon_from_multisegment(
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(0, 1), Point(1, 0))]),
-    ...     Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
-    ...                                    Point(0, 1)]), [])]))
-    Multisegment([])
-    >>> subtract_multipolygon_from_multisegment(
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(1, 1), Point(2, 2))]),
-    ...     Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
-    ...                                    Point(1, 1), Point(0, 1)]), [])]))
-    Multisegment([Segment(Point(1, 1), Point(2, 2))])
+    >>> Contour = context.contour_cls
+    >>> Multipoint = context.multipoint_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> (subtract_multipolygon_from_multisegment(Multisegment([]),
+    ...                                          Multipolygon([]))
+    ...  == Multisegment([]))
+    True
+    >>> (subtract_multipolygon_from_multisegment(
+    ...      Multisegment([]),
+    ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+    ...                                     Point(0, 1)]), [])]))
+    ...  == Multisegment([]))
+    True
+    >>> (subtract_multipolygon_from_multisegment(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multipolygon([]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
+    >>> (subtract_multipolygon_from_multisegment(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+    ...                                     Point(0, 1)]), [])]))
+    ...  == Multisegment([]))
+    True
+    >>> (subtract_multipolygon_from_multisegment(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(1, 1), Point(2, 2))]),
+    ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+    ...                                     Point(1, 1), Point(0, 1)]), [])]))
+    ...  == Multisegment([Segment(Point(1, 1), Point(2, 2))]))
+    True
     """
     return _mixed.Difference(
             multisegment.segments, multipolygon.polygons,
