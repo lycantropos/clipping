@@ -873,54 +873,69 @@ def intersect_multipolygons(left: _Multipolygon,
     >>> upper_right_square = Contour([Point(3, 3), Point(6, 3), Point(6, 6),
     ...                               Point(3, 6)])
     >>> upper_right_triangle = Contour([Point(4, 4), Point(5, 4), Point(4, 5)])
-    >>> intersect_multipolygons(Multipolygon([]), Multipolygon([]))
-    Multipolygon([])
-    >>> intersect_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
-    ...     Multipolygon([]))
-    Multipolygon([])
-    >>> intersect_multipolygons(
-    ...     Multipolygon([]),
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
-    Multipolygon([])
-    >>> intersect_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
-    Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 3),\
- Point(0, 3)]), [Contour([Point(2, 2), Point(2, 1), Point(1, 2)])])])
-    >>> intersect_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
-    ...     Multipolygon([Polygon(lower_right_square,
-    ...                           [lower_right_triangle])]))
-    Multipolygon([])
-    >>> intersect_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
-    ...     Multipolygon([Polygon(upper_left_square, [upper_left_triangle])]))
-    Multipolygon([])
-    >>> intersect_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
-    ...     Multipolygon([Polygon(upper_right_square,
-    ...                           [upper_right_triangle])]))
-    Multipolygon([])
-    >>> intersect_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
-    ...                   Polygon(upper_right_square,
-    ...                           [upper_right_triangle])]),
-    ...     Multipolygon([Polygon(upper_left_square, [upper_left_triangle]),
-    ...                   Polygon(lower_right_square,
-    ...                           [lower_right_triangle])]))
-    Multipolygon([])
-    >>> intersect_multipolygons(
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
-    ...                   Polygon(upper_right_square,
-    ...                           [upper_right_triangle])]),
-    ...     Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
-    ...                   Polygon(upper_right_square,
-    ...                           [upper_right_triangle])]))
-    Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 3),\
- Point(0, 3)]), [Contour([Point(2, 2), Point(2, 1), Point(1, 2)])]),\
- Polygon(Contour([Point(3, 3), Point(6, 3), Point(6, 6), Point(3, 6)]),\
- [Contour([Point(4, 5), Point(5, 4), Point(4, 4)])])])
+    >>> (intersect_multipolygons(Multipolygon([]), Multipolygon([]))
+    ...  == Multipolygon([]))
+    True
+    >>> (intersect_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([]))
+    ...  == Multipolygon([]))
+    True
+    >>> (intersect_multipolygons(
+    ...      Multipolygon([]),
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == Multipolygon([]))
+    True
+    >>> (intersect_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0),
+    ...                                    Point(3, 3), Point(0, 3)]),
+    ...                           [Contour([Point(1, 2), Point(2, 2),
+    ...                                     Point(2, 1)])])]))
+    True
+    >>> (intersect_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([Polygon(lower_right_square,
+    ...                            [lower_right_triangle])]))
+    ...  == Multipolygon([]))
+    True
+    >>> (intersect_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle])]))
+    ...  == Multipolygon([]))
+    True
+    >>> (intersect_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([Polygon(upper_right_square,
+    ...                            [upper_right_triangle])]))
+    ...  == Multipolygon([]))
+    True
+    >>> (intersect_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
+    ...                    Polygon(upper_right_square,
+    ...                            [upper_right_triangle])]),
+    ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle]),
+    ...                    Polygon(lower_right_square,
+    ...                            [lower_right_triangle])]))
+    ...  == Multipolygon([]))
+    True
+    >>> (intersect_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
+    ...                    Polygon(upper_right_square,
+    ...                            [upper_right_triangle])]),
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
+    ...                    Polygon(upper_right_square,
+    ...                            [upper_right_triangle])]))
+    ...  == Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0),
+    ...                                    Point(3, 3), Point(0, 3)]),
+    ...                           [Contour([Point(1, 2), Point(2, 2),
+    ...                                     Point(2, 1)])]),
+    ...                   Polygon(Contour([Point(3, 3), Point(6, 3),
+    ...                                    Point(6, 6), Point(3, 6)]),
+    ...                           [Contour([Point(4, 4), Point(4, 5),
+    ...                                     Point(5, 4)])])]))
+    True
     """
     return _holey.Intersection(
             left.polygons, right.polygons,
