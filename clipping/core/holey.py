@@ -380,10 +380,11 @@ def _compute_relations(event: Event,
     if below_in_result_event is not None:
         below_in_result_contour_id = below_in_result_event.contour_id
         if not below_in_result_event.result_in_out:
-            holes[below_in_result_contour_id].append(contour_id)
-            parent = below_in_result_contour_id
-            depth = depths[below_in_result_contour_id] + 1
-            is_internal = True
+            if not are_internal[below_in_result_contour_id]:
+                holes[below_in_result_contour_id].append(contour_id)
+                parent = below_in_result_contour_id
+                depth = depths[below_in_result_contour_id] + 1
+                is_internal = True
         elif are_internal[below_in_result_contour_id]:
             below_in_result_parent_id = parents[below_in_result_contour_id]
             holes[below_in_result_parent_id].append(contour_id)
