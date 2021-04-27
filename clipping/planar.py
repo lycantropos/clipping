@@ -291,36 +291,43 @@ def symmetric_subtract_multisegments(left: _Multisegment,
 
     >>> from ground.base import get_context
     >>> context = get_context()
-    >>> Multisegment, Point, Segment = (context.multisegment_cls,
-    ...                                 context.point_cls, context.segment_cls)
-    >>> symmetric_subtract_multisegments(Multisegment([]), Multisegment([]))
-    Multisegment([])
-    >>> symmetric_subtract_multisegments(
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(0, 1), Point(1, 0))]),
-    ...     Multisegment([]))
-    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
- Segment(Point(0, 1), Point(1, 0))])
-    >>> symmetric_subtract_multisegments(
-    ...     Multisegment([]),
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Segment = context.segment_cls
+    >>> (symmetric_subtract_multisegments(Multisegment([]), Multisegment([]))
+    ...  == Multisegment([]))
+    True
+    >>> (symmetric_subtract_multisegments(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multisegment([]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                   Segment(Point(0, 1), Point(1, 0))]))
-    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
- Segment(Point(0, 1), Point(1, 0))])
-    >>> symmetric_subtract_multisegments(
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(0, 1), Point(1, 0))]),
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    True
+    >>> (symmetric_subtract_multisegments(
+    ...      Multisegment([]),
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                   Segment(Point(0, 1), Point(1, 0))]))
-    Multisegment([])
-    >>> symmetric_subtract_multisegments(
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(0, 1), Point(1, 1))]),
-    ...     Multisegment([Segment(Point(0, 0), Point(2, 0)),
-    ...                   Segment(Point(0, 0), Point(2, 2))]))
-    Multisegment([Segment(Point(0, 0), Point(1, 1)),\
- Segment(Point(0, 1), Point(1, 1)), Segment(Point(1, 0), Point(2, 0)),\
- Segment(Point(1, 1), Point(2, 2))])
+    True
+    >>> (symmetric_subtract_multisegments(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]))
+    ...  == Multisegment([]))
+    True
+    >>> (symmetric_subtract_multisegments(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 1))]),
+    ...      Multisegment([Segment(Point(0, 0), Point(2, 0)),
+    ...                    Segment(Point(0, 0), Point(2, 2))]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 1)),
+    ...                   Segment(Point(0, 1), Point(1, 1)),
+    ...                   Segment(Point(1, 0), Point(2, 0)),
+    ...                   Segment(Point(1, 1), Point(2, 2))]))
+    True
     """
     return _linear.SymmetricDifference(
             left.segments, right.segments,
