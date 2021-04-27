@@ -65,17 +65,22 @@ def segments_to_multisegment(segments: _Sequence[_Segment],
 
     >>> from ground.base import get_context
     >>> context = get_context()
-    >>> Point, Segment = context.point_cls, context.segment_cls
-    >>> segments_to_multisegment([])
-    Multisegment([])
-    >>> segments_to_multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                           Segment(Point(0, 1), Point(1, 0))])
-    Multisegment([Segment(Point(0, 0), Point(1, 0)), Segment(Point(0, 1),\
- Point(1, 0))])
-    >>> segments_to_multisegment([Segment(Point(0, 0), Point(2, 0)),
-    ...                           Segment(Point(1, 0), Point(3, 0))])
-    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
- Segment(Point(1, 0), Point(2, 0)), Segment(Point(2, 0), Point(3, 0))])
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Segment = context.segment_cls
+    >>> segments_to_multisegment([]) == Multisegment([])
+    True
+    >>> (segments_to_multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                            Segment(Point(0, 1), Point(1, 0))])
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
+    >>> (segments_to_multisegment([Segment(Point(0, 0), Point(2, 0)),
+    ...                            Segment(Point(1, 0), Point(3, 0))])
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(1, 0), Point(2, 0)),
+    ...                   Segment(Point(2, 0), Point(3, 0))]))
+    True
     """
     return _linear.merge_segments(
             segments, _get_context() if context is None else context)
