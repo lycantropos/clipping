@@ -350,33 +350,42 @@ def unite_multisegments(left: _Multisegment,
 
     >>> from ground.base import get_context
     >>> context = get_context()
-    >>> Multisegment, Point, Segment = (context.multisegment_cls,
-    ...                                 context.point_cls, context.segment_cls)
-    >>> unite_multisegments(Multisegment([]), Multisegment([]))
-    Multisegment([])
-    >>> unite_multisegments(Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                                   Segment(Point(0, 1), Point(1, 0))]),
-    ...                     Multisegment([]))
-    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
- Segment(Point(0, 1), Point(1, 0))])
-    >>> unite_multisegments(Multisegment([]),
-    ...                     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                                   Segment(Point(0, 1), Point(1, 0))]))
-    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
- Segment(Point(0, 1), Point(1, 0))])
-    >>> unite_multisegments(Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                                   Segment(Point(0, 1), Point(1, 0))]),
-    ...                     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                                   Segment(Point(0, 1), Point(1, 0))]))
-    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
- Segment(Point(0, 1), Point(1, 0))])
-    >>> unite_multisegments(Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                                   Segment(Point(0, 1), Point(1, 1))]),
-    ...                     Multisegment([Segment(Point(0, 0), Point(2, 0)),
-    ...                                   Segment(Point(0, 0), Point(2, 2))]))
-    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
- Segment(Point(0, 0), Point(1, 1)), Segment(Point(0, 1), Point(1, 1)),\
- Segment(Point(1, 0), Point(2, 0)), Segment(Point(1, 1), Point(2, 2))])
+    >>> Contour = context.contour_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Segment = context.segment_cls
+    >>> (unite_multisegments(Multisegment([]), Multisegment([]))
+    ...  == Multisegment([]))
+    True
+    >>> (unite_multisegments(Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                                    Segment(Point(0, 1), Point(1, 0))]),
+    ...                      Multisegment([]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
+    >>> (unite_multisegments(Multisegment([]),
+    ...                      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                                    Segment(Point(0, 1), Point(1, 0))]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
+    >>> (unite_multisegments(Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                                    Segment(Point(0, 1), Point(1, 0))]),
+    ...                      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                                    Segment(Point(0, 1), Point(1, 0))]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
+    >>> (unite_multisegments(Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                                    Segment(Point(0, 1), Point(1, 1))]),
+    ...                      Multisegment([Segment(Point(0, 0), Point(2, 0)),
+    ...                                    Segment(Point(0, 0), Point(2, 2))]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 0), Point(1, 1)),
+    ...                   Segment(Point(0, 1), Point(1, 1)),
+    ...                   Segment(Point(1, 0), Point(2, 0)),
+    ...                   Segment(Point(1, 1), Point(2, 2))]))
+    True
     """
     return _linear.Union(
             left.segments, right.segments,
