@@ -410,36 +410,43 @@ def intersect_multisegment_with_multipolygon(
 
     >>> from ground.base import get_context
     >>> context = get_context()
-    >>> Contour, Multipolygon, Multisegment, Point, Polygon, Segment = (
-    ...     context.contour_cls, context.multipolygon_cls,
-    ...     context.multisegment_cls, context.point_cls, context.polygon_cls,
-    ...     context.segment_cls)
-    >>> intersect_multisegment_with_multipolygon(Multisegment([]),
-    ...                                          Multipolygon([]))
-    Multisegment([])
-    >>> intersect_multisegment_with_multipolygon(
-    ...     Multisegment([]),
-    ...     Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
-    ...                                    Point(0, 1)]), [])]))
-    Multisegment([])
-    >>> intersect_multisegment_with_multipolygon(
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(0, 1), Point(1, 0))]),
-    ...     Multipolygon([]))
-    Multisegment([])
-    >>> intersect_multisegment_with_multipolygon(
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(0, 1), Point(1, 0))]),
-    ...     Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
-    ...                                    Point(0, 1)]), [])]))
-    Multisegment([Segment(Point(0, 0), Point(1, 0)),\
- Segment(Point(0, 1), Point(1, 0))])
-    >>> intersect_multisegment_with_multipolygon(
-    ...     Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                   Segment(Point(1, 1), Point(2, 2))]),
-    ...     Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
-    ...                                    Point(1, 1), Point(0, 1)]), [])]))
-    Multisegment([Segment(Point(0, 0), Point(1, 0))])
+    >>> Contour = context.contour_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> (intersect_multisegment_with_multipolygon(Multisegment([]),
+    ...                                           Multipolygon([]))
+    ...  == Multisegment([]))
+    True
+    >>> (intersect_multisegment_with_multipolygon(
+    ...      Multisegment([]),
+    ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+    ...                                     Point(0, 1)]), [])]))
+    ...  == Multisegment([]))
+    True
+    >>> (intersect_multisegment_with_multipolygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multipolygon([]))
+    ...  == Multisegment([]))
+    True
+    >>> (intersect_multisegment_with_multipolygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+    ...                                     Point(0, 1)]), [])]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
+    >>> (intersect_multisegment_with_multipolygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(1, 1), Point(2, 2))]),
+    ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+    ...                                     Point(1, 1), Point(0, 1)]), [])]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0))]))
+    True
     """
     return _mixed.Intersection(
             multisegment.segments, multipolygon.polygons,
