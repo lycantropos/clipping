@@ -674,27 +674,32 @@ def intersect_multiregions(left: _Multiregion,
     ...                              Point(0, 2)])
     >>> upper_right_square = Contour([Point(1, 1), Point(2, 1), Point(2, 2),
     ...                               Point(1, 2)])
-    >>> intersect_multiregions([], [])
-    []
-    >>> intersect_multiregions([lower_left_square], [])
-    []
-    >>> intersect_multiregions([], [lower_left_square])
-    []
-    >>> intersect_multiregions([lower_left_square], [lower_left_square])
-    [Contour([Point(0, 0), Point(1, 0), Point(1, 1), Point(0, 1)])]
-    >>> intersect_multiregions([lower_left_square], [lower_right_square])
-    []
-    >>> intersect_multiregions([lower_left_square], [upper_left_square])
-    []
-    >>> intersect_multiregions([lower_left_square], [upper_right_square])
-    []
-    >>> intersect_multiregions([lower_left_square, upper_right_square],
-    ...                        [upper_left_square, lower_right_square])
-    []
-    >>> intersect_multiregions([lower_left_square, upper_right_square],
-    ...                        [lower_left_square, upper_right_square])
-    [Contour([Point(0, 0), Point(1, 0), Point(1, 1), Point(0, 1)]),\
- Contour([Point(1, 1), Point(2, 1), Point(2, 2), Point(1, 2)])]
+    >>> intersect_multiregions([], []) == []
+    True
+    >>> intersect_multiregions([lower_left_square], []) == []
+    True
+    >>> intersect_multiregions([], [lower_left_square]) == []
+    True
+    >>> (intersect_multiregions([lower_left_square], [lower_left_square])
+    ...  == [lower_left_square])
+    True
+    >>> (intersect_multiregions([lower_left_square], [lower_right_square])
+    ...  == [])
+    True
+    >>> (intersect_multiregions([lower_left_square], [upper_left_square])
+    ...  == [])
+    True
+    >>> (intersect_multiregions([lower_left_square], [upper_right_square])
+    ...  == [])
+    True
+    >>> (intersect_multiregions([lower_left_square, upper_right_square],
+    ...                         [upper_left_square, lower_right_square])
+    ...  == [])
+    True
+    >>> (intersect_multiregions([lower_left_square, upper_right_square],
+    ...                         [lower_left_square, upper_right_square])
+    ...  == [lower_left_square, upper_right_square])
+    True
     """
     return _holeless.Intersection(
             left, right,
