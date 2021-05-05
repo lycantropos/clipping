@@ -1,5 +1,5 @@
 """
-Boolean operations on multisegments/multiregions/multipolygons in the plane.
+Boolean operations on geometries in the plane.
 
 Based on algorithm by F. Martinez et al.
 
@@ -13,16 +13,8 @@ Glossary
 
 **Region** --- contour with points that lie within it.
 
-**Multiregion** --- possibly empty sequence of regions such
-that intersection of distinct regions is a discrete points set.
-
-**Linear mix** --- pair of disjoint/touching multipoint and multisegment.
-
-**Holeless mix** --- triplet of disjoint/touching multipoint, multisegment
-and multiregion.
-
-**Mix** --- triplet of disjoint/touching multipoint, multisegment
-and multipolygon.
+**Multiregion** --- sequence of two or more regions
+such that intersection of distinct regions is a discrete points set.
 """
 from typing import (Optional as _Optional,
                     Sequence as _Sequence)
