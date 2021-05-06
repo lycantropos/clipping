@@ -107,6 +107,21 @@ def complete_intersect_multisegments(first: _Multisegment,
     >>> Multisegment = context.multisegment_cls
     >>> Point = context.point_cls
     >>> Segment = context.segment_cls
+    >>> (complete_intersect_multisegments(Multisegment([]), Multisegment([]))
+    ...  == (Multipoint([]), Multisegment([])))
+    True
+    >>> (complete_intersect_multisegments(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multisegment([]))
+    ...  == (Multipoint([]), Multisegment([])))
+    True
+    >>> (complete_intersect_multisegments(
+    ...      Multisegment([]),
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]))
+    ...  ==  (Multipoint([]), Multisegment([])))
+    True
     >>> (complete_intersect_multisegments(
     ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                    Segment(Point(0, 1), Point(1, 0))]),
@@ -157,6 +172,21 @@ def intersect_multisegments(first: _Multisegment,
     >>> Multisegment = context.multisegment_cls
     >>> Point = context.point_cls
     >>> Segment = context.segment_cls
+    >>> (intersect_multisegments(Multisegment([]), Multisegment([]))
+    ...  == Multisegment([]))
+    True
+    >>> (intersect_multisegments(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multisegment([]))
+    ...  == Multisegment([]))
+    True
+    >>> (intersect_multisegments(
+    ...      Multisegment([]),
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]))
+    ...  == Multisegment([]))
+    True
     >>> (intersect_multisegments(
     ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                    Segment(Point(0, 1), Point(1, 0))]),
@@ -205,6 +235,22 @@ def subtract_multisegments(minuend: _Multisegment,
     >>> Multisegment = context.multisegment_cls
     >>> Point = context.point_cls
     >>> Segment = context.segment_cls
+    >>> (subtract_multisegments(Multisegment([]), Multisegment([]))
+    ...  == Multisegment([]))
+    True
+    >>> (subtract_multisegments(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multisegment([]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
+    >>> (subtract_multisegments(
+    ...      Multisegment([]),
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]))
+    ...  == Multisegment([]))
+    True
     >>> (subtract_multisegments(
     ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                    Segment(Point(0, 1), Point(1, 0))]),
@@ -252,6 +298,23 @@ def symmetric_subtract_multisegments(first: _Multisegment,
     >>> Multisegment = context.multisegment_cls
     >>> Point = context.point_cls
     >>> Segment = context.segment_cls
+    >>> (symmetric_subtract_multisegments(Multisegment([]), Multisegment([]))
+    ...  == Multisegment([]))
+    True
+    >>> (symmetric_subtract_multisegments(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multisegment([]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
+    >>> (symmetric_subtract_multisegments(
+    ...      Multisegment([]),
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
     >>> (symmetric_subtract_multisegments(
     ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                    Segment(Point(0, 1), Point(1, 0))]),
@@ -301,6 +364,21 @@ def unite_multisegments(first: _Multisegment,
     >>> Multisegment = context.multisegment_cls
     >>> Point = context.point_cls
     >>> Segment = context.segment_cls
+    >>> (unite_multisegments(Multisegment([]), Multisegment([]))
+    ...  == Multisegment([]))
+    True
+    >>> (unite_multisegments(Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                                    Segment(Point(0, 1), Point(1, 0))]),
+    ...                      Multisegment([]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
+    >>> (unite_multisegments(Multisegment([]),
+    ...                      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                                    Segment(Point(0, 1), Point(1, 0))]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
     >>> (unite_multisegments(Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                                    Segment(Point(0, 1), Point(1, 0))]),
     ...                      Multisegment([Segment(Point(0, 0), Point(1, 0)),
@@ -359,6 +437,22 @@ def intersect_multisegment_with_multipolygon(
     >>> Point = context.point_cls
     >>> Polygon = context.polygon_cls
     >>> Segment = context.segment_cls
+    >>> (intersect_multisegment_with_multipolygon(Multisegment([]),
+    ...                                           Multipolygon([]))
+    ...  == Multisegment([]))
+    True
+    >>> (intersect_multisegment_with_multipolygon(
+    ...      Multisegment([]),
+    ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+    ...                                     Point(0, 1)]), [])]))
+    ...  == Multisegment([]))
+    True
+    >>> (intersect_multisegment_with_multipolygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multipolygon([]))
+    ...  == Multisegment([]))
+    True
     >>> (intersect_multisegment_with_multipolygon(
     ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                    Segment(Point(0, 1), Point(1, 0))]),
@@ -417,6 +511,22 @@ def complete_intersect_multisegment_with_multipolygon(
     >>> Point = context.point_cls
     >>> Polygon = context.polygon_cls
     >>> Segment = context.segment_cls
+    >>> (complete_intersect_multisegment_with_multipolygon(Multisegment([]),
+    ...                                                    Multipolygon([]))
+    ...  == (Multipoint([]), Multisegment([])))
+    True
+    >>> (complete_intersect_multisegment_with_multipolygon(
+    ...      Multisegment([]),
+    ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+    ...                                     Point(0, 1)]), [])]))
+    ...  == (Multipoint([]), Multisegment([])))
+    True
+    >>> (complete_intersect_multisegment_with_multipolygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multipolygon([]))
+    ...  == (Multipoint([]), Multisegment([])))
+    True
     >>> (complete_intersect_multisegment_with_multipolygon(
     ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                    Segment(Point(0, 1), Point(1, 0))]),
@@ -476,6 +586,23 @@ def subtract_multipolygon_from_multisegment(multisegment: _Multisegment,
     >>> Point = context.point_cls
     >>> Polygon = context.polygon_cls
     >>> Segment = context.segment_cls
+    >>> (subtract_multipolygon_from_multisegment(Multisegment([]),
+    ...                                          Multipolygon([]))
+    ...  == Multisegment([]))
+    True
+    >>> (subtract_multipolygon_from_multisegment(
+    ...      Multisegment([]),
+    ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
+    ...                                     Point(0, 1)]), [])]))
+    ...  == Multisegment([]))
+    True
+    >>> (subtract_multipolygon_from_multisegment(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Multipolygon([]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
     >>> (subtract_multipolygon_from_multisegment(
     ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                    Segment(Point(0, 1), Point(1, 0))]),
@@ -537,6 +664,15 @@ def complete_intersect_multiregions(first: _Multiregion,
     ...                              Point(0, 2)])
     >>> upper_right_square = Contour([Point(1, 1), Point(2, 1), Point(2, 2),
     ...                               Point(1, 2)])
+    >>> (complete_intersect_multiregions([], [])
+    ...  == (Multipoint([]), Multisegment([]), []))
+    True
+    >>> (complete_intersect_multiregions([lower_left_square], [])
+    ...  == (Multipoint([]), Multisegment([]), []))
+    True
+    >>> (complete_intersect_multiregions([], [lower_left_square])
+    ...  == (Multipoint([]), Multisegment([]), []))
+    True
     >>> (complete_intersect_multiregions([lower_left_square],
     ...                                  [lower_left_square])
     ...  == (Multipoint([]), Multisegment([]), [lower_left_square]))
@@ -612,6 +748,12 @@ def intersect_multiregions(first: _Multiregion,
     ...                              Point(0, 2)])
     >>> upper_right_square = Contour([Point(1, 1), Point(2, 1), Point(2, 2),
     ...                               Point(1, 2)])
+    >>> intersect_multiregions([], []) == []
+    True
+    >>> intersect_multiregions([lower_left_square], []) == []
+    True
+    >>> intersect_multiregions([], [lower_left_square]) == []
+    True
     >>> (intersect_multiregions([lower_left_square], [lower_left_square])
     ...  == [lower_left_square])
     True
@@ -689,6 +831,19 @@ def complete_intersect_multipolygons(first: _Multipolygon,
     >>> upper_right_square = Contour([Point(3, 3), Point(6, 3), Point(6, 6),
     ...                               Point(3, 6)])
     >>> upper_right_triangle = Contour([Point(4, 4), Point(4, 5), Point(5, 4)])
+    >>> (complete_intersect_multipolygons(Multipolygon([]), Multipolygon([]))
+    ...  == (Multipoint([]), Multisegment([]), Multipolygon([])))
+    True
+    >>> (complete_intersect_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([]))
+    ...  == (Multipoint([]), Multisegment([]), Multipolygon([])))
+    True
+    >>> (complete_intersect_multipolygons(
+    ...      Multipolygon([]),
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == (Multipoint([]), Multisegment([]), Multipolygon([])))
+    True
     >>> (complete_intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
@@ -795,6 +950,19 @@ def intersect_multipolygons(first: _Multipolygon,
     >>> upper_right_square = Contour([Point(3, 3), Point(6, 3), Point(6, 6),
     ...                               Point(3, 6)])
     >>> upper_right_triangle = Contour([Point(4, 4), Point(4, 5), Point(5, 4)])
+    >>> (intersect_multipolygons(Multipolygon([]), Multipolygon([]))
+    ...  == Multipolygon([]))
+    True
+    >>> (intersect_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([]))
+    ...  == Multipolygon([]))
+    True
+    >>> (intersect_multipolygons(
+    ...      Multipolygon([]),
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == Multipolygon([]))
+    True
     >>> (intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
@@ -890,6 +1058,19 @@ def subtract_multipolygons(minuend: _Multipolygon,
     >>> upper_right_square = Contour([Point(3, 3), Point(6, 3), Point(6, 6),
     ...                               Point(3, 6)])
     >>> upper_right_triangle = Contour([Point(4, 4), Point(4, 5), Point(5, 4)])
+    >>> (subtract_multipolygons(Multipolygon([]), Multipolygon([]))
+    ...  == Multipolygon([]))
+    True
+    >>> (subtract_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([]))
+    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    True
+    >>> (subtract_multipolygons(
+    ...      Multipolygon([]),
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == Multipolygon([]))
+    True
     >>> (subtract_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
@@ -985,6 +1166,18 @@ def symmetric_subtract_multipolygons(first: _Multipolygon,
     >>> upper_right_square = Contour([Point(3, 3), Point(6, 3), Point(6, 6),
     ...                               Point(3, 6)])
     >>> upper_right_triangle = Contour([Point(4, 4), Point(4, 5), Point(5, 4)])
+    >>> symmetric_subtract_multipolygons(Multipolygon([]), Multipolygon([]))
+    Multipolygon([])
+    >>> (symmetric_subtract_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([]))
+    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    True
+    >>> (symmetric_subtract_multipolygons(
+    ...      Multipolygon([]),
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    True
     >>> (symmetric_subtract_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
@@ -1089,6 +1282,19 @@ def unite_multipolygons(first: _Multipolygon,
     >>> upper_right_square = Contour([Point(3, 3), Point(6, 3), Point(6, 6),
     ...                               Point(3, 6)])
     >>> upper_right_triangle = Contour([Point(4, 4), Point(4, 5), Point(5, 4)])
+    >>> (unite_multipolygons(Multipolygon([]), Multipolygon([]))
+    ...  == Multipolygon([]))
+    True
+    >>> (unite_multipolygons(
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
+    ...      Multipolygon([]))
+    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    True
+    >>> (unite_multipolygons(
+    ...      Multipolygon([]),
+    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    True
     >>> (unite_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
