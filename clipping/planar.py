@@ -78,8 +78,8 @@ def segments_to_multisegment(segments: _Sequence[_Segment],
             segments, _get_context() if context is None else context)
 
 
-def complete_intersect_multisegments(left: _Multisegment,
-                                     right: _Multisegment,
+def complete_intersect_multisegments(first: _Multisegment,
+                                     second: _Multisegment,
                                      *,
                                      context: _Optional[_Context] = None
                                      ) -> _LinearMix:
@@ -93,11 +93,11 @@ def complete_intersect_multisegments(left: _Multisegment,
         ``O(segments_count)``
 
     where ``segments_count = segments_count + intersections_count``,
-    ``segments_count = len(left) + len(right)``,
+    ``segments_count = len(first.segments) + len(second.segments)``,
     ``intersections_count`` --- number of intersections between multisegments.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param first: first operand.
+    :param second: second operand.
     :param context: geometric context
     :returns: intersection of operands.
 
@@ -126,12 +126,12 @@ def complete_intersect_multisegments(left: _Multisegment,
     True
     """
     return _linear.CompleteIntersection(
-            left.segments, right.segments,
+            first.segments, second.segments,
             _get_context() if context is None else context).compute()
 
 
-def intersect_multisegments(left: _Multisegment,
-                            right: _Multisegment,
+def intersect_multisegments(first: _Multisegment,
+                            second: _Multisegment,
                             *,
                             context: _Optional[_Context] = None
                             ) -> _Multisegment:
@@ -144,11 +144,11 @@ def intersect_multisegments(left: _Multisegment,
         ``O(segments_count)``
 
     where ``segments_count = segments_count + intersections_count``,
-    ``segments_count = len(left) + len(right)``,
+    ``segments_count = len(first.segments) + len(second.segments)``,
     ``intersections_count`` --- number of intersections between multisegments.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param first: first operand.
+    :param second: second operand.
     :param context: geometric context
     :returns: intersection of operands.
 
@@ -174,7 +174,7 @@ def intersect_multisegments(left: _Multisegment,
     True
     """
     return _linear.Intersection(
-            left.segments, right.segments,
+            first.segments, second.segments,
             _get_context() if context is None else context).compute()
 
 
@@ -192,7 +192,7 @@ def subtract_multisegments(minuend: _Multisegment,
         ``O(segments_count)``
 
     where ``segments_count = segments_count + intersections_count``,
-    ``segments_count = len(left) + len(right)``,
+    ``segments_count = len(first.segments) + len(second.segments)``,
     ``intersections_count`` --- number of intersections between multisegments.
 
     :param minuend: multisegment to subtract from.
@@ -225,8 +225,8 @@ def subtract_multisegments(minuend: _Multisegment,
             _get_context() if context is None else context).compute()
 
 
-def symmetric_subtract_multisegments(left: _Multisegment,
-                                     right: _Multisegment,
+def symmetric_subtract_multisegments(first: _Multisegment,
+                                     second: _Multisegment,
                                      *,
                                      context: _Optional[_Context] = None
                                      ) -> _Multisegment:
@@ -239,11 +239,11 @@ def symmetric_subtract_multisegments(left: _Multisegment,
         ``O(segments_count)``
 
     where ``segments_count = segments_count + intersections_count``,
-    ``segments_count = len(left) + len(right)``,
+    ``segments_count = len(first.segments) + len(second.segments)``,
     ``intersections_count`` --- number of intersections between multisegments.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param first: first operand.
+    :param second: second operand.
     :param context: geometric context
     :returns: symmetric difference of operands.
 
@@ -271,12 +271,12 @@ def symmetric_subtract_multisegments(left: _Multisegment,
     True
     """
     return _linear.SymmetricDifference(
-            left.segments, right.segments,
+            first.segments, second.segments,
             _get_context() if context is None else context).compute()
 
 
-def unite_multisegments(left: _Multisegment,
-                        right: _Multisegment,
+def unite_multisegments(first: _Multisegment,
+                        second: _Multisegment,
                         *,
                         context: _Optional[_Context] = None) -> _Multisegment:
     """
@@ -288,11 +288,11 @@ def unite_multisegments(left: _Multisegment,
         ``O(segments_count)``
 
     where ``segments_count = segments_count + intersections_count``,
-    ``segments_count = len(left) + len(right)``,
+    ``segments_count = len(first.segments) + len(second.segments)``,
     ``intersections_count`` --- number of intersections between multisegments.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param first: first operand.
+    :param second: second operand.
     :param context: geometric context
     :returns: union of operands.
 
@@ -320,7 +320,7 @@ def unite_multisegments(left: _Multisegment,
     True
     """
     return _linear.Union(
-            left.segments, right.segments,
+            first.segments, second.segments,
             _get_context() if context is None else context).compute()
 
 
@@ -338,9 +338,11 @@ def intersect_multisegment_with_multipolygon(
         ``O(segments_count)``
 
     where ``segments_count = start_segments_count + intersections_count``,
-    ``start_segments_count = len(multisegment) + multipolygon_edges_count``,
-    ``multipolygon_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in multipolygon)``,
+    ``start_segments_count = len(multisegment.segments)\
+ + multipolygon_edges_count``,
+    ``multipolygon_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in multipolygon.polygons)``,
     ``intersections_count`` --- number of intersections between multisegment
     and multipolygon edges.
 
@@ -393,9 +395,11 @@ def complete_intersect_multisegment_with_multipolygon(
         ``O(segments_count)``
 
     where ``segments_count = start_segments_count + intersections_count``,
-    ``start_segments_count = len(multisegment) + multipolygon_edges_count``,
-    ``multipolygon_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in multipolygon)``,
+    ``start_segments_count = len(multisegment.segments)\
+ + multipolygon_edges_count``,
+    ``multipolygon_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in multipolygon.polygons)``,
     ``intersections_count`` --- number of intersections between multisegment
     and multipolygon edges.
 
@@ -450,9 +454,11 @@ def subtract_multipolygon_from_multisegment(multisegment: _Multisegment,
         ``O(segments_count)``
 
     where ``segments_count = start_segments_count + intersections_count``,
-    ``start_segments_count = len(multisegment) + multipolygon_edges_count``,
-    ``multipolygon_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in multipolygon)``,
+    ``start_segments_count = len(multisegment.segments)\
+ + multipolygon_edges_count``,
+    ``multipolygon_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in multipolygon.polygons)``,
     ``intersections_count`` --- number of intersections between multisegment
     and multipolygon edges.
 
@@ -490,8 +496,8 @@ def subtract_multipolygon_from_multisegment(multisegment: _Multisegment,
             _get_context() if context is None else context).compute()
 
 
-def complete_intersect_multiregions(left: _Multiregion,
-                                    right: _Multiregion,
+def complete_intersect_multiregions(first: _Multiregion,
+                                    second: _Multiregion,
                                     *,
                                     context: _Optional[_Context] = None
                                     ) -> _HolelessMix:
@@ -506,13 +512,13 @@ def complete_intersect_multiregions(left: _Multiregion,
 
     where ``segments_count = edges_count + intersections_count``,
     ``edges_count = left_edges_count + right_edges_count``,
-    ``left_edges_count = sum(map(len, left))``,
-    ``right_edges_count = sum(map(len, right))``,
+    ``first_edges_count = sum(len(region.vertices) for region in first)``,
+    ``second_edges_count = sum(len(region.vertices) for region in second)``,
     ``intersections_count`` --- number of intersections between multiregions
     edges.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param first: first operand.
+    :param second: second operand.
     :param context: geometric context
     :returns: intersection of operands.
 
@@ -566,12 +572,12 @@ def complete_intersect_multiregions(left: _Multiregion,
     True
     """
     return _holeless.CompleteIntersection(
-            left, right,
+            first, second,
             _get_context() if context is None else context).compute()
 
 
-def intersect_multiregions(left: _Multiregion,
-                           right: _Multiregion,
+def intersect_multiregions(first: _Multiregion,
+                           second: _Multiregion,
                            *,
                            context: _Optional[_Context] = None
                            ) -> _Multiregion:
@@ -585,13 +591,13 @@ def intersect_multiregions(left: _Multiregion,
 
     where ``segments_count = edges_count + intersections_count``,
     ``edges_count = left_edges_count + right_edges_count``,
-    ``left_edges_count = sum(map(len, left))``,
-    ``right_edges_count = sum(map(len, right))``,
+    ``first_edges_count = sum(len(region.vertices) for region in first)``,
+    ``second_edges_count = sum(len(region.vertices) for region in second)``,
     ``intersections_count`` --- number of intersections between multiregions
     edges.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param first: first operand.
+    :param second: second operand.
     :param context: geometric context
     :returns: intersection of operands.
 
@@ -628,12 +634,12 @@ def intersect_multiregions(left: _Multiregion,
     True
     """
     return _holeless.Intersection(
-            left, right,
+            first, second, 
             _get_context() if context is None else context).compute()
 
 
-def complete_intersect_multipolygons(left: _Multipolygon,
-                                     right: _Multipolygon,
+def complete_intersect_multipolygons(first: _Multipolygon,
+                                     second: _Multipolygon,
                                      *,
                                      context: _Optional[_Context] = None
                                      ) -> _Mix:
@@ -648,15 +654,17 @@ def complete_intersect_multipolygons(left: _Multipolygon,
 
     where ``segments_count = edges_count + intersections_count``,
     ``edges_count = left_edges_count + right_edges_count``,
-    ``left_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in left)``,
-    ``right_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in right)``,
+    ``first_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in first.polygons)``,
+    ``second_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in second.polygons)``,
     ``intersections_count`` --- number of intersections between multipolygons
     edges.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param first: first operand.
+    :param second: second operand.
     :param context: geometric context
     :returns: intersection of operands.
 
@@ -736,12 +744,12 @@ def complete_intersect_multipolygons(left: _Multipolygon,
     True
     """
     return _holey.CompleteIntersection(
-            left.polygons, right.polygons,
+            first.polygons, second.polygons,
             _get_context() if context is None else context).compute()
 
 
-def intersect_multipolygons(left: _Multipolygon,
-                            right: _Multipolygon,
+def intersect_multipolygons(first: _Multipolygon,
+                            second: _Multipolygon,
                             *,
                             context: _Optional[_Context] = None
                             ) -> _Multipolygon:
@@ -755,15 +763,17 @@ def intersect_multipolygons(left: _Multipolygon,
 
     where ``segments_count = edges_count + intersections_count``,
     ``edges_count = left_edges_count + right_edges_count``,
-    ``left_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in left)``,
-    ``right_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in right)``,
+    ``first_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in first.polygons)``,
+    ``second_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in second.polygons)``,
     ``intersections_count`` --- number of intersections between multipolygons
     edges.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param first: first operand.
+    :param second: second operand.
     :param context: geometric context
     :returns: intersection of operands.
 
@@ -829,7 +839,7 @@ def intersect_multipolygons(left: _Multipolygon,
     True
     """
     return _holey.Intersection(
-            left.polygons, right.polygons,
+            first.polygons, second.polygons,
             _get_context() if context is None else context).compute()
 
 
@@ -848,10 +858,12 @@ def subtract_multipolygons(minuend: _Multipolygon,
 
     where ``segments_count = edges_count + intersections_count``,
     ``edges_count = left_edges_count + right_edges_count``,
-    ``left_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in left)``,
-    ``right_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in right)``,
+    ``first_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in first.polygons)``,
+    ``second_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in second.polygons)``,
     ``intersections_count`` --- number of intersections between multipolygons
     edges.
 
@@ -926,8 +938,8 @@ def subtract_multipolygons(minuend: _Multipolygon,
             _get_context() if context is None else context).compute()
 
 
-def symmetric_subtract_multipolygons(left: _Multipolygon,
-                                     right: _Multipolygon,
+def symmetric_subtract_multipolygons(first: _Multipolygon,
+                                     second: _Multipolygon,
                                      *,
                                      context: _Optional[_Context] = None
                                      ) -> _Multipolygon:
@@ -941,15 +953,17 @@ def symmetric_subtract_multipolygons(left: _Multipolygon,
 
     where ``segments_count = edges_count + intersections_count``,
     ``edges_count = left_edges_count + right_edges_count``,
-    ``left_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in left)``,
-    ``right_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in right)``,
+    ``first_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in first.polygons)``,
+    ``second_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in second.polygons)``,
     ``intersections_count`` --- number of intersections between multipolygons
     edges.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param first: first operand.
+    :param second: second operand.
     :param context: geometric context
     :returns: symmetric difference of operands.
 
@@ -1025,12 +1039,12 @@ def symmetric_subtract_multipolygons(left: _Multipolygon,
     True
     """
     return _holey.SymmetricDifference(
-            left.polygons, right.polygons,
+            first.polygons, second.polygons,
             _get_context() if context is None else context).compute()
 
 
-def unite_multipolygons(left: _Multipolygon,
-                        right: _Multipolygon,
+def unite_multipolygons(first: _Multipolygon,
+                        second: _Multipolygon,
                         *,
                         context: _Optional[_Context] = None) -> _Multipolygon:
     """
@@ -1043,15 +1057,17 @@ def unite_multipolygons(left: _Multipolygon,
 
     where ``segments_count = edges_count + intersections_count``,
     ``edges_count = left_edges_count + right_edges_count``,
-    ``left_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in left)``,
-    ``right_edges_count = sum(len(border) + sum(map(len, holes))\
- for border, holes in right)``,
+    ``first_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in first.polygons)``,
+    ``second_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in second.polygons)``,
     ``intersections_count`` --- number of intersections between multipolygons
     edges.
 
-    :param left: left operand.
-    :param right: right operand.
+    :param first: first operand.
+    :param second: second operand.
     :param context: geometric context
     :returns: union of operands.
 
@@ -1128,5 +1144,5 @@ def unite_multipolygons(left: _Multipolygon,
     True
     """
     return _holey.Union(
-            left.polygons, right.polygons,
+            first.polygons, second.polygons,
             _get_context() if context is None else context).compute()
