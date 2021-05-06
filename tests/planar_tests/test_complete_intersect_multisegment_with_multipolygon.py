@@ -7,10 +7,10 @@ from orient.planar import (point_in_multipolygon,
                            segment_in_multisegment,
                            segment_in_segment)
 
-from clipping.core.utils import contour_to_edges_endpoints
 from clipping.planar import (complete_intersect_multisegment_with_multipolygon,
                              intersect_multisegment_with_multipolygon)
 from tests.utils import (MultipolygonWithMultisegment,
+                         contour_to_edges,
                          is_linear_mix,
                          is_linear_mix_empty,
                          reverse_multipolygon,
@@ -65,7 +65,7 @@ def test_properties(multipolygon_with_multisegment
                            for contour
                            in to_multipolygon_contours(multipolygon)
                            for edge_start, edge_end
-                           in contour_to_edges_endpoints(contour))))
+                           in contour_to_edges(contour))))
     assert all(segment_in_multisegment(segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
                for segment in result_multisegment.segments)

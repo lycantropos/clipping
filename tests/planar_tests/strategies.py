@@ -2,7 +2,7 @@ from itertools import combinations
 from typing import (List,
                     Tuple)
 
-from ground.hints import Coordinate
+from ground.hints import Scalar
 from hypothesis import strategies
 from hypothesis_geometry import planar
 
@@ -50,8 +50,8 @@ multipolygons_with_empty_multisegments = strategies.tuples(multipolygons,
 
 
 def coordinates_to_multipolygons_with_multisegments(
-        coordinates: Strategy[Coordinate]) -> Strategy[Tuple[Multipolygon,
-                                                             Multisegment]]:
+        coordinates: Strategy[Scalar]) -> Strategy[Tuple[Multipolygon,
+                                                         Multisegment]]:
     return strategies.tuples(planar.multipolygons(coordinates),
                              planar.multisegments(coordinates))
 

@@ -10,9 +10,9 @@ from typing import (Any,
 from ground.base import (Context,
                          Orientation)
 from ground.hints import (Contour,
-                          Coordinate,
                           Point,
                           Polygon,
+                          Scalar,
                           Segment)
 
 from .hints import (Multiregion,
@@ -58,12 +58,6 @@ def contour_to_oriented_edges_endpoints(contour: Contour,
                   for index in range(len(vertices) - 1, -1, -1)))
 
 
-def contour_to_edges_endpoints(contour: Contour) -> Iterable[SegmentEndpoints]:
-    vertices = contour.vertices
-    return ((vertices[index - 1], vertices[index])
-            for index in range(len(vertices)))
-
-
 def to_contour_orientation(contour: Contour, context: Context) -> Orientation:
     vertices = contour.vertices
     index = min(range(len(vertices)),
@@ -79,19 +73,19 @@ def to_first_border_vertex(polygon: Polygon) -> Point:
     return polygon.border.vertices[0]
 
 
-def to_multiregion_x_max(multiregion: Multiregion) -> Coordinate:
+def to_multiregion_x_max(multiregion: Multiregion) -> Scalar:
     return max(vertex.x
                for border in multiregion
                for vertex in border.vertices)
 
 
-def to_polygons_x_max(polygons: Sequence[Polygon]) -> Coordinate:
+def to_polygons_x_max(polygons: Sequence[Polygon]) -> Scalar:
     return max(vertex.x
                for polygon in polygons
                for vertex in polygon.border.vertices)
 
 
-def to_segments_x_max(segments: Sequence[Segment]) -> Coordinate:
+def to_segments_x_max(segments: Sequence[Segment]) -> Scalar:
     return max(max(segment.start.x, segment.end.x) for segment in segments)
 
 

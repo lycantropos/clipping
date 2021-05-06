@@ -175,6 +175,7 @@ def to_triplets(strategy: Strategy[Domain]
     return strategies.tuples(strategy, strategy, strategy)
 
 
+contour_to_edges = _context.contour_edges
 is_contour = Contour.__instancecheck__
 
 

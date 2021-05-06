@@ -116,19 +116,12 @@ class LinearBinaryEventsQueue:
     def detect_intersection(self,
                             below_event: BinaryEvent,
                             event: BinaryEvent) -> None:
-        below_segment_start, below_segment_end = (below_event.start,
-                                                  below_event.end)
-        segment_start, segment_end = event.start, event.end
-        relation = self.context.segments_relation(below_segment_start,
-                                                  below_segment_end,
-                                                  segment_start, segment_end)
+        relation = self.context.segments_relation(below_event, event)
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = self.context.segments_intersection(
-                        below_segment_start, below_segment_end, segment_start,
-                        segment_end)
+                point = self.context.segments_intersection(below_event, event)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -213,19 +206,12 @@ class MixedBinaryEventsQueue:
     def detect_intersection(self,
                             below_event: MixedEvent,
                             event: MixedEvent) -> bool:
-        below_segment_start, below_segment_end = (below_event.start,
-                                                  below_event.end)
-        segment_start, segment_end = event.start, event.end
-        relation = self.context.segments_relation(below_segment_start,
-                                                  below_segment_end,
-                                                  segment_start, segment_end)
+        relation = self.context.segments_relation(below_event, event)
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = self.context.segments_intersection(
-                        below_segment_start, below_segment_end, segment_start,
-                        segment_end)
+                point = self.context.segments_intersection(below_event, event)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -321,19 +307,12 @@ class NaryEventsQueue:
     def detect_intersection(self,
                             below_event: NaryEvent,
                             event: NaryEvent) -> None:
-        below_segment_start, below_segment_end = (below_event.start,
-                                                  below_event.end)
-        segment_start, segment_end = event.start, event.end
-        relation = self.context.segments_relation(below_segment_start,
-                                                  below_segment_end,
-                                                  segment_start, segment_end)
+        relation = self.context.segments_relation(below_event, event)
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = self.context.segments_intersection(
-                        below_segment_start, below_segment_end, segment_start,
-                        segment_end)
+                point = self.context.segments_intersection(below_event, event)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
@@ -410,19 +389,12 @@ class ShapedBinaryEventsQueue(Generic[Event]):
         return self._queue.key
 
     def detect_intersection(self, below_event: Event, event: Event) -> bool:
-        below_segment_start, below_segment_end = (below_event.start,
-                                                  below_event.end)
-        segment_start, segment_end = event.start, event.end
-        relation = self.context.segments_relation(below_segment_start,
-                                                  below_segment_end,
-                                                  segment_start, segment_end)
+        relation = self.context.segments_relation(below_event, event)
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
                 # segments do not intersect_multipolygons at endpoints
-                point = self.context.segments_intersection(
-                        below_segment_start, below_segment_end, segment_start,
-                        segment_end)
+                point = self.context.segments_intersection(below_event, event)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
                 if point != event.start and point != event.end:
