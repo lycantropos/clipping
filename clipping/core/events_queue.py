@@ -3,7 +3,7 @@ from typing import (Callable,
                     Generic,
                     Iterable,
                     Type,
-                    TypeVar,
+                    Union,
                     cast)
 
 from ground.base import (Context,
@@ -14,14 +14,23 @@ from prioq.base import PriorityQueue
 from reprit.base import generate_repr
 
 from .enums import OverlapKind
-from .event import (BinaryEvent,
-                    HoleyEvent,
-                    MixedEvent,
-                    NaryEvent,
-                    OrientedEvent,
-                    ShapedEvent)
+from .event import (LeftBinaryEvent,
+                    LeftHolelessEvent,
+                    LeftHoleyEvent,
+                    LeftMixedEvent,
+                    LeftNaryEvent,
+                    LeftShapedEvent,
+                    RightBinaryEvent,
+                    RightMixedEvent,
+                    RightNaryEvent,
+                    RightShapedEvent)
 from .hints import (Orienteer,
                     SegmentEndpoints)
+
+BinaryEvent = Union[LeftBinaryEvent, RightBinaryEvent]
+NaryEvent = Union[LeftNaryEvent, RightNaryEvent]
+MixedEvent = Union[LeftMixedEvent, RightMixedEvent]
+ShapedEvent = Union[LeftShapedEvent, RightShapedEvent]
 
 
 class BinaryEventsQueueKey:
@@ -54,7 +63,7 @@ class BinaryEventsQueueKey:
             other_end_orientation = self.orienteer(event.start, event.end,
                                                    other_event.end)
             # the lowest segment is processed first
-            return (other_event.from_left
+            return (other_event.from_first
                     if other_end_orientation is Orientation.COLLINEAR
                     else (other_end_orientation
                           # the lowest segment is processed first
@@ -97,7 +106,7 @@ class NaryEventsQueueKey:
                         else Orientation.CLOCKWISE))
 
 
-class LinearBinaryEventsQueue:
+class LinearEventsQueue:
     __slots__ = 'context', '_queue'
 
     def __init__(self, context: Context) -> None:
@@ -115,8 +124,8 @@ class LinearBinaryEventsQueue:
         return self._queue.key
 
     def detect_intersection(self,
-                            below_event: BinaryEvent,
-                            event: BinaryEvent) -> None:
+                            below_event: LeftBinaryEvent,
+                            event: LeftBinaryEvent) -> None:
         relation = self.context.segments_relation(below_event, event)
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
@@ -129,7 +138,7 @@ class LinearBinaryEventsQueue:
                     self._divide_segment(event, point)
         elif relation is not Relation.DISJOINT:
             # segments overlap
-            if below_event.from_left is event.from_left:
+            if below_event.from_first is event.from_first:
                 raise ValueError('Segments of the same multisegment '
                                  'should not overlap.')
             starts_equal = below_event.start == event.start
@@ -142,18 +151,18 @@ class LinearBinaryEventsQueue:
             ends_equal = event.end == below_event.end
             if ends_equal:
                 end_min = end_max = None
-            elif self.key(event.complement) < self.key(below_event.complement):
-                end_min, end_max = event.complement, below_event.complement
+            elif self.key(event.opposite) < self.key(below_event.opposite):
+                end_min, end_max = event.opposite, below_event.opposite
             else:
-                end_min, end_max = below_event.complement, event.complement
+                end_min, end_max = below_event.opposite, event.opposite
             if starts_equal:
                 # both line segments are equal or share the left endpoint
                 if not ends_equal:
-                    self._divide_segment(end_max.complement, end_min.start)
+                    self._divide_segment(end_max.opposite, end_min.start)
             elif ends_equal:
                 # the line segments share the right endpoint
                 self._divide_segment(start_min, start_max.start)
-            elif start_min is end_max.complement:
+            elif start_min is end_max.opposite:
                 # one line segment includes the other one
                 self._divide_segment(start_min, end_min.start)
                 self._divide_segment(start_min, start_max.start)
@@ -167,21 +176,21 @@ class LinearBinaryEventsQueue:
 
     def register(self,
                  segments_endpoints: Iterable[SegmentEndpoints],
-                 from_left: bool) -> None:
+                 from_first: bool) -> None:
         events_queue = self._queue
         for segment_endpoints in segments_endpoints:
-            event = BinaryEvent.from_segment_endpoints(segment_endpoints,
-                                                       from_left)
+            event = LeftBinaryEvent.from_segment_endpoints(segment_endpoints,
+                                                           from_first)
             events_queue.push(event)
-            events_queue.push(event.complement)
+            events_queue.push(event.opposite)
 
-    def _divide_segment(self, event: BinaryEvent, point: Point) -> None:
-        tail = BinaryEvent.divide(event, point)
+    def _divide_segment(self, event: LeftBinaryEvent, point: Point) -> None:
+        tail = event.divide(point)
         self._queue.push(tail)
-        self._queue.push(event.complement)
+        self._queue.push(event.opposite)
 
 
-class MixedBinaryEventsQueue:
+class MixedEventsQueue:
     __slots__ = 'context', '_queue'
 
     def __init__(self, context: Context) -> None:
@@ -199,8 +208,8 @@ class MixedBinaryEventsQueue:
         return bool(self._queue)
 
     def detect_intersection(self,
-                            below_event: MixedEvent,
-                            event: MixedEvent) -> bool:
+                            below_event: LeftMixedEvent,
+                            event: LeftMixedEvent) -> bool:
         relation = self.context.segments_relation(below_event, event)
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
@@ -213,11 +222,11 @@ class MixedBinaryEventsQueue:
                     self._divide_segment(event, point)
         elif relation is not Relation.DISJOINT:
             # segments overlap
-            if below_event.from_left is event.from_left:
+            if below_event.from_first is event.from_first:
                 raise ValueError('Edges of the {geometry} '
                                  'should not overlap.'
                                  .format(geometry=('multisegment'
-                                                   if event.from_left
+                                                   if event.from_first
                                                    else 'multipolygon')))
             event.is_overlap = below_event.is_overlap = True
             starts_equal = below_event.start == event.start
@@ -230,19 +239,19 @@ class MixedBinaryEventsQueue:
             ends_equal = event.end == below_event.end
             if ends_equal:
                 end_min = end_max = None
-            elif self.key(event.complement) < self.key(below_event.complement):
-                end_min, end_max = event.complement, below_event.complement
+            elif self.key(event.opposite) < self.key(below_event.opposite):
+                end_min, end_max = event.opposite, below_event.opposite
             else:
-                end_min, end_max = below_event.complement, event.complement
+                end_min, end_max = below_event.opposite, event.opposite
             if starts_equal:
                 # both line segments are equal or share the left endpoint
                 if not ends_equal:
-                    self._divide_segment(end_max.complement, end_min.start)
+                    self._divide_segment(end_max.opposite, end_min.start)
                 return True
             elif ends_equal:
                 # the line segments share the right endpoint
                 self._divide_segment(start_min, start_max.start)
-            elif start_min is end_max.complement:
+            elif start_min is end_max.opposite:
                 # one line segment includes the other one
                 self._divide_segment(start_min, end_min.start)
                 self._divide_segment(start_min, start_max.start)
@@ -257,17 +266,18 @@ class MixedBinaryEventsQueue:
 
     def register(self,
                  segments_endpoints: Iterable[SegmentEndpoints],
-                 from_left: bool) -> None:
-        queue = self._queue
+                 from_first: bool) -> None:
+        push = self._queue.push
         for segment_endpoints in segments_endpoints:
-            event = MixedEvent.from_endpoints(segment_endpoints, from_left)
-            queue.push(event)
-            queue.push(event.complement)
+            event = LeftMixedEvent.from_endpoints(segment_endpoints,
+                                                  from_first)
+            push(event)
+            push(event.opposite)
 
-    def _divide_segment(self, event: MixedEvent, point: Point) -> None:
+    def _divide_segment(self, event: LeftMixedEvent, point: Point) -> None:
         tail = event.divide(point)
         self._queue.push(tail)
-        self._queue.push(event.complement)
+        self._queue.push(event.opposite)
 
 
 class NaryEventsQueue:
@@ -288,8 +298,8 @@ class NaryEventsQueue:
         return self._queue.key
 
     def detect_intersection(self,
-                            below_event: NaryEvent,
-                            event: NaryEvent) -> None:
+                            below_event: LeftNaryEvent,
+                            event: LeftNaryEvent) -> None:
         relation = self.context.segments_relation(below_event, event)
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
@@ -312,18 +322,18 @@ class NaryEventsQueue:
             ends_equal = event.end == below_event.end
             if ends_equal:
                 end_min = end_max = None
-            elif self.key(event.complement) < self.key(below_event.complement):
-                end_min, end_max = event.complement, below_event.complement
+            elif self.key(event.opposite) < self.key(below_event.opposite):
+                end_min, end_max = event.opposite, below_event.opposite
             else:
-                end_min, end_max = below_event.complement, event.complement
+                end_min, end_max = below_event.opposite, event.opposite
             if starts_equal:
                 # both line segments are equal or share the left endpoint
                 if not ends_equal:
-                    self._divide_segment(end_max.complement, end_min.start)
+                    self._divide_segment(end_max.opposite, end_min.start)
             elif ends_equal:
                 # the line segments share the right endpoint
                 self._divide_segment(start_min, start_max.start)
-            elif start_min is end_max.complement:
+            elif start_min is end_max.opposite:
                 # one line segment includes the other one
                 self._divide_segment(start_min, end_min.start)
                 self._divide_segment(start_min, start_max.start)
@@ -336,26 +346,24 @@ class NaryEventsQueue:
         return self._queue.pop()
 
     def register(self, segments_endpoints: Iterable[SegmentEndpoints]) -> None:
-        queue = self._queue
+        push = self._queue.push
         for segment_endpoints in segments_endpoints:
-            event = NaryEvent.from_segment_endpoints(segment_endpoints)
-            queue.push(event)
-            queue.push(event.complement)
+            event = LeftNaryEvent.from_segment_endpoints(segment_endpoints)
+            push(event)
+            push(event.opposite)
 
-    def _divide_segment(self, event: NaryEvent, point: Point) -> None:
-        tail = NaryEvent.divide(event, point)
+    def _divide_segment(self, event: LeftNaryEvent, point: Point) -> None:
+        tail = LeftNaryEvent.divide(event, point)
         self._queue.push(tail)
-        self._queue.push(event.complement)
+        self._queue.push(event.opposite)
 
 
-Event = TypeVar('Event',
-                bound=OrientedEvent)
-
-
-class ShapedBinaryEventsQueue(Generic[Event]):
+class ShapedEventsQueue(Generic[LeftShapedEvent]):
     __slots__ = 'context', 'event_cls', '_queue'
 
-    def __init__(self, event_cls: Type[Event], context: Context) -> None:
+    def __init__(self,
+                 event_cls: Type[LeftShapedEvent],
+                 context: Context) -> None:
         self.event_cls, self.context = event_cls, context
         self._queue = PriorityQueue(key=partial(BinaryEventsQueueKey,
                                                 context.angle_orientation))
@@ -366,10 +374,12 @@ class ShapedBinaryEventsQueue(Generic[Event]):
         return bool(self._queue)
 
     @property
-    def key(self) -> Callable[[Event], BinaryEventsQueueKey]:
+    def key(self) -> Callable[[ShapedEvent], BinaryEventsQueueKey]:
         return self._queue.key
 
-    def detect_intersection(self, below_event: Event, event: Event) -> bool:
+    def detect_intersection(self,
+                            below_event: LeftShapedEvent,
+                            event: LeftShapedEvent) -> bool:
         relation = self.context.segments_relation(below_event, event)
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
@@ -382,7 +392,7 @@ class ShapedBinaryEventsQueue(Generic[Event]):
                     self._divide_segment(event, point)
         elif relation is not Relation.DISJOINT:
             # segments overlap
-            if below_event.from_left is event.from_left:
+            if below_event.from_first is event.from_first:
                 raise ValueError('Edges of the same multipolygon '
                                  'should not overlap.')
             starts_equal = below_event.start == event.start
@@ -395,10 +405,10 @@ class ShapedBinaryEventsQueue(Generic[Event]):
             ends_equal = event.end == below_event.end
             if ends_equal:
                 end_min = end_max = None
-            elif self.key(event.complement) < self.key(below_event.complement):
-                end_min, end_max = event.complement, below_event.complement
+            elif self.key(event.opposite) < self.key(below_event.opposite):
+                end_min, end_max = event.opposite, below_event.opposite
             else:
-                end_min, end_max = below_event.complement, event.complement
+                end_min, end_max = below_event.opposite, event.opposite
             if starts_equal:
                 # both line segments are equal or share the left endpoint
                 below_event.overlap_kind = event.overlap_kind = (
@@ -406,12 +416,12 @@ class ShapedBinaryEventsQueue(Generic[Event]):
                     if event.interior_to_left is below_event.interior_to_left
                     else OverlapKind.DIFFERENT_ORIENTATION)
                 if not ends_equal:
-                    self._divide_segment(end_max.complement, end_min.start)
+                    self._divide_segment(end_max.opposite, end_min.start)
                 return True
             elif ends_equal:
                 # the line segments share the right endpoint
                 self._divide_segment(start_min, start_max.start)
-            elif start_min is end_max.complement:
+            elif start_min is end_max.opposite:
                 # one line segment includes the other one
                 self._divide_segment(start_min, end_min.start)
                 self._divide_segment(start_min, start_max.start)
@@ -421,27 +431,27 @@ class ShapedBinaryEventsQueue(Generic[Event]):
                 self._divide_segment(start_min, start_max.start)
         return False
 
-    def pop(self) -> Event:
+    def pop(self) -> ShapedEvent:
         return self._queue.pop()
 
     def register(self,
                  segments_endpoints: Iterable[SegmentEndpoints],
-                 from_left: bool) -> None:
+                 from_first: bool) -> None:
         event_cls, push = self.event_cls, self._queue.push
         for segment_endpoints in segments_endpoints:
-            event = event_cls.from_endpoints(segment_endpoints, from_left)
+            event = event_cls.from_endpoints(segment_endpoints, from_first)
             push(event)
-            push(event.complement)
+            push(event.opposite)
 
-    def _divide_segment(self, event: Event, point: Point) -> None:
+    def _divide_segment(self, event: LeftShapedEvent, point: Point) -> None:
         tail = event.divide(point)
         self._queue.push(tail)
-        self._queue.push(event.complement)
+        self._queue.push(event.opposite)
 
 
 HolelessEventsQueue = cast(Callable[[Context],
-                                    ShapedBinaryEventsQueue[ShapedEvent]],
-                           partial(ShapedBinaryEventsQueue, ShapedEvent))
+                                    ShapedEventsQueue[LeftHolelessEvent]],
+                           partial(ShapedEventsQueue, LeftHolelessEvent))
 HoleyEventsQueue = cast(Callable[[Context],
-                                 ShapedBinaryEventsQueue[HoleyEvent]],
-                        partial(ShapedBinaryEventsQueue, HoleyEvent))
+                                 ShapedEventsQueue[LeftHoleyEvent]],
+                        partial(ShapedEventsQueue, LeftHoleyEvent))

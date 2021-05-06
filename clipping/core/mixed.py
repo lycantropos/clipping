@@ -17,9 +17,10 @@ from ground.hints import (Multisegment,
 from reprit.base import generate_repr
 
 from . import bounding
-from .event import (MixedEvent as Event,
+from .event import (LeftMixedEvent as LeftEvent,
+                    RightMixedEvent as RightEvent,
                     event_to_segment_endpoints)
-from .events_queue import MixedBinaryEventsQueue as EventsQueue
+from .events_queue import MixedEventsQueue as EventsQueue
 from .hints import LinearMix
 from .sweep_line import BinarySweepLine as SweepLine
 from .utils import (all_equal,
@@ -28,6 +29,8 @@ from .utils import (all_equal,
                     segments_to_endpoints,
                     to_polygons_x_max,
                     to_segments_x_max)
+
+Event = Union[LeftEvent, RightEvent]
 
 
 class Operation(ABC):
@@ -40,8 +43,8 @@ class Operation(ABC):
         """
         Initializes operation.
 
-        :param segments: left operand.
-        :param polygons: right operand.
+        :param segments: first operand.
+        :param polygons: second operand.
         :param context: operation context.
         """
         self.context, self.segments, self.polygons = (context, segments,
@@ -56,12 +59,13 @@ class Operation(ABC):
         Computes result of the operation.
         """
 
-    def compute_fields(self, event: Event,
-                       below_event: Optional[Event]) -> None:
+    def compute_fields(self,
+                       event: LeftEvent,
+                       below_event: Optional[LeftEvent]) -> None:
         if below_event is not None:
             event.other_interior_to_left = (below_event.other_interior_to_left
-                                            if (event.from_left
-                                                is below_event.from_left)
+                                            if (event.from_first
+                                                is below_event.from_first)
                                             else below_event.interior_to_left)
         event.in_result = self.in_result(event)
 
@@ -75,7 +79,7 @@ class Operation(ABC):
                     False)
 
     @abstractmethod
-    def in_result(self, event: Event) -> bool:
+    def in_result(self, event: LeftEvent) -> bool:
         """Detects if event will be presented in result of the operation."""
 
     def normalize_operands(self) -> None:
@@ -83,7 +87,7 @@ class Operation(ABC):
 
     def process_event(self, event: Event, sweep_line: SweepLine) -> None:
         if not event.is_left:
-            event = event.complement
+            event = event.opposite
             if event in sweep_line:
                 above_event, below_event = (sweep_line.above(event),
                                             sweep_line.below(event))
@@ -115,22 +119,22 @@ class Difference(Operation):
     def compute(self) -> Multisegment:
         return self.context.multisegment_cls(self._compute())
 
-    def in_result(self, event: Event) -> bool:
-        return event.from_left and event.outside
+    def in_result(self, event: LeftEvent) -> bool:
+        return event.from_first and event.outside
 
-    def sweep(self) -> Iterable[Event]:
+    def sweep(self) -> Iterable[LeftEvent]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
         sweep_line = SweepLine(self.context)
-        left_x_max = to_segments_x_max(self.segments)
+        first_x_max = to_segments_x_max(self.segments)
         while events_queue:
             event = events_queue.pop()
-            if left_x_max < event.start.x:
+            if first_x_max < event.start.x:
                 break
             self.process_event(event, sweep_line)
             if not event.is_left:
-                result.append(event.complement)
+                result.append(event.opposite)
         return result
 
     def _compute(self) -> Sequence[Segment]:
@@ -159,10 +163,10 @@ class CompleteIntersection(Operation):
         return (self.context.multipoint_cls(points),
                 self.context.multisegment_cls(segments))
 
-    def in_result(self, event: Event) -> bool:
-        return event.from_left and not event.outside
+    def in_result(self, event: LeftEvent) -> bool:
+        return event.from_first and not event.outside
 
-    def sweep(self) -> Iterable[Event]:
+    def sweep(self) -> Iterable[LeftEvent]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
@@ -197,14 +201,15 @@ class CompleteIntersection(Operation):
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
-            if not (any(event.primary.in_result for event in same_start_events)
-                    or all_equal(event.from_left
+            if not (any(event.left.in_result for event in same_start_events)
+                    or all_equal(event.from_first
                                  for event in same_start_events)):
                 points.append(start)
         return (points,
                 endpoints_to_segments([event_to_segment_endpoints(event)
                                        for event in events
-                                       if event.in_result], self.context))
+                                       if event.is_left and event.in_result],
+                                      self.context))
 
 
 class Intersection(Operation):
@@ -213,10 +218,10 @@ class Intersection(Operation):
     def compute(self) -> Multisegment:
         return self.context.multisegment_cls(self._compute())
 
-    def in_result(self, event: Event) -> bool:
-        return event.from_left and not event.outside
+    def in_result(self, event: LeftEvent) -> bool:
+        return event.from_first and not event.outside
 
-    def sweep(self) -> Iterable[Event]:
+    def sweep(self) -> Iterable[LeftEvent]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue

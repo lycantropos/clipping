@@ -10,12 +10,11 @@ from ground.base import (Context,
                          Orientation)
 from reprit.base import generate_repr
 
-from .event import (BinaryEvent,
-                    Event,
-                    NaryEvent)
+from .event import LeftEvent
 from .hints import Orienteer
 
-Event = TypeVar('Event', NaryEvent, Event)
+Event = TypeVar('Event',
+                bound=LeftEvent)
 
 
 class SweepLine(ABC, Generic[Event]):
@@ -105,7 +104,7 @@ class NarySweepLine(SweepLine):
 class BinarySweepLineKey:
     __slots__ = 'event', 'orienteer'
 
-    def __init__(self, orienteer: Orienteer, event: BinaryEvent) -> None:
+    def __init__(self, orienteer: Orienteer, event: Event) -> None:
         self.orienteer, self.event = orienteer, event
 
     __repr__ = generate_repr(__init__)
@@ -127,8 +126,8 @@ class BinarySweepLineKey:
                 # other segment fully lies on one side
                 return other_start_orientation is Orientation.COUNTERCLOCKWISE
             # segments are collinear
-            elif event.from_left is not other_event.from_left:
-                return event.from_left
+            elif event.from_first is not other_event.from_first:
+                return event.from_first
             elif start.x == other_start.x:
                 if start.y != other_start.y:
                     # segments are vertical
@@ -161,7 +160,7 @@ class BinarySweepLineKey:
 class NarySweepLineKey:
     __slots__ = 'event', 'orienteer'
 
-    def __init__(self, orienteer: Orienteer, event: NaryEvent) -> None:
+    def __init__(self, orienteer: Orienteer, event: Event) -> None:
         self.orienteer, self.event = orienteer, event
 
     __repr__ = generate_repr(__init__)

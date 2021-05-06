@@ -15,7 +15,8 @@ from ground.hints import (Point,
 from reprit.base import generate_repr
 
 from . import bounding
-from .event import (ShapedEvent as Event,
+from .event import (LeftHolelessEvent as LeftEvent,
+                    RightShapedEvent as RightEvent,
                     event_to_segment_endpoints,
                     events_to_connectivity)
 from .events_queue import HolelessEventsQueue as EventsQueue
@@ -29,22 +30,24 @@ from .utils import (all_equal,
                     pairwise,
                     to_multiregion_x_max)
 
+Event = Union_[LeftEvent, RightEvent]
+
 
 class Operation(ABC):
-    __slots__ = 'context', 'left', 'right', '_events_queue'
+    __slots__ = 'context', 'first', 'second', '_events_queue'
 
     def __init__(self,
-                 left: Multiregion,
-                 right: Multiregion,
+                 first: Multiregion,
+                 second: Multiregion,
                  context: Context) -> None:
         """
         Initializes operation.
 
-        :param left: left operand.
-        :param right: right operand.
+        :param first: first operand.
+        :param second: second operand.
         :param context: operation context.
         """
-        self.context, self.left, self.right = context, left, right
+        self.context, self.first, self.second = context, first, second
         self._events_queue = EventsQueue(context)
 
     __repr__ = generate_repr(__init__)
@@ -55,17 +58,17 @@ class Operation(ABC):
         Computes result of the operation.
         """
 
-    def compute_fields(self, event: Event, below_event: Optional[Event]
+    def compute_fields(self, event: LeftEvent, below_event: Optional[LeftEvent]
                        ) -> None:
         if below_event is not None:
             event.other_interior_to_left = (below_event.other_interior_to_left
-                                            if (event.from_left
-                                                is below_event.from_left)
+                                            if (event.from_first
+                                                is below_event.from_first)
                                             else below_event.interior_to_left)
         event.in_result = self.in_result(event)
 
     def events_to_multiregion(self, events: Iterable[Event]) -> Multiregion:
-        events = sorted([event for event in events if event.primary.in_result],
+        events = sorted([event for event in events if event.left.in_result],
                         key=self._events_queue.key)
         for index, event in enumerate(events):
             event.position = index
@@ -80,7 +83,7 @@ class Operation(ABC):
             vertices = [contour_start]
             contour_events = [event]
             cursor = event
-            complement_position = event.complement.position
+            complement_position = event.opposite.position
             processed[index] = processed[complement_position] = True
             while cursor.end != contour_start:
                 vertices.append(cursor.end)
@@ -90,24 +93,24 @@ class Operation(ABC):
                     break
                 cursor = events[position]
                 contour_events.append(cursor)
-                complement_position = cursor.complement.position
+                complement_position = cursor.opposite.position
                 processed[position] = processed[complement_position] = True
             result.append(contour_cls(vertices))
         return result
 
     def fill_queue(self) -> None:
         events_queue = self._events_queue
-        for region in self.left:
+        for region in self.first:
             events_queue.register(
                     contour_to_oriented_edges_endpoints(region, self.context),
                     True)
-        for region in self.right:
+        for region in self.second:
             events_queue.register(
                     contour_to_oriented_edges_endpoints(region, self.context),
                     False)
 
     @abstractmethod
-    def in_result(self, event: Event) -> bool:
+    def in_result(self, event: LeftEvent) -> bool:
         """Detects if event will be presented in result of the operation."""
 
     def normalize_operands(self) -> None:
@@ -119,7 +122,7 @@ class Operation(ABC):
                       sweep_line: SweepLine) -> None:
         if not event.is_left:
             processed_events.append(event)
-            event = event.complement
+            event = event.opposite
             if event in sweep_line:
                 above_event, below_event = (sweep_line.above(event),
                                             sweep_line.below(event))
@@ -154,16 +157,16 @@ class CompleteIntersection(Operation):
         return (self.context.multipoint_cls(points),
                 self.context.multisegment_cls(segments), multiregion)
 
-    def in_result(self, event: Event) -> bool:
+    def in_result(self, event: LeftEvent) -> bool:
         return (event.inside
-                or not event.from_left and event.is_common_region_boundary)
+                or not event.from_first and event.is_common_region_boundary)
 
     def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
         sweep_line = SweepLine(self.context)
-        min_max_x = min(to_multiregion_x_max(self.left),
-                        to_multiregion_x_max(self.right))
+        min_max_x = min(to_multiregion_x_max(self.first),
+                        to_multiregion_x_max(self.second))
         while self._events_queue:
             event = self._events_queue.pop()
             if min_max_x < event.start.x:
@@ -173,17 +176,17 @@ class CompleteIntersection(Operation):
 
     def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment],
                                 Multiregion]:
-        if not (self.left and self.right):
+        if not (self.first and self.second):
             return [], [], []
-        left_box, right_box = (self.context.contours_box(self.left),
-                               self.context.contours_box(self.right))
-        if bounding.disjoint_with(left_box, right_box):
+        first_box, second_box = (self.context.contours_box(self.first),
+                                 self.context.contours_box(self.second))
+        if bounding.disjoint_with(first_box, second_box):
             return [], [], []
-        self.left = bounding.to_intersecting_regions(right_box, self.left,
-                                                     self.context)
-        self.right = bounding.to_intersecting_regions(left_box, self.right,
+        self.first = bounding.to_intersecting_regions(second_box, self.first,
                                                       self.context)
-        if not (self.left and self.right):
+        self.second = bounding.to_intersecting_regions(first_box, self.second,
+                                                       self.context)
+        if not (self.first and self.second):
             return [], [], []
         self.normalize_operands()
         events = sorted(self.sweep(),
@@ -195,18 +198,18 @@ class CompleteIntersection(Operation):
             same_start_events = list(same_start_events)
             if not (any(event.is_left and event.in_result
                         for event in same_start_events)
-                    or all_equal(event.from_left
+                    or all_equal(event.from_first
                                  for event in same_start_events)):
                 no_segment_found = True
                 for event, next_event in pairwise(same_start_events):
-                    if (event.from_left is not next_event.from_left
+                    if (event.from_first is not next_event.from_first
                             and event.start == next_event.start
                             and event.end == next_event.end):
                         no_segment_found = False
                         if event.is_left:
                             endpoints.append(
                                     event_to_segment_endpoints(next_event))
-                if no_segment_found and all(not event.primary.in_result
+                if no_segment_found and all(not event.left.in_result
                                             for event in same_start_events):
                     points.append(start)
         return (points, endpoints_to_segments(endpoints, self.context),
@@ -217,17 +220,17 @@ class Intersection(Operation):
     __slots__ = ()
 
     def compute(self) -> Multiregion:
-        if not (self.left and self.right):
+        if not (self.first and self.second):
             return []
-        left_box, right_box = (self.context.contours_box(self.left),
-                               self.context.contours_box(self.right))
-        if bounding.disjoint_with(left_box, right_box):
+        first_box, second_box = (self.context.contours_box(self.first),
+                                 self.context.contours_box(self.second))
+        if bounding.disjoint_with(first_box, second_box):
             return []
-        self.left = bounding.to_coupled_regions(right_box, self.left,
-                                                self.context)
-        self.right = bounding.to_coupled_regions(left_box, self.right,
+        self.first = bounding.to_coupled_regions(second_box, self.first,
                                                  self.context)
-        if not (self.left and self.right):
+        self.second = bounding.to_coupled_regions(first_box, self.second,
+                                                  self.context)
+        if not (self.first and self.second):
             return []
         self.normalize_operands()
         return self.events_to_multiregion(self.sweep())
@@ -235,19 +238,19 @@ class Intersection(Operation):
     def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
-        sweep_line = SweepLine(self.context)
-        min_max_x = min(to_multiregion_x_max(self.left),
-                        to_multiregion_x_max(self.right))
-        while self._events_queue:
-            event = self._events_queue.pop()
+        events_queue, sweep_line = self._events_queue, SweepLine(self.context)
+        min_max_x = min(to_multiregion_x_max(self.first),
+                        to_multiregion_x_max(self.second))
+        while events_queue:
+            event = events_queue.pop()
             if min_max_x < event.start.x:
                 break
             self.process_event(event, result, sweep_line)
         return result
 
-    def in_result(self, event: Event) -> bool:
+    def in_result(self, event: LeftEvent) -> bool:
         return (event.inside
-                or not event.from_left and event.is_common_region_boundary)
+                or not event.from_first and event.is_common_region_boundary)
 
 
 def _to_next_position(position: int,
