@@ -12,7 +12,6 @@ from clipping.planar import (complete_intersect_multisegment_with_multipolygon,
 from tests.utils import (MultipolygonWithMultisegment,
                          contour_to_edges,
                          is_linear_mix,
-                         is_linear_mix_empty,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
                          reverse_multipolygon_holes,
@@ -81,28 +80,6 @@ def test_properties(multipolygon_with_multisegment
                if (segment_in_multipolygon(segment, multipolygon)
                    in (Relation.CROSS, Relation.COMPONENT, Relation.ENCLOSED,
                        Relation.WITHIN)))
-
-
-@given(strategies.empty_multipolygons_with_multisegments)
-def test_left_absorbing_element(empty_multipolygon_with_multisegment
-                                : MultipolygonWithMultisegment) -> None:
-    empty_multipolygon, multisegment = empty_multipolygon_with_multisegment
-
-    result = complete_intersect_multisegment_with_multipolygon(
-            multisegment, empty_multipolygon)
-
-    assert is_linear_mix_empty(result)
-
-
-@given(strategies.multipolygons_with_empty_multisegments)
-def test_right_absorbing_element(multipolygon_with_empty_multisegment
-                                 : MultipolygonWithMultisegment) -> None:
-    multipolygon, empty_multisegment = multipolygon_with_empty_multisegment
-
-    result = complete_intersect_multisegment_with_multipolygon(
-            empty_multisegment, multipolygon)
-
-    assert is_linear_mix_empty(result)
 
 
 @given(strategies.multipolygons_with_multisegments)

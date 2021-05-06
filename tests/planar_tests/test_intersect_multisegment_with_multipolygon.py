@@ -56,28 +56,6 @@ def test_properties(multipolygon_with_multisegment
                        Relation.WITHIN)))
 
 
-@given(strategies.empty_multipolygons_with_multisegments)
-def test_left_absorbing_element(empty_multipolygon_with_multisegment
-                                : MultipolygonWithMultisegment) -> None:
-    empty_multipolygon, multisegment = empty_multipolygon_with_multisegment
-
-    result = intersect_multisegment_with_multipolygon(multisegment,
-                                                      empty_multipolygon)
-
-    assert not result.segments
-
-
-@given(strategies.multipolygons_with_empty_multisegments)
-def test_right_absorbing_element(multipolygon_with_empty_multisegment
-                                 : MultipolygonWithMultisegment) -> None:
-    multipolygon, empty_multisegment = multipolygon_with_empty_multisegment
-
-    result = intersect_multisegment_with_multipolygon(empty_multisegment,
-                                                      multipolygon)
-
-    assert not result.segments
-
-
 @given(strategies.multipolygons_with_multisegments)
 def test_reversals(multipolygon_with_multisegment: MultipolygonWithMultisegment
                    ) -> None:

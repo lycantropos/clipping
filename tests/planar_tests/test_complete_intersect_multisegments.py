@@ -12,7 +12,6 @@ from clipping.planar import (complete_intersect_multisegments,
 from tests.utils import (MultisegmentsPair,
                          are_linear_mixes_similar,
                          is_linear_mix,
-                         is_linear_mix_empty,
                          linear_mix_equivalent_to_multisegment,
                          reverse_linear_mix_coordinates,
                          reverse_multisegment,
@@ -79,26 +78,6 @@ def test_idempotence(multisegment: Multisegment) -> None:
     result = complete_intersect_multisegments(multisegment, multisegment)
 
     assert linear_mix_equivalent_to_multisegment(result, multisegment)
-
-
-@given(strategies.empty_multisegments_with_multisegments)
-def test_left_absorbing_element(empty_multisegment_with_multisegment
-                                : MultisegmentsPair) -> None:
-    empty_multisegment, multisegment = empty_multisegment_with_multisegment
-
-    result = complete_intersect_multisegments(empty_multisegment, multisegment)
-
-    assert is_linear_mix_empty(result)
-
-
-@given(strategies.empty_multisegments_with_multisegments)
-def test_right_absorbing_element(empty_multisegment_with_multisegment
-                                 : MultisegmentsPair) -> None:
-    empty_multisegment, multisegment = empty_multisegment_with_multisegment
-
-    result = complete_intersect_multisegments(multisegment, empty_multisegment)
-
-    assert is_linear_mix_empty(result)
 
 
 @given(strategies.multisegments_pairs)
