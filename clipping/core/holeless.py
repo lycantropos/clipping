@@ -176,6 +176,8 @@ class CompleteIntersection(Operation):
 
     def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment],
                                 Multiregion]:
+        if not (self.first and self.second):
+            return [], [], []
         first_box, second_box = (self.context.contours_box(self.first),
                                  self.context.contours_box(self.second))
         if bounding.disjoint_with(first_box, second_box):
@@ -218,6 +220,8 @@ class Intersection(Operation):
     __slots__ = ()
 
     def compute(self) -> Multiregion:
+        if not (self.first and self.second):
+            return []
         first_box, second_box = (self.context.contours_box(self.first),
                                  self.context.contours_box(self.second))
         if bounding.disjoint_with(first_box, second_box):

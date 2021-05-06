@@ -138,6 +138,8 @@ class Difference(Operation):
         return result
 
     def _compute(self) -> Sequence[Segment]:
+        if not (self.segments and self.polygons):
+            return self.segments
         segments_box = self.context.segments_box(self.segments)
         if bounding.disjoint_with(segments_box,
                                   self.context.polygons_box(self.polygons)):
@@ -180,6 +182,8 @@ class CompleteIntersection(Operation):
         return result
 
     def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment]]:
+        if not (self.segments and self.polygons):
+            return [], []
         multisegment_box = self.context.segments_box(self.segments)
         multipolygon_box = self.context.polygons_box(self.polygons)
         if bounding.disjoint_with(multisegment_box, multipolygon_box):
@@ -234,6 +238,8 @@ class Intersection(Operation):
         return result
 
     def _compute(self) -> Sequence[Segment]:
+        if not (self.segments and self.polygons):
+            return []
         multisegment_box = self.context.segments_box(self.segments)
         multipolygon_box = self.context.polygons_box(self.polygons)
         if bounding.disjoint_with(multisegment_box,
