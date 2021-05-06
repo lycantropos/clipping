@@ -2,7 +2,8 @@ from abc import (ABC,
                  abstractmethod)
 from functools import partial
 from typing import (Generic,
-                    Optional)
+                    Optional,
+                    TypeVar)
 
 from dendroid import red_black
 from ground.base import (Context,
@@ -13,6 +14,8 @@ from .event import (BinaryEvent,
                     Event,
                     NaryEvent)
 from .hints import Orienteer
+
+Event = TypeVar('Event', NaryEvent, Event)
 
 
 class SweepLine(ABC, Generic[Event]):

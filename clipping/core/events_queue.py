@@ -3,6 +3,7 @@ from typing import (Callable,
                     Generic,
                     Iterable,
                     Type,
+                    TypeVar,
                     cast)
 
 from ground.base import (Context,
@@ -14,10 +15,10 @@ from reprit.base import generate_repr
 
 from .enums import OverlapKind
 from .event import (BinaryEvent,
-                    Event,
                     HoleyEvent,
                     MixedEvent,
                     NaryEvent,
+                    OrientedEvent,
                     ShapedEvent)
 from .hints import (Orienteer,
                     SegmentEndpoints)
@@ -42,11 +43,11 @@ class BinaryEventsQueueKey:
             # different points, but same x-coordinate,
             # the event with lower y-coordinate is processed first
             return start.y < other_start.y
-        elif event.is_right_endpoint is not other_event.is_right_endpoint:
+        elif event.is_left is not other_event.is_left:
             # same start, but one is a left endpoint
             # and the other a right endpoint,
             # the right endpoint is processed first
-            return event.is_right_endpoint
+            return not event.is_left
         # same start, both events are left endpoints
         # or both are right endpoints
         else:
@@ -57,9 +58,9 @@ class BinaryEventsQueueKey:
                     if other_end_orientation is Orientation.COLLINEAR
                     else (other_end_orientation
                           # the lowest segment is processed first
-                          is (Orientation.CLOCKWISE
-                              if event.is_right_endpoint
-                              else Orientation.COUNTERCLOCKWISE)))
+                          is (Orientation.COUNTERCLOCKWISE
+                              if event.is_left
+                              else Orientation.CLOCKWISE)))
 
 
 class NaryEventsQueueKey:
@@ -81,19 +82,19 @@ class NaryEventsQueueKey:
             # different points, but same x-coordinate,
             # the event with lower y-coordinate is processed first
             return start.y < other_start.y
-        elif event.is_right_endpoint is not other_event.is_right_endpoint:
+        elif event.is_left is not other_event.is_left:
             # same start, but one is a left endpoint
             # and the other a right endpoint,
             # the right endpoint is processed first
-            return event.is_right_endpoint
+            return not event.is_left
         # same start, both events are left endpoints
         # or both are right endpoints
         else:
             # the lowest segment is processed first
             return (self.orienteer(event.start, event.end, other_event.end)
-                    is (Orientation.CLOCKWISE
-                        if event.is_right_endpoint
-                        else Orientation.COUNTERCLOCKWISE))
+                    is (Orientation.COUNTERCLOCKWISE
+                        if event.is_left
+                        else Orientation.CLOCKWISE))
 
 
 class LinearBinaryEventsQueue:
@@ -165,25 +166,19 @@ class LinearBinaryEventsQueue:
         return self._queue.pop()
 
     def register(self,
-                 endpoints: Iterable[SegmentEndpoints],
+                 segments_endpoints: Iterable[SegmentEndpoints],
                  from_left: bool) -> None:
         events_queue = self._queue
-        for start, end in endpoints:
-            if start > end:
-                start, end = end, start
-            start_event = BinaryEvent(False, start, None, from_left)
-            end_event = BinaryEvent(True, end, start_event, from_left)
-            start_event.complement = end_event
-            events_queue.push(start_event)
-            events_queue.push(end_event)
+        for segment_endpoints in segments_endpoints:
+            event = BinaryEvent.from_segment_endpoints(segment_endpoints,
+                                                       from_left)
+            events_queue.push(event)
+            events_queue.push(event.complement)
 
     def _divide_segment(self, event: BinaryEvent, point: Point) -> None:
-        left_event = BinaryEvent(False, point, event.complement,
-                                 event.from_left)
-        right_event = BinaryEvent(True, point, event, event.from_left)
-        event.complement.complement, event.complement = left_event, right_event
-        self._queue.push(left_event)
-        self._queue.push(right_event)
+        tail = BinaryEvent.divide(event, point)
+        self._queue.push(tail)
+        self._queue.push(event.complement)
 
 
 class MixedBinaryEventsQueue:
@@ -261,30 +256,18 @@ class MixedBinaryEventsQueue:
         return self._queue.pop()
 
     def register(self,
-                 segments: Iterable[SegmentEndpoints],
+                 segments_endpoints: Iterable[SegmentEndpoints],
                  from_left: bool) -> None:
         queue = self._queue
-        for start, end in segments:
-            interior_to_left = True
-            if start > end:
-                start, end = end, start
-                interior_to_left = False
-            start_event = MixedEvent(False, start, None, from_left,
-                                     interior_to_left)
-            end_event = MixedEvent(True, end, start_event, from_left,
-                                   interior_to_left)
-            start_event.complement = end_event
-            queue.push(start_event)
-            queue.push(end_event)
+        for segment_endpoints in segments_endpoints:
+            event = MixedEvent.from_endpoints(segment_endpoints, from_left)
+            queue.push(event)
+            queue.push(event.complement)
 
     def _divide_segment(self, event: MixedEvent, point: Point) -> None:
-        left_event = MixedEvent(False, point, event.complement,
-                                event.from_left, event.interior_to_left)
-        right_event = MixedEvent(True, point, event, event.from_left,
-                                 event.interior_to_left)
-        event.complement.complement, event.complement = left_event, right_event
-        self._queue.push(left_event)
-        self._queue.push(right_event)
+        tail = event.divide(point)
+        self._queue.push(tail)
+        self._queue.push(event.complement)
 
 
 class NaryEventsQueue:
@@ -352,23 +335,21 @@ class NaryEventsQueue:
     def pop(self) -> NaryEvent:
         return self._queue.pop()
 
-    def register(self, endpoints: Iterable[SegmentEndpoints]) -> None:
+    def register(self, segments_endpoints: Iterable[SegmentEndpoints]) -> None:
         queue = self._queue
-        for start, end in endpoints:
-            if start > end:
-                start, end = end, start
-            start_event = NaryEvent(False, start, None)
-            end_event = NaryEvent(True, end, start_event)
-            start_event.complement = end_event
-            queue.push(start_event)
-            queue.push(end_event)
+        for segment_endpoints in segments_endpoints:
+            event = NaryEvent.from_segment_endpoints(segment_endpoints)
+            queue.push(event)
+            queue.push(event.complement)
 
     def _divide_segment(self, event: NaryEvent, point: Point) -> None:
-        left_event = NaryEvent(False, point, event.complement)
-        right_event = NaryEvent(True, point, event)
-        event.complement.complement, event.complement = left_event, right_event
-        self._queue.push(left_event)
-        self._queue.push(right_event)
+        tail = NaryEvent.divide(event, point)
+        self._queue.push(tail)
+        self._queue.push(event.complement)
+
+
+Event = TypeVar('Event',
+                bound=OrientedEvent)
 
 
 class ShapedBinaryEventsQueue(Generic[Event]):
@@ -444,31 +425,18 @@ class ShapedBinaryEventsQueue(Generic[Event]):
         return self._queue.pop()
 
     def register(self,
-                 endpoints: Iterable[SegmentEndpoints],
+                 segments_endpoints: Iterable[SegmentEndpoints],
                  from_left: bool) -> None:
-        event_cls = self.event_cls
-        queue = self._queue
-        for start, end in endpoints:
-            inside_on_left = True
-            if start > end:
-                start, end = end, start
-                inside_on_left = False
-            start_event = event_cls(False, start, None, from_left,
-                                    inside_on_left)
-            end_event = event_cls(True, end, start_event, from_left,
-                                  inside_on_left)
-            start_event.complement = end_event
-            queue.push(start_event)
-            queue.push(end_event)
+        event_cls, push = self.event_cls, self._queue.push
+        for segment_endpoints in segments_endpoints:
+            event = event_cls.from_endpoints(segment_endpoints, from_left)
+            push(event)
+            push(event.complement)
 
     def _divide_segment(self, event: Event, point: Point) -> None:
-        left_event = self.event_cls(False, point, event.complement,
-                                    event.from_left, event.interior_to_left)
-        right_event = self.event_cls(True, point, event, event.from_left,
-                                     event.interior_to_left)
-        event.complement.complement, event.complement = left_event, right_event
-        self._queue.push(left_event)
-        self._queue.push(right_event)
+        tail = event.divide(point)
+        self._queue.push(tail)
+        self._queue.push(event.complement)
 
 
 HolelessEventsQueue = cast(Callable[[Context],

@@ -82,7 +82,7 @@ class Operation(ABC):
         pass
 
     def process_event(self, event: Event, sweep_line: SweepLine) -> None:
-        if event.is_right_endpoint:
+        if not event.is_left:
             event = event.complement
             if event in sweep_line:
                 above_event, below_event = (sweep_line.above(event),
@@ -129,7 +129,7 @@ class Difference(Operation):
             if left_x_max < event.start.x:
                 break
             self.process_event(event, sweep_line)
-            if event.is_right_endpoint:
+            if not event.is_left:
                 result.append(event.complement)
         return result
 
@@ -197,11 +197,9 @@ class CompleteIntersection(Operation):
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
-            if (all(not (event.in_result or event.is_right_endpoint
-                         and event.complement.in_result)
-                    for event in same_start_events)
-                    and not all_equal(event.from_left
-                                      for event in same_start_events)):
+            if not (any(event.primary.in_result for event in same_start_events)
+                    or all_equal(event.from_left
+                                 for event in same_start_events)):
                 points.append(start)
         return (points,
                 endpoints_to_segments([event_to_segment_endpoints(event)
@@ -230,7 +228,7 @@ class Intersection(Operation):
             if min_max_x < event.start.x:
                 break
             self.process_event(event, sweep_line)
-            if not event.is_right_endpoint:
+            if event.is_left:
                 result.append(event)
         return result
 

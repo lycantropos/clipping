@@ -44,7 +44,16 @@ def _merge_segments(segments: Sequence[Segment],
     segments_endpoints = []  # type: List[SegmentEndpoints]
     while events_queue:
         event = events_queue.pop()
-        if event.is_right_endpoint:
+        if event.is_left:
+            if event not in sweep_line:
+                sweep_line.add(event)
+                above_event, below_event = (sweep_line.above(event),
+                                            sweep_line.below(event))
+                if above_event is not None:
+                    events_queue.detect_intersection(event, above_event)
+                if below_event is not None:
+                    events_queue.detect_intersection(below_event, event)
+        else:
             event = event.complement
             if event in sweep_line:
                 above_event, below_event = (sweep_line.above(event),
@@ -53,14 +62,6 @@ def _merge_segments(segments: Sequence[Segment],
                 if above_event is not None and below_event is not None:
                     events_queue.detect_intersection(below_event, above_event)
                 segments_endpoints.append(event_to_segment_endpoints(event))
-        elif event not in sweep_line:
-            sweep_line.add(event)
-            above_event, below_event = (sweep_line.above(event),
-                                        sweep_line.below(event))
-            if above_event is not None:
-                events_queue.detect_intersection(event, above_event)
-            if below_event is not None:
-                events_queue.detect_intersection(below_event, event)
     return endpoints_to_segments(
             sorted(endpoints for endpoints, _ in groupby(segments_endpoints)),
             context)
@@ -99,9 +100,10 @@ class Operation(ABC):
     def normalize_operands(self) -> None:
         pass
 
-    def process_event(self, event: BinaryEvent,
+    def process_event(self,
+                      event: BinaryEvent,
                       sweep_line: BinarySweepLine) -> None:
-        if event.is_right_endpoint:
+        if not event.is_left:
             event = event.complement
             if event in sweep_line:
                 above_event, below_event = (sweep_line.above(event),
@@ -127,7 +129,7 @@ class Operation(ABC):
         while events_queue:
             event = events_queue.pop()
             self.process_event(event, sweep_line)
-            if event.is_right_endpoint:
+            if not event.is_left:
                 result.append(event.complement)
         return result
 
@@ -149,7 +151,7 @@ class Difference(Operation):
             if left_x_max < event.start.x:
                 break
             self.process_event(event, sweep_line)
-            if event.is_right_endpoint:
+            if not event.is_left:
                 result.append(event.complement)
         return result
 
@@ -192,7 +194,7 @@ class Intersection(Operation):
             if min_max_x < event.start.x:
                 break
             self.process_event(event, sweep_line)
-            if event.is_right_endpoint:
+            if not event.is_left:
                 result.append(event.complement)
         return result
 
@@ -271,7 +273,7 @@ class CompleteIntersection(Operation):
                             and event.start == next_event.start
                             and event.end == next_event.end):
                         no_segment_found = False
-                        if not event.is_right_endpoint:
+                        if event.is_left:
                             endpoints.append(event_to_segment_endpoints(event))
                 if no_segment_found:
                     points.append(start)

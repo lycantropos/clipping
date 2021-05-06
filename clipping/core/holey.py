@@ -132,7 +132,7 @@ class Operation(ABC):
                       event: Event,
                       processed_events: List[Event],
                       sweep_line: SweepLine) -> None:
-        if event.is_right_endpoint:
+        if not event.is_left:
             processed_events.append(event)
             event = event.complement
             if event in sweep_line:
@@ -259,17 +259,17 @@ class CompleteIntersection(Operation):
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
-            if (all(event.is_right_endpoint or not event.in_result
-                    for event in same_start_events)
-                    and not all_equal(event.from_left
-                                      for event in same_start_events)):
+            if not (any(event.is_left and event.in_result
+                        for event in same_start_events)
+                    or all_equal(event.from_left
+                                 for event in same_start_events)):
                 no_segment_found = True
                 for event, next_event in pairwise(same_start_events):
                     if (event.from_left is not next_event.from_left
                             and event.start == next_event.start
                             and event.end == next_event.end):
                         no_segment_found = False
-                        if not event.is_right_endpoint:
+                        if event.is_left:
                             endpoints.append(
                                     event_to_segment_endpoints(next_event))
                 if no_segment_found and all(not event.primary.in_result
@@ -426,12 +426,12 @@ def _events_to_contour_vertices(cursor: Event,
         complement_position = cursor.complement.position
     for event in contour_events:
         processed[event.position] = processed[event.complement.position] = True
-        if event.is_right_endpoint:
-            event.complement.result_in_out = True
-            event.complement.contour_id = contour_id
-        else:
+        if event.is_left:
             event.result_in_out = False
             event.contour_id = contour_id
+        else:
+            event.complement.result_in_out = True
+            event.complement.contour_id = contour_id
     return contour
 
 
