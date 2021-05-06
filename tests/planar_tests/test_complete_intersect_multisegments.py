@@ -82,26 +82,6 @@ def test_idempotence(multisegment: Multisegment) -> None:
     assert linear_mix_equivalent_to_multisegment(result, multisegment)
 
 
-@given(strategies.empty_multisegments_with_multisegments)
-def test_left_absorbing_element(empty_multisegment_with_multisegment
-                                : MultisegmentsPair) -> None:
-    empty_multisegment, multisegment = empty_multisegment_with_multisegment
-
-    result = complete_intersect_multisegments(empty_multisegment, multisegment)
-
-    assert is_linear_mix_empty(result)
-
-
-@given(strategies.empty_multisegments_with_multisegments)
-def test_right_absorbing_element(empty_multisegment_with_multisegment
-                                 : MultisegmentsPair) -> None:
-    empty_multisegment, multisegment = empty_multisegment_with_multisegment
-
-    result = complete_intersect_multisegments(multisegment, empty_multisegment)
-
-    assert is_linear_mix_empty(result)
-
-
 @given(strategies.multisegments_pairs)
 def test_absorption_identity(multisegments_pair: MultisegmentsPair) -> None:
     left_multisegment, right_multisegment = multisegments_pair

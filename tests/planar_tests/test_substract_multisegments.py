@@ -23,26 +23,6 @@ def test_basic(multisegments_pair: MultisegmentsPair) -> None:
     assert is_multisegment(result)
 
 
-@given(strategies.empty_multisegments_with_multisegments)
-def test_left_absorbing_element(empty_multisegment_with_multisegment
-                                : MultisegmentsPair) -> None:
-    empty_multisegment, multisegment = empty_multisegment_with_multisegment
-
-    result = subtract_multisegments(empty_multisegment, multisegment)
-
-    assert not result.segments
-
-
-@given(strategies.empty_multisegments_with_multisegments)
-def test_right_neutral_element(empty_multisegment_with_multisegment
-                               : MultisegmentsPair) -> None:
-    empty_multisegment, multisegment = empty_multisegment_with_multisegment
-
-    result = subtract_multisegments(multisegment, empty_multisegment)
-
-    assert are_multisegments_similar(result, multisegment)
-
-
 @given(strategies.multisegments_pairs)
 def test_commutative_case(multisegments_pair: MultisegmentsPair) -> None:
     left_multisegment, right_multisegment = multisegments_pair
