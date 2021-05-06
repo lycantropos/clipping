@@ -159,8 +159,6 @@ class Difference(Operation):
         return result
 
     def _compute(self) -> Sequence[Segment]:
-        if not (self.first and self.second):
-            return self.first
         first_box, second_box = (self.context.segments_box(self.first),
                                  self.context.segments_box(self.second))
         if bounding.disjoint_with(first_box, second_box):
@@ -202,8 +200,6 @@ class Intersection(Operation):
         return result
 
     def _compute(self) -> Sequence[Segment]:
-        if not (self.first and self.second):
-            return []
         first_box, second_box = (self.context.segments_box(self.first),
                                  self.context.segments_box(self.second))
         if bounding.disjoint_with(first_box, second_box):
@@ -248,8 +244,6 @@ class CompleteIntersection(Operation):
         return result
 
     def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment]]:
-        if not (self.first and self.second):
-            return [], []
         first_box, second_box = (self.context.segments_box(self.first),
                                  self.context.segments_box(self.second))
         if bounding.disjoint_with(first_box, second_box):
@@ -290,10 +284,8 @@ class SymmetricDifference(Operation):
         return self.context.multisegment_cls(self._compute())
 
     def _compute(self) -> Sequence[Segment]:
-        if not (self.first and self.second):
-            return self.first or self.second
-        elif bounding.disjoint_with(self.context.segments_box(self.first),
-                                    self.context.segments_box(self.second)):
+        if bounding.disjoint_with(self.context.segments_box(self.first),
+                                  self.context.segments_box(self.second)):
             result = []
             result += self.first
             result += self.second
@@ -316,10 +308,8 @@ class Union(Operation):
         return self.context.multisegment_cls(self._compute())
 
     def _compute(self) -> Sequence[Segment]:
-        if not (self.first and self.second):
-            return self.first or self.second
-        elif bounding.disjoint_with(self.context.segments_box(self.first),
-                                    self.context.segments_box(self.second)):
+        if bounding.disjoint_with(self.context.segments_box(self.first),
+                                  self.context.segments_box(self.second)):
             result = []
             result += self.first
             result += self.second

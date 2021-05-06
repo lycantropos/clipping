@@ -198,8 +198,6 @@ class Difference(Operation):
         return result
 
     def _compute(self) -> Sequence[Polygon]:
-        if not (self.first and self.second):
-            return self.first
         first_box = self.context.polygons_box(self.first)
         if bounding.disjoint_with(first_box,
                                   self.context.polygons_box(self.second)):
@@ -242,8 +240,6 @@ class CompleteIntersection(Operation):
 
     def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment],
                                 Sequence[Polygon]]:
-        if not (self.first and self.second):
-            return [], [], []
         first_box, second_box = (self.context.polygons_box(self.first),
                                  self.context.polygons_box(self.second))
         if bounding.disjoint_with(first_box, second_box):
@@ -307,8 +303,6 @@ class Intersection(Operation):
         return result
 
     def _compute(self) -> Sequence[Polygon]:
-        if not (self.first and self.second):
-            return []
         first_box, second_box = (self.context.polygons_box(self.first),
                                  self.context.polygons_box(self.second))
         if bounding.disjoint_with(first_box, second_box):
@@ -333,10 +327,8 @@ class SymmetricDifference(Operation):
         return not event.is_overlap
 
     def _compute(self) -> Sequence[Polygon]:
-        if not (self.first and self.second):
-            return self.first or self.second
-        elif bounding.disjoint_with(self.context.polygons_box(self.first),
-                                    self.context.polygons_box(self.second)):
+        if bounding.disjoint_with(self.context.polygons_box(self.first),
+                                  self.context.polygons_box(self.second)):
             result = []
             result += self.first
             result += self.second
@@ -353,10 +345,8 @@ class Union(Operation):
         return self.context.multipolygon_cls(self._compute())
 
     def _compute(self) -> Sequence[Polygon]:
-        if not (self.first and self.second):
-            return self.first or self.second
-        elif bounding.disjoint_with(self.context.polygons_box(self.first),
-                                    self.context.polygons_box(self.second)):
+        if bounding.disjoint_with(self.context.polygons_box(self.first),
+                                  self.context.polygons_box(self.second)):
             result = []
             result += self.first
             result += self.second
