@@ -361,13 +361,11 @@ def segments_intersections(first: Segment, second: Segment
                            ) -> Tuple[Point, ...]:
     first_start, first_end = first.start, first.end
     second_start, second_end = second.start, second.end
-    relation = segments_relation(first_start, first_end, second_start,
-                                 second_end)
+    relation = segments_relation(first, second)
     if relation is Relation.DISJOINT:
         return ()
     elif relation is Relation.CROSS or relation is Relation.TOUCH:
-        return segments_intersection(first_start, first_end, second_start,
-                                     second_end),
+        return segments_intersection(first, second),
     else:
         _, first_point, second_point, _ = sorted([first_start, first_end,
                                                   second_start, second_end])

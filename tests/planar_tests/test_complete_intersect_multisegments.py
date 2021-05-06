@@ -68,8 +68,7 @@ def test_properties(multisegments_pair: MultisegmentsPair) -> None:
                       is Relation.COMPONENT
                       for segment in result_multisegment.segments)
                for left_segment in left_multisegment.segments
-               if any(segments_relation(left_segment.start, left_segment.end,
-                                        right_segment.start, right_segment.end)
+               if any(segments_relation(left_segment, right_segment)
                       not in (Relation.CROSS, Relation.DISJOINT,
                               Relation.TOUCH)
                       for right_segment in right_multisegment.segments))
