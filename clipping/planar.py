@@ -634,7 +634,7 @@ def intersect_multiregions(first: _Multiregion,
     True
     """
     return _holeless.Intersection(
-            first, second, 
+            first, second,
             _get_context() if context is None else context).compute()
 
 
