@@ -197,7 +197,7 @@ class CompleteIntersection(Operation):
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
-            if not (any(event.left.in_result for event in same_start_events)
+            if not (any(event.primary.in_result for event in same_start_events)
                     or all_equal(event.from_first
                                  for event in same_start_events)):
                 points.append(start)

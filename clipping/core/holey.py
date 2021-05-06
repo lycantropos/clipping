@@ -75,7 +75,7 @@ class Operation(ABC):
         event.in_result = self.in_result(event)
 
     def events_to_polygons(self, events: Iterable[Event]) -> Sequence[Polygon]:
-        events = sorted([event for event in events if event.left.in_result],
+        events = sorted([event for event in events if event.primary.in_result],
                         key=self._events_queue.key)
         for index, event in enumerate(events):
             event.position = index
@@ -271,7 +271,7 @@ class CompleteIntersection(Operation):
                         if event.is_left:
                             endpoints.append(
                                     event_to_segment_endpoints(next_event))
-                if no_segment_found and all(not event.left.in_result
+                if no_segment_found and all(not event.primary.in_result
                                             for event in same_start_events):
                     points.append(start)
         return (points, endpoints_to_segments(endpoints, self.context),
