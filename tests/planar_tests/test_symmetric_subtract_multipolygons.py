@@ -34,6 +34,26 @@ def test_self_inverse(multipolygon: Multipolygon) -> None:
     assert not result.polygons
 
 
+@given(strategies.empty_multipolygons_with_multipolygons)
+def test_left_neutral_element(empty_multipolygon_with_multipolygon
+                              : MultipolygonsPair) -> None:
+    empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
+
+    result = symmetric_subtract_multipolygons(empty_multipolygon, multipolygon)
+
+    assert are_multipolygons_similar(result, multipolygon)
+
+
+@given(strategies.empty_multipolygons_with_multipolygons)
+def test_right_neutral_element(empty_multipolygon_with_multipolygon
+                               : MultipolygonsPair) -> None:
+    empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
+
+    result = symmetric_subtract_multipolygons(multipolygon, empty_multipolygon)
+
+    assert are_multipolygons_similar(result, multipolygon)
+
+
 @given(strategies.multipolygons_pairs)
 def test_commutativity(multipolygons_pair: MultipolygonsPair) -> None:
     left_multipolygon, right_multipolygon = multipolygons_pair

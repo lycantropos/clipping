@@ -32,6 +32,26 @@ def test_self_inverse(multisegment: Multisegment) -> None:
     assert not result.segments
 
 
+@given(strategies.empty_multisegments_with_multisegments)
+def test_left_neutral_element(empty_multisegment_with_multisegment
+                              : MultisegmentsPair) -> None:
+    empty_multisegment, multisegment = empty_multisegment_with_multisegment
+
+    result = symmetric_subtract_multisegments(empty_multisegment, multisegment)
+
+    assert are_multisegments_similar(result, multisegment)
+
+
+@given(strategies.empty_multisegments_with_multisegments)
+def test_right_neutral_element(empty_multisegment_with_multisegment
+                               : MultisegmentsPair) -> None:
+    empty_multisegment, multisegment = empty_multisegment_with_multisegment
+
+    result = symmetric_subtract_multisegments(multisegment, empty_multisegment)
+
+    assert are_multisegments_similar(result, multisegment)
+
+
 @given(strategies.multisegments_pairs)
 def test_commutativity(multisegments_pair: MultisegmentsPair) -> None:
     left_multisegment, right_multisegment = multisegments_pair

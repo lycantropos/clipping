@@ -25,6 +25,26 @@ def test_basic(multipolygons_pair: MultipolygonsPair) -> None:
     assert is_multipolygon(result)
 
 
+@given(strategies.empty_multipolygons_with_multipolygons)
+def test_left_absorbing_element(empty_multipolygon_with_multipolygon
+                                : MultipolygonsPair) -> None:
+    empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
+
+    result = subtract_multipolygons(empty_multipolygon, multipolygon)
+
+    assert not result.polygons
+
+
+@given(strategies.empty_multipolygons_with_multipolygons)
+def test_right_neutral_element(empty_multipolygon_with_multipolygon
+                               : MultipolygonsPair) -> None:
+    empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
+
+    result = subtract_multipolygons(multipolygon, empty_multipolygon)
+
+    assert are_multipolygons_similar(result, multipolygon)
+
+
 @given(strategies.multipolygons_pairs)
 def test_commutative_case(multipolygons_pair: MultipolygonsPair) -> None:
     left_multipolygon, right_multipolygon = multipolygons_pair

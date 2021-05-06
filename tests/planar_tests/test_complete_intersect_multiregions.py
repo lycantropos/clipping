@@ -32,6 +32,26 @@ def test_idempotence(multiregion: Multiregion) -> None:
     assert holeless_mix_similar_to_multiregion(result, multiregion)
 
 
+@given(strategies.empty_multiregions_with_multiregions)
+def test_left_absorbing_element(empty_multiregion_with_multiregion
+                                : MultiregionsPair) -> None:
+    empty_multiregion, multiregion = empty_multiregion_with_multiregion
+
+    result = complete_intersect_multiregions(empty_multiregion, multiregion)
+
+    assert is_holeless_mix_empty(result)
+
+
+@given(strategies.empty_multiregions_with_multiregions)
+def test_right_absorbing_element(empty_multiregion_with_multiregion
+                                 : MultiregionsPair) -> None:
+    empty_multiregion, multiregion = empty_multiregion_with_multiregion
+
+    result = complete_intersect_multiregions(multiregion, empty_multiregion)
+
+    assert is_holeless_mix_empty(result)
+
+
 @given(strategies.multiregions_pairs)
 def test_commutativity(multiregions_pair: MultiregionsPair) -> None:
     left_multiregion, right_multiregion = multiregions_pair

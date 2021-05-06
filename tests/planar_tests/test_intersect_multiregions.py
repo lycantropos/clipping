@@ -32,6 +32,26 @@ def test_idempotence(multiregion: Multiregion) -> None:
     assert are_multiregions_similar(result, multiregion)
 
 
+@given(strategies.empty_multiregions_with_multiregions)
+def test_left_absorbing_element(empty_multiregion_with_multiregion
+                                : MultiregionsPair) -> None:
+    empty_multiregion, multiregion = empty_multiregion_with_multiregion
+
+    result = intersect_multiregions(empty_multiregion, multiregion)
+
+    assert not result
+
+
+@given(strategies.empty_multiregions_with_multiregions)
+def test_right_absorbing_element(empty_multiregion_with_multiregion
+                                 : MultiregionsPair) -> None:
+    empty_multiregion, multiregion = empty_multiregion_with_multiregion
+
+    result = intersect_multiregions(multiregion, empty_multiregion)
+
+    assert not result
+
+
 @given(strategies.multiregions_pairs)
 def test_commutativity(multiregions_pair: MultiregionsPair) -> None:
     left_multiregion, right_multiregion = multiregions_pair

@@ -56,6 +56,28 @@ def test_properties(multipolygon_with_multisegment
                    in (Relation.DISJOINT, Relation.CROSS)))
 
 
+@given(strategies.empty_multipolygons_with_multisegments)
+def test_left_neutral_element(empty_multipolygon_with_multisegment
+                              : MultipolygonWithMultisegment) -> None:
+    empty_multipolygon, multisegment = empty_multipolygon_with_multisegment
+
+    result = subtract_multipolygon_from_multisegment(multisegment,
+                                                     empty_multipolygon)
+
+    assert result == multisegment
+
+
+@given(strategies.multipolygons_with_empty_multisegments)
+def test_right_absorbing_element(multipolygon_with_empty_multisegment
+                                 : MultipolygonWithMultisegment) -> None:
+    multipolygon, empty_multisegment = multipolygon_with_empty_multisegment
+
+    result = subtract_multipolygon_from_multisegment(empty_multisegment,
+                                                     multipolygon)
+
+    assert not result.segments
+
+
 @given(strategies.multipolygons_with_multisegments)
 def test_reversals(multipolygon_with_multisegment: MultipolygonWithMultisegment
                    ) -> None:

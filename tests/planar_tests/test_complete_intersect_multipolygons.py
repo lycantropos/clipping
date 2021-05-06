@@ -7,6 +7,7 @@ from clipping.planar import (complete_intersect_multipolygons,
 from tests.utils import (MultipolygonsPair,
                          are_mixes_similar,
                          is_mix,
+                         is_mix_empty,
                          mix_similar_to_multipolygon,
                          reverse_mix_coordinates,
                          reverse_multipolygon,
@@ -32,6 +33,26 @@ def test_idempotence(multipolygon: Multipolygon) -> None:
     result = complete_intersect_multipolygons(multipolygon, multipolygon)
 
     assert mix_similar_to_multipolygon(result, multipolygon)
+
+
+@given(strategies.empty_multipolygons_with_multipolygons)
+def test_left_absorbing_element(empty_multipolygon_with_multipolygon
+                                : MultipolygonsPair) -> None:
+    empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
+
+    result = complete_intersect_multipolygons(empty_multipolygon, multipolygon)
+
+    assert is_mix_empty(result)
+
+
+@given(strategies.empty_multipolygons_with_multipolygons)
+def test_right_absorbing_element(empty_multipolygon_with_multipolygon
+                                 : MultipolygonsPair) -> None:
+    empty_multipolygon, multipolygon = empty_multipolygon_with_multipolygon
+
+    result = complete_intersect_multipolygons(multipolygon, empty_multipolygon)
+
+    assert is_mix_empty(result)
 
 
 @given(strategies.multipolygons_pairs)
