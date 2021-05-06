@@ -189,8 +189,7 @@ def intersects_with_segment(box: Box,
                  or any(context.segments_relation(edge_start, edge_end, start,
                                                   end) is not Relation.DISJOINT
                         for edge_start, edge_end
-                        in to_edges_endpoints(box,
-                                              context))))
+                        in to_edges_endpoints(box, context))))
 
 
 def coupled_with_segment(box: Box,
@@ -206,8 +205,7 @@ def coupled_with_segment(box: Box,
                                                   segment.start, segment.end)
                         not in (Relation.TOUCH, Relation.DISJOINT)
                         for edge_start, edge_end
-                        in to_edges_endpoints(box,
-                                              context))))
+                        in to_edges_endpoints(box, context))))
 
 
 def is_subset_of_region(box: Box,
@@ -219,8 +217,7 @@ def is_subset_of_region(box: Box,
     return all(segment_in_region(segment, border) in (Relation.COMPONENT,
                                                       Relation.ENCLOSED,
                                                       Relation.WITHIN)
-               for segment in to_edges(box,
-                                       context))
+               for segment in to_edges(box, context))
 
 
 def within_of_region(box: Box,
@@ -230,15 +227,13 @@ def within_of_region(box: Box,
     Checks if the box is contained in an interior of the region.
     """
     return (all(point_in_region(vertex, border) is Relation.WITHIN
-                for vertex in to_vertices(box,
-                                          context))
+                for vertex in to_vertices(box, context))
             and all(context.segments_relation(edge_start, edge_end,
                                               border_edge_start,
                                               border_edge_end)
                     is Relation.DISJOINT
                     for edge_start, edge_end
-                    in to_edges_endpoints(box,
-                                          context)
+                    in to_edges_endpoints(box, context)
                     for border_edge_start, border_edge_end
                     in contour_to_edges_endpoints(border)))
 
@@ -268,8 +263,7 @@ def intersects_with_polygon(box: Box,
           or any(contains_point(box, vertex) for vertex in border.vertices)):
         return True
     relations = [point_in_region(vertex, border)
-                 for vertex in to_vertices(box,
-                                           context)]
+                 for vertex in to_vertices(box, context)]
     if (within_of(box, polygon_box)
             and all(relation is Relation.WITHIN for relation in relations)
             and all(context.segments_relation(edge_start, edge_end,
@@ -277,20 +271,17 @@ def intersects_with_polygon(box: Box,
                                               border_edge_end)
                     is Relation.DISJOINT
                     for edge_start, edge_end
-                    in to_edges_endpoints(box,
-                                          context)
+                    in to_edges_endpoints(box, context)
                     for border_edge_start, border_edge_end
                     in contour_to_edges_endpoints(border))):
         return not any(within_of(box, context.contour_box(hole))
-                       and within_of_region(box, hole,
-                                            context)
+                       and within_of_region(box, hole, context)
                        for hole in polygon.holes)
     else:
         return (any(relation is not Relation.DISJOINT
                     for relation in relations)
                 or any(intersects_with_segment(box, border_edge_start,
-                                               border_edge_end,
-                                               context)
+                                               border_edge_end, context)
                        for border_edge_start, border_edge_end
                        in contour_to_edges_endpoints(border)))
 
@@ -308,13 +299,9 @@ def intersects_with_region(box: Box,
                         for vertex in region.vertices)
                  or any(point_in_region(vertex, region)
                         is not Relation.DISJOINT
-                        for vertex in to_vertices(box,
-                                                  context))
-                 or any(intersects_with_segment(box, border_edge_start,
-                                                border_edge_end,
-                                                context)
-                        for border_edge_start, border_edge_end in
-                        contour_to_edges_endpoints(region))))
+                        for vertex in to_vertices(box, context))
+                 or any(intersects_with_segment(box, start, end, context)
+                        for start, end in contour_to_edges_endpoints(region))))
 
 
 def coupled_with_polygon(box: Box,
@@ -331,25 +318,20 @@ def coupled_with_polygon(box: Box,
           or any(covers_point(box, vertex) for vertex in border.vertices)):
         return True
     relations = [point_in_region(vertex, border)
-                 for vertex in to_vertices(box,
-                                           context)]
+                 for vertex in to_vertices(box, context)]
     if any(relation is Relation.WITHIN for relation in relations):
         return (not all(relation is Relation.WITHIN for relation in relations)
-                or not is_subset_of_multiregion(box, polygon.holes,
-                                                context))
+                or not is_subset_of_multiregion(box, polygon.holes, context))
     else:
-        return (not is_subset_of_multiregion(box, polygon.holes,
-                                             context)
+        return (not is_subset_of_multiregion(box, polygon.holes, context)
                 if (is_subset_of(box, polygon_box)
-                    and is_subset_of_region(box, border,
-                                            context))
+                    and is_subset_of_region(box, border, context))
                 else any(segment_in_contour(segment, border)
                          is Relation.OVERLAP
                          or segment_in_region(segment, border)
                          in (Relation.CROSS, Relation.COMPONENT,
                              Relation.ENCLOSED)
-                         for segment in to_edges(box,
-                                                 context)))
+                         for segment in to_edges(box, context)))
 
 
 def coupled_with_region(box: Box,
@@ -365,18 +347,15 @@ def coupled_with_region(box: Box,
           or any(covers_point(box, vertex) for vertex in region.vertices)):
         return True
     return (any(point_in_region(vertex, region) is Relation.WITHIN
-                for vertex in to_vertices(box,
-                                          context))
+                for vertex in to_vertices(box, context))
             or is_subset_of(box, region_box)
-            and is_subset_of_region(box, region,
-                                    context)
+            and is_subset_of_region(box, region, context)
             or any(segment_in_contour(segment, region)
                    is Relation.OVERLAP
                    or segment_in_region(segment, region)
                    in (Relation.CROSS, Relation.COMPONENT,
                        Relation.ENCLOSED)
-                   for segment in to_edges(box,
-                                           context)))
+                   for segment in to_edges(box, context)))
 
 
 def contains_point(box: Box, point: Point) -> bool:
@@ -431,8 +410,7 @@ def to_coupled_segments(box: Box,
                         context: Context) -> Sequence[Segment]:
     return [segment
             for segment in segments
-            if coupled_with_segment(box, segment,
-                                    context)]
+            if coupled_with_segment(box, segment, context)]
 
 
 def to_intersecting_polygons(box: Box,
@@ -440,8 +418,7 @@ def to_intersecting_polygons(box: Box,
                              context: Context) -> Sequence[Polygon]:
     return [polygon
             for polygon in polygons
-            if intersects_with_polygon(box, polygon,
-                                       context)]
+            if intersects_with_polygon(box, polygon, context)]
 
 
 def to_intersecting_regions(box: Box,
@@ -457,8 +434,7 @@ def to_coupled_polygons(box: Box,
                         context: Context) -> Sequence[Polygon]:
     return [polygon
             for polygon in polygons
-            if coupled_with_polygon(box, polygon,
-                                    context)]
+            if coupled_with_polygon(box, polygon, context)]
 
 
 def to_coupled_regions(box: Box,
@@ -466,5 +442,4 @@ def to_coupled_regions(box: Box,
                        context: Context) -> Multiregion:
     return [region
             for region in multiregion
-            if coupled_with_region(box, region,
-                                   context)]
+            if coupled_with_region(box, region, context)]
