@@ -17,13 +17,18 @@ Glossary
 such that intersection of distinct regions is a discrete points set.
 """
 from typing import (Optional as _Optional,
-                    Sequence as _Sequence)
+                    Sequence as _Sequence,
+                    Union as _Union)
 
 from ground.base import (Context as _Context,
                          get_context as _get_context)
-from ground.hints import (Multipolygon as _Multipolygon,
+from ground.hints import (Empty as _Empty,
+                          Mix as _Mix,
+                          Multipoint as _Multipoint,
+                          Multipolygon as _Multipolygon,
                           Multisegment as _Multisegment,
-                          Segment as _Segment)
+                          Segment as _Segment,
+                          Segment)
 
 from .core import (holeless as _holeless,
                    holey as _holey,
@@ -31,14 +36,13 @@ from .core import (holeless as _holeless,
                    mixed as _mixed)
 from .hints import (HolelessMix as _HolelessMix,
                     LinearMix as _LinearMix,
-                    Mix as _Mix,
                     Multiregion as _Multiregion)
 
 
 def segments_to_multisegment(segments: _Sequence[_Segment],
                              *,
                              context: _Optional[_Context] = None
-                             ) -> _Multisegment:
+                             ) -> _Union[_Empty, _Segment, _Multisegment]:
     """
     Returns multisegment from given segments.
 
@@ -80,7 +84,8 @@ def complete_intersect_multisegments(first: _Multisegment,
                                      second: _Multisegment,
                                      *,
                                      context: _Optional[_Context] = None
-                                     ) -> _LinearMix:
+                                     ) -> _Union[_Empty, _Mix, _Multipoint,
+                                                 _Multisegment, Segment]:
     """
     Returns intersection of multisegments considering cases
     with segments touching each other in points.
@@ -133,7 +138,7 @@ def intersect_multisegments(first: _Multisegment,
                             second: _Multisegment,
                             *,
                             context: _Optional[_Context] = None
-                            ) -> _Multisegment:
+                            ) -> _Union[_Empty, _Segment, _Multisegment]:
     """
     Returns intersection of multisegments.
 
@@ -181,7 +186,7 @@ def subtract_multisegments(minuend: _Multisegment,
                            subtrahend: _Multisegment,
                            *,
                            context: _Optional[_Context] = None
-                           ) -> _Multisegment:
+                           ) -> _Union[_Empty, _Segment, _Multisegment]:
     """
     Returns difference of multisegments.
 
@@ -229,7 +234,8 @@ def symmetric_subtract_multisegments(first: _Multisegment,
                                      second: _Multisegment,
                                      *,
                                      context: _Optional[_Context] = None
-                                     ) -> _Multisegment:
+                                     ) -> _Union[_Empty, _Segment,
+                                                 _Multisegment]:
     """
     Returns symmetric difference of multisegments.
 
