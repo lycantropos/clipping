@@ -5,14 +5,15 @@ from operator import attrgetter
 from typing import (Iterable,
                     List,
                     Optional,
-                    Sequence,
-                    Tuple,
                     Union)
 
 from ground.base import Context
-from ground.hints import (Multisegment,
+from ground.hints import (Empty,
+                          Mix,
+                          Multipoint,
+                          Multipolygon,
+                          Multisegment,
                           Point,
-                          Polygon,
                           Segment)
 from reprit.base import generate_repr
 
@@ -20,8 +21,10 @@ from . import bounding
 from .event import (LeftMixedEvent as LeftEvent,
                     RightMixedEvent as RightEvent)
 from .events_queue import MixedEventsQueue as EventsQueue
-from .hints import LinearMix
 from .sweep_line import BinarySweepLine as SweepLine
+from .unpacking import (unpack_linear_mix,
+                        unpack_points,
+                        unpack_segments)
 from .utils import (all_equal,
                     endpoints_to_segments,
                     polygon_to_oriented_edges_endpoints,
@@ -34,27 +37,30 @@ Event = Union[LeftEvent, RightEvent]
 
 
 class Operation(ABC):
-    __slots__ = 'context', 'segments', 'polygons', '_events_queue'
+    __slots__ = ('context', 'multisegment', 'multipolygon', '_events_queue',
+                 '_polygons', '_segments')
 
     def __init__(self,
-                 segments: Sequence[Segment],
-                 polygons: Sequence[Polygon],
+                 multisegment: Multisegment,
+                 multipolygon: Multipolygon,
                  context: Context) -> None:
         """
         Initializes operation.
 
-        :param segments: first operand.
-        :param polygons: second operand.
+        :param multisegment: first operand.
+        :param multipolygon: second operand.
         :param context: operation context.
         """
-        self.context, self.segments, self.polygons = (context, segments,
-                                                      polygons)
+        self.context, self.multisegment, self.multipolygon = (
+            context, multisegment, multipolygon)
+        self._segments, self._polygons = (multisegment.segments,
+                                          multipolygon.polygons)
         self._events_queue = EventsQueue(context)
 
     __repr__ = generate_repr(__init__)
 
     @abstractmethod
-    def compute(self) -> Union[LinearMix, Multisegment]:
+    def compute(self) -> Union[Empty, Mix, Multipoint, Multisegment]:
         """
         Computes result of the operation.
         """
@@ -71,9 +77,8 @@ class Operation(ABC):
 
     def fill_queue(self) -> None:
         events_queue = self._events_queue
-        events_queue.register(segments_to_endpoints(self.segments),
-                              True)
-        for polygon in self.polygons:
+        events_queue.register(segments_to_endpoints(self._segments), True)
+        for polygon in self._polygons:
             events_queue.register(
                     polygon_to_oriented_edges_endpoints(polygon, self.context),
                     False)
@@ -82,12 +87,9 @@ class Operation(ABC):
     def in_result(self, event: LeftEvent) -> bool:
         """Detects if event will be presented in result of the operation."""
 
-    def normalize_operands(self) -> None:
-        pass
-
     def process_event(self, event: Event, sweep_line: SweepLine) -> None:
         if not event.is_left:
-            event = event.opposite
+            event = event.left
             if event in sweep_line:
                 above_event, below_event = (sweep_line.above(event),
                                             sweep_line.below(event))
@@ -116,8 +118,21 @@ class Operation(ABC):
 class Difference(Operation):
     __slots__ = ()
 
-    def compute(self) -> Multisegment:
-        return self.context.multisegment_cls(self._compute())
+    def compute(self) -> Union[Empty, Multisegment, Segment]:
+        context = self.context
+        segments_box = context.segments_box(self._segments)
+        if bounding.disjoint_with(segments_box,
+                                  context.polygons_box(self._polygons)):
+            return self.multisegment
+        self._polygons = bounding.to_coupled_polygons(
+                segments_box, self._polygons, context)
+        if not self._polygons:
+            return self.multisegment
+        return unpack_segments(endpoints_to_segments([to_endpoints(event)
+                                                      for event in self.sweep()
+                                                      if event.in_result],
+                                                     context),
+                               context)
 
     def in_result(self, event: LeftEvent) -> bool:
         return event.from_first and event.outside
@@ -127,74 +142,34 @@ class Difference(Operation):
         result = []
         events_queue = self._events_queue
         sweep_line = SweepLine(self.context)
-        first_x_max = to_segments_x_max(self.segments)
+        first_x_max = to_segments_x_max(self._segments)
         while events_queue:
             event = events_queue.pop()
             if first_x_max < event.start.x:
                 break
             self.process_event(event, sweep_line)
             if not event.is_left:
-                result.append(event.opposite)
+                result.append(event.left)
         return result
-
-    def _compute(self) -> Sequence[Segment]:
-        if not (self.segments and self.polygons):
-            return self.segments
-        segments_box = self.context.segments_box(self.segments)
-        if bounding.disjoint_with(segments_box,
-                                  self.context.polygons_box(self.polygons)):
-            return self.segments
-        self.polygons = bounding.to_coupled_polygons(segments_box,
-                                                     self.polygons,
-                                                     self.context)
-        if not self.polygons:
-            return self.segments
-        self.normalize_operands()
-        return endpoints_to_segments([to_endpoints(event)
-                                      for event in self.sweep()
-                                      if event.in_result], self.context)
 
 
 class CompleteIntersection(Operation):
     __slots__ = ()
 
-    def compute(self) -> LinearMix:
-        points, segments = self._compute()
-        return (self.context.multipoint_cls(points),
-                self.context.multisegment_cls(segments))
-
-    def in_result(self, event: LeftEvent) -> bool:
-        return event.from_first and not event.outside
-
-    def sweep(self) -> Iterable[LeftEvent]:
-        self.fill_queue()
-        result = []
-        events_queue = self._events_queue
-        sweep_line = SweepLine(self.context)
-        min_max_x = min(to_segments_x_max(self.segments),
-                        to_polygons_x_max(self.polygons))
-        while events_queue:
-            event = events_queue.pop()
-            if min_max_x < event.start.x:
-                break
-            self.process_event(event, sweep_line)
-            result.append(event)
-        return result
-
-    def _compute(self) -> Tuple[Sequence[Point], Sequence[Segment]]:
-        if not (self.segments and self.polygons):
-            return [], []
-        multisegment_box = self.context.segments_box(self.segments)
-        multipolygon_box = self.context.polygons_box(self.polygons)
+    def compute(self) -> Union[Empty, Mix, Multipoint, Multisegment, Segment]:
+        context = self.context
+        multisegment_box = context.segments_box(self._segments)
+        multipolygon_box = context.polygons_box(self._polygons)
         if bounding.disjoint_with(multisegment_box, multipolygon_box):
-            return [], []
-        self.segments = bounding.to_intersecting_segments(
-                multipolygon_box, self.segments, self.context)
-        self.polygons = bounding.to_intersecting_polygons(
-                multisegment_box, self.polygons, self.context)
-        if not (self.segments and self.polygons):
-            return [], []
-        self.normalize_operands()
+            return context.empty
+        self._segments = bounding.to_intersecting_segments(
+                multipolygon_box, self._segments, context)
+        if not self._segments:
+            return context.empty
+        self._polygons = bounding.to_intersecting_polygons(
+                multisegment_box, self._polygons, context)
+        if not self._polygons:
+            return context.empty
         events = sorted(self.sweep(),
                         key=self._events_queue.key)
         points = []  # type: List[Point]
@@ -205,18 +180,14 @@ class CompleteIntersection(Operation):
                     or all_equal(event.from_first
                                  for event in same_start_events)):
                 points.append(start)
-        return (points,
-                endpoints_to_segments([to_endpoints(event)
-                                       for event in events
-                                       if event.is_left and event.in_result],
-                                      self.context))
-
-
-class Intersection(Operation):
-    __slots__ = ()
-
-    def compute(self) -> Multisegment:
-        return self.context.multisegment_cls(self._compute())
+        segments = endpoints_to_segments([to_endpoints(event)
+                                          for event in events
+                                          if event.is_left
+                                          and event.in_result],
+                                         context)
+        return unpack_linear_mix(unpack_points(points, context),
+                                 unpack_segments(segments, context),
+                                 context)
 
     def in_result(self, event: LeftEvent) -> bool:
         return event.from_first and not event.outside
@@ -226,8 +197,50 @@ class Intersection(Operation):
         result = []
         events_queue = self._events_queue
         sweep_line = SweepLine(self.context)
-        min_max_x = min(to_segments_x_max(self.segments),
-                        to_polygons_x_max(self.polygons))
+        min_max_x = min(to_segments_x_max(self._segments),
+                        to_polygons_x_max(self._polygons))
+        while events_queue:
+            event = events_queue.pop()
+            if min_max_x < event.start.x:
+                break
+            self.process_event(event, sweep_line)
+            result.append(event)
+        return result
+
+
+class Intersection(Operation):
+    __slots__ = ()
+
+    def compute(self) -> Union[Empty, Segment, Multisegment]:
+        context = self.context
+        multisegment_box = context.segments_box(self._segments)
+        multipolygon_box = context.polygons_box(self._polygons)
+        if bounding.disjoint_with(multisegment_box, multipolygon_box):
+            return context.empty
+        self._segments = bounding.to_intersecting_segments(
+                multipolygon_box, self._segments, context)
+        if not self._segments:
+            return context.empty
+        self._polygons = bounding.to_intersecting_polygons(multisegment_box,
+                                                           self._polygons,
+                                                           context)
+        if not (self._segments and self._polygons):
+            return context.empty
+        segments = endpoints_to_segments([to_endpoints(event)
+                                          for event in self.sweep()
+                                          if event.in_result], context)
+        return unpack_segments(segments, context)
+
+    def in_result(self, event: LeftEvent) -> bool:
+        return event.from_first and not event.outside
+
+    def sweep(self) -> Iterable[LeftEvent]:
+        self.fill_queue()
+        result = []
+        events_queue = self._events_queue
+        sweep_line = SweepLine(self.context)
+        min_max_x = min(to_segments_x_max(self._segments),
+                        to_polygons_x_max(self._polygons))
         while events_queue:
             event = events_queue.pop()
             if min_max_x < event.start.x:
@@ -236,23 +249,3 @@ class Intersection(Operation):
             if event.is_left:
                 result.append(event)
         return result
-
-    def _compute(self) -> Sequence[Segment]:
-        if not (self.segments and self.polygons):
-            return []
-        multisegment_box = self.context.segments_box(self.segments)
-        multipolygon_box = self.context.polygons_box(self.polygons)
-        if bounding.disjoint_with(multisegment_box,
-                                  multipolygon_box):
-            return []
-        self.segments = bounding.to_intersecting_segments(
-                multipolygon_box, self.segments, self.context)
-        self.polygons = bounding.to_intersecting_polygons(multisegment_box,
-                                                          self.polygons,
-                                                          self.context)
-        if not (self.segments and self.polygons):
-            return []
-        self.normalize_operands()
-        return endpoints_to_segments([to_endpoints(event)
-                                      for event in self.sweep()
-                                      if event.in_result], self.context)

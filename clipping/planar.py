@@ -379,11 +379,11 @@ def intersect_multisegment_with_multipolygon(
     ...                    Segment(Point(1, 1), Point(2, 2))]),
     ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
     ...                                     Point(1, 1), Point(0, 1)]), [])]))
-    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0))]))
+    ...  == Segment(Point(0, 0), Point(1, 0)))
     True
     """
     return _mixed.Intersection(
-            multisegment.segments, multipolygon.polygons,
+            multisegment, multipolygon,
             _get_context() if context is None else context).compute()
 
 
@@ -417,6 +417,8 @@ def complete_intersect_multisegment_with_multipolygon(
 
     >>> from ground.base import get_context
     >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Mix = context.mix_cls
     >>> Contour = context.contour_cls
     >>> Multipoint = context.multipoint_cls
     >>> Multipolygon = context.multipolygon_cls
@@ -429,21 +431,20 @@ def complete_intersect_multisegment_with_multipolygon(
     ...                    Segment(Point(0, 1), Point(1, 0))]),
     ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
     ...                                     Point(0, 1)]), [])]))
-    ...  == (Multipoint([]),
-    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                    Segment(Point(0, 1), Point(1, 0))])))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
     True
     >>> (complete_intersect_multisegment_with_multipolygon(
     ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                    Segment(Point(1, 1), Point(2, 2))]),
     ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
     ...                                     Point(1, 1), Point(0, 1)]), [])]))
-    ...  == (Multipoint([Point(1, 1)]),
-    ...      Multisegment([Segment(Point(0, 0), Point(1, 0))])))
+    ...  == Mix(Multipoint([Point(1, 1)]), Segment(Point(0, 0), Point(1, 0)),
+    ...         EMPTY))
     True
     """
     return _mixed.CompleteIntersection(
-            multisegment.segments, multipolygon.polygons,
+            multisegment, multipolygon,
             _get_context() if context is None else context).compute()
 
 
@@ -476,6 +477,7 @@ def subtract_multipolygon_from_multisegment(multisegment: _Multisegment,
 
     >>> from ground.base import get_context
     >>> context = get_context()
+    >>> EMPTY = context.empty
     >>> Contour = context.contour_cls
     >>> Multipoint = context.multipoint_cls
     >>> Multipolygon = context.multipolygon_cls
@@ -488,18 +490,18 @@ def subtract_multipolygon_from_multisegment(multisegment: _Multisegment,
     ...                    Segment(Point(0, 1), Point(1, 0))]),
     ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
     ...                                     Point(0, 1)]), [])]))
-    ...  == Multisegment([]))
+    ...  is EMPTY)
     True
     >>> (subtract_multipolygon_from_multisegment(
     ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                    Segment(Point(1, 1), Point(2, 2))]),
     ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
     ...                                     Point(1, 1), Point(0, 1)]), [])]))
-    ...  == Multisegment([Segment(Point(1, 1), Point(2, 2))]))
+    ...  == Segment(Point(1, 1), Point(2, 2)))
     True
     """
     return _mixed.Difference(
-            multisegment.segments, multipolygon.polygons,
+            multisegment, multipolygon,
             _get_context() if context is None else context).compute()
 
 
