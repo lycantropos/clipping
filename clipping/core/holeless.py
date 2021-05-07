@@ -17,7 +17,6 @@ from reprit.base import generate_repr
 from . import bounding
 from .event import (LeftHolelessEvent as LeftEvent,
                     RightShapedEvent as RightEvent,
-                    event_to_segment_endpoints,
                     events_to_connectivity)
 from .events_queue import HolelessEventsQueue as EventsQueue
 from .hints import (HolelessMix,
@@ -28,6 +27,7 @@ from .utils import (all_equal,
                     contour_to_oriented_edges_endpoints,
                     endpoints_to_segments,
                     pairwise,
+                    to_endpoints,
                     to_multiregion_x_max)
 
 Event = Union_[LeftEvent, RightEvent]
@@ -207,8 +207,7 @@ class CompleteIntersection(Operation):
                             and event.end == next_event.end):
                         no_segment_found = False
                         if event.is_left:
-                            endpoints.append(
-                                    event_to_segment_endpoints(next_event))
+                            endpoints.append(to_endpoints(next_event))
                 if no_segment_found and all(not event.primary.in_result
                                             for event in same_start_events):
                     points.append(start)

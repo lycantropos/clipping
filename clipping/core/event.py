@@ -3,7 +3,6 @@ from abc import (ABC,
 from reprlib import recursive_repr
 from typing import (Optional,
                     Sequence,
-                    Tuple,
                     TypeVar)
 
 from ground.hints import Point
@@ -479,7 +478,3 @@ def events_to_connectivity(events: Sequence[Event]) -> Sequence[int]:
             result[left_start_index + 1:left_stop_index + 1] = range(
                     left_start_index, left_stop_index)
     return result
-
-
-def event_to_segment_endpoints(event: Event) -> Tuple[Point, Point]:
-    return event.start, event.end

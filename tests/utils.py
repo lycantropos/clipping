@@ -12,7 +12,7 @@ from hypothesis import strategies
 from hypothesis.strategies import SearchStrategy
 from orient.planar import multisegment_in_multisegment
 
-from clipping.core.linear import segment_to_endpoints
+from clipping.core.utils import to_endpoints
 from clipping.hints import (HolelessMix,
                             LinearMix,
                             Mix,
@@ -112,9 +112,9 @@ def are_multisegments_equivalent(left: Multisegment,
 
 def are_multisegments_similar(left: Multisegment, right: Multisegment) -> bool:
     return (len(left.segments) == len(right.segments)
-            and (frozenset(map(segment_to_endpoints,
+            and (frozenset(map(to_endpoints,
                                map(to_sorted_segment, left.segments)))
-                 == frozenset(map(segment_to_endpoints,
+                 == frozenset(map(to_endpoints,
                                   map(to_sorted_segment, right.segments)))))
 
 
@@ -155,7 +155,7 @@ def normalize_region(contour: Contour) -> Contour:
 def normalize_segments_sequence(segments: Sequence[Segment]
                                 ) -> Sequence[Segment]:
     return sorted([to_sorted_segment(segment) for segment in segments],
-                  key=segment_to_endpoints)
+                  key=to_endpoints)
 
 
 def reverse_sequence(sequence: Domain) -> Domain:

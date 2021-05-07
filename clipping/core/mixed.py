@@ -18,8 +18,7 @@ from reprit.base import generate_repr
 
 from . import bounding
 from .event import (LeftMixedEvent as LeftEvent,
-                    RightMixedEvent as RightEvent,
-                    event_to_segment_endpoints)
+                    RightMixedEvent as RightEvent)
 from .events_queue import MixedEventsQueue as EventsQueue
 from .hints import LinearMix
 from .sweep_line import BinarySweepLine as SweepLine
@@ -27,6 +26,7 @@ from .utils import (all_equal,
                     endpoints_to_segments,
                     polygon_to_oriented_edges_endpoints,
                     segments_to_endpoints,
+                    to_endpoints,
                     to_polygons_x_max,
                     to_segments_x_max)
 
@@ -150,7 +150,7 @@ class Difference(Operation):
         if not self.polygons:
             return self.segments
         self.normalize_operands()
-        return endpoints_to_segments([event_to_segment_endpoints(event)
+        return endpoints_to_segments([to_endpoints(event)
                                       for event in self.sweep()
                                       if event.in_result], self.context)
 
@@ -206,7 +206,7 @@ class CompleteIntersection(Operation):
                                  for event in same_start_events)):
                 points.append(start)
         return (points,
-                endpoints_to_segments([event_to_segment_endpoints(event)
+                endpoints_to_segments([to_endpoints(event)
                                        for event in events
                                        if event.is_left and event.in_result],
                                       self.context))
@@ -253,6 +253,6 @@ class Intersection(Operation):
         if not (self.segments and self.polygons):
             return []
         self.normalize_operands()
-        return endpoints_to_segments([event_to_segment_endpoints(event)
+        return endpoints_to_segments([to_endpoints(event)
                                       for event in self.sweep()
                                       if event.in_result], self.context)
