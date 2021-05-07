@@ -48,10 +48,12 @@ Usage
 ```python
 >>> from ground.base import get_context
 >>> context = get_context()
->>> Multipoint, Multisegment, Point, Segment = (context.multipoint_cls,
-...                                             context.multisegment_cls,
-...                                             context.point_cls,
-...                                             context.segment_cls)
+>>> EMPTY = context.empty
+>>> Mix = context.mix_cls
+>>> Multipoint = context.multipoint_cls
+>>> Multisegment = context.multisegment_cls
+>>> Point = context.point_cls
+>>> Segment = context.segment_cls
 >>> left_edge = Segment(Point(0, 0), Point(0, 1))
 >>> right_edge = Segment(Point(1, 0), Point(1, 1))
 >>> bottom_edge = Segment(Point(0, 0), Point(1, 0))
@@ -67,8 +69,9 @@ True
 >>> from clipping.planar import complete_intersect_multisegments
 >>> (complete_intersect_multisegments(trident, square_edges)
 ...  == complete_intersect_multisegments(square_edges, trident)
-...  == (Multipoint([Point(1, 1)]),
-...      intersect_multisegments(trident, square_edges)))
+...  == Mix(Multipoint([Point(1, 1)]),
+...         intersect_multisegments(trident, square_edges),
+...         EMPTY))
 True
 >>> from clipping.planar import unite_multisegments
 >>> (unite_multisegments(trident, square_edges)
@@ -77,8 +80,7 @@ True
 ...                   right_edge]))
 True
 >>> from clipping.planar import subtract_multisegments
->>> (subtract_multisegments(trident, square_edges)
-...  == Multisegment([main_diagonal]))
+>>> subtract_multisegments(trident, square_edges) == main_diagonal
 True
 >>> (subtract_multisegments(square_edges, trident)
 ...  == Multisegment([top_edge, right_edge]))
