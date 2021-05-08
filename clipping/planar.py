@@ -27,8 +27,7 @@ from ground.hints import (Empty as _Empty,
                           Multipoint as _Multipoint,
                           Multipolygon as _Multipolygon,
                           Multisegment as _Multisegment,
-                          Segment as _Segment,
-                          Segment)
+                          Segment as _Segment)
 
 from .core import (holeless as _holeless,
                    holey as _holey,
@@ -85,7 +84,7 @@ def complete_intersect_multisegments(first: _Multisegment,
                                      *,
                                      context: _Optional[_Context] = None
                                      ) -> _Union[_Empty, _Mix, _Multipoint,
-                                                 _Multisegment, Segment]:
+                                                 _Multisegment, _Segment]:
     """
     Returns intersection of multisegments considering cases
     with segments touching each other in points.
@@ -391,7 +390,8 @@ def complete_intersect_multisegment_with_multipolygon(
         multisegment: _Multisegment,
         multipolygon: _Multipolygon,
         *,
-        context: _Optional[_Context] = None) -> _LinearMix:
+        context: _Optional[_Context] = None
+) -> _Union[_Empty, _Mix, _Multipoint, _Multisegment, _Segment]:
     """
     Returns intersection of multisegment with multipolygon considering cases
     with geometries touching each other in points/segments.
