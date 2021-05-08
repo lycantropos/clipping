@@ -49,6 +49,15 @@ def unpack_points(points: Sequence[Point], context: Context
     return context.multipoint_cls(points) if points else context.empty
 
 
+def unpack_polygons(polygons: Sequence[Polygon],
+                    context: Context) -> Union[Empty, Multipolygon, Polygon]:
+    return ((context.multipolygon_cls(polygons)
+             if len(polygons) > 1
+             else polygons[0])
+            if polygons
+            else context.empty)
+
+
 def unpack_regions(regions: Sequence[Contour],
                    context: Context) -> Union[Empty, Polygon, Multipolygon]:
     polygon_cls = context.polygon_cls

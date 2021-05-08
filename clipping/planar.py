@@ -658,7 +658,9 @@ def complete_intersect_multipolygons(first: _Multipolygon,
                                      second: _Multipolygon,
                                      *,
                                      context: _Optional[_Context] = None
-                                     ) -> _Mix:
+                                     ) -> _Union[_Empty, _Mix, _Multipoint,
+                                                 _Multipolygon, _Multisegment,
+                                                 _Polygon]:
     """
     Returns intersection of multipolygons considering cases
     with polygons touching each other in points/segments.
@@ -708,29 +710,24 @@ def complete_intersect_multipolygons(first: _Multipolygon,
     >>> (complete_intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
-    ...  == (Multipoint([]), Multisegment([]),
-    ...      Multipolygon([Polygon(lower_left_square,
-    ...                            [lower_left_triangle])])))
+    ...  == Polygon(lower_left_square, [lower_left_triangle]))
     True
     >>> (complete_intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_right_square,
     ...                            [lower_right_triangle])]))
-    ...  == (Multipoint([]),
-    ...      Multisegment([Segment(Point(3, 0), Point(3, 3))]),
-    ...      Multipolygon([])))
+    ...  == Segment(Point(3, 0), Point(3, 3)))
     True
     >>> (complete_intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle])]))
-    ...  == (Multipoint([]), Multisegment([Segment(Point(0, 3), Point(3, 3))]),
-    ...      Multipolygon([])))
+    ...  == Segment(Point(0, 3), Point(3, 3)))
     True
     >>> (complete_intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(upper_right_square,
     ...                            [upper_right_triangle])]))
-    ...  == (Multipoint([Point(3, 3)]), Multisegment([]), Multipolygon([])))
+    ...  == Multipoint([Point(3, 3)]))
     True
     >>> (complete_intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
@@ -739,12 +736,10 @@ def complete_intersect_multipolygons(first: _Multipolygon,
     ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle]),
     ...                    Polygon(lower_right_square,
     ...                            [lower_right_triangle])]))
-    ...  ==  (Multipoint([]),
-    ...       Multisegment([Segment(Point(0, 3), Point(3, 3)),
-    ...                     Segment(Point(3, 0), Point(3, 3)),
-    ...                     Segment(Point(3, 3), Point(6, 3)),
-    ...                     Segment(Point(3, 3), Point(3, 6))]),
-    ...       Multipolygon([])))
+    ...  ==  Multisegment([Segment(Point(0, 3), Point(3, 3)),
+    ...                    Segment(Point(3, 0), Point(3, 3)),
+    ...                    Segment(Point(3, 3), Point(6, 3)),
+    ...                    Segment(Point(3, 3), Point(3, 6))]))
     True
     >>> (complete_intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
@@ -753,14 +748,14 @@ def complete_intersect_multipolygons(first: _Multipolygon,
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
     ...                    Polygon(upper_right_square,
     ...                            [upper_right_triangle])]))
-    ...  == (Multipoint([]), Multisegment([]),
-    ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
-    ...                    Polygon(upper_right_square,
-    ...                            [upper_right_triangle])])))
+    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
+    ...                   Polygon(upper_right_square,
+    ...                           [upper_right_triangle])]))
     True
     """
     return _holey.CompleteIntersection(
-            first.polygons, second.polygons,
+            _holey.MultipolygonOperand(first),
+            _holey.MultipolygonOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -795,6 +790,7 @@ def intersect_multipolygons(first: _Multipolygon,
 
     >>> from ground.base import get_context
     >>> context = get_context()
+    >>> EMPTY = context.empty
     >>> Contour = context.contour_cls
     >>> Multipolygon = context.multipolygon_cls
     >>> Point = context.point_cls
@@ -814,24 +810,24 @@ def intersect_multipolygons(first: _Multipolygon,
     >>> (intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
-    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == Polygon(lower_left_square, [lower_left_triangle]))
     True
     >>> (intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_right_square,
     ...                            [lower_right_triangle])]))
-    ...  == Multipolygon([]))
+    ...  is EMPTY)
     True
     >>> (intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle])]))
-    ...  == Multipolygon([]))
+    ...  is EMPTY)
     True
     >>> (intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(upper_right_square,
     ...                            [upper_right_triangle])]))
-    ...  == Multipolygon([]))
+    ...  is EMPTY)
     True
     >>> (intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
@@ -840,7 +836,7 @@ def intersect_multipolygons(first: _Multipolygon,
     ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle]),
     ...                    Polygon(lower_right_square,
     ...                            [lower_right_triangle])]))
-    ...  == Multipolygon([]))
+    ...  is EMPTY)
     True
     >>> (intersect_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
@@ -855,7 +851,8 @@ def intersect_multipolygons(first: _Multipolygon,
     True
     """
     return _holey.Intersection(
-            first.polygons, second.polygons,
+            _holey.MultipolygonOperand(first),
+            _holey.MultipolygonOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -890,10 +887,11 @@ def subtract_multipolygons(minuend: _Multipolygon,
 
     >>> from ground.base import get_context
     >>> context = get_context()
-    >>> Contour, Multipolygon, Point, Polygon = (context.contour_cls,
-    ...                                          context.multipolygon_cls,
-    ...                                          context.point_cls,
-    ...                                          context.polygon_cls)
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
     >>> lower_left_square = Contour([Point(0, 0), Point(3, 0), Point(3, 3),
     ...                              Point(0, 3)])
     >>> lower_left_triangle = Contour([Point(1, 2), Point(2, 2), Point(2, 1)])
@@ -909,18 +907,18 @@ def subtract_multipolygons(minuend: _Multipolygon,
     >>> (subtract_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
-    ...  == Multipolygon([]))
+    ...  is EMPTY)
     True
     >>> (subtract_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_right_square,
     ...                            [lower_right_triangle])]))
-    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == Polygon(lower_left_square, [lower_left_triangle]))
     True
     >>> (subtract_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle])]))
-    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == Polygon(lower_left_square, [lower_left_triangle]))
     True
     >>> (subtract_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
@@ -946,11 +944,12 @@ def subtract_multipolygons(minuend: _Multipolygon,
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
     ...                    Polygon(upper_right_square,
     ...                            [upper_right_triangle])]))
-    ...  == Multipolygon([]))
+    ...  is EMPTY)
     True
     """
     return _holey.Difference(
-            minuend.polygons, subtrahend.polygons,
+            _holey.MultipolygonOperand(minuend),
+            _holey.MultipolygonOperand(subtrahend),
             _get_context() if context is None else context).compute()
 
 
@@ -985,10 +984,11 @@ def symmetric_subtract_multipolygons(first: _Multipolygon,
 
     >>> from ground.base import get_context
     >>> context = get_context()
-    >>> Contour, Multipolygon, Point, Polygon = (context.contour_cls,
-    ...                                          context.multipolygon_cls,
-    ...                                          context.point_cls,
-    ...                                          context.polygon_cls)
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
     >>> lower_left_square = Contour([Point(0, 0), Point(3, 0), Point(3, 3),
     ...                              Point(0, 3)])
     >>> lower_left_triangle = Contour([Point(1, 2), Point(2, 2), Point(2, 1)])
@@ -1004,24 +1004,22 @@ def symmetric_subtract_multipolygons(first: _Multipolygon,
     >>> (symmetric_subtract_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
-    ...  == Multipolygon([]))
+    ...  is EMPTY)
     True
     >>> (symmetric_subtract_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_right_square,
     ...                            [lower_right_triangle])]))
-    ...  == Multipolygon([Polygon(Contour([Point(0, 0), Point(6, 0),
-    ...                                    Point(6, 3), Point(0, 3)]),
-    ...                           [lower_left_triangle,
-    ...                            lower_right_triangle])]))
+    ...  == Polygon(Contour([Point(0, 0), Point(6, 0), Point(6, 3),
+    ...                      Point(0, 3)]),
+    ...             [lower_left_triangle, lower_right_triangle]))
     True
     >>> (symmetric_subtract_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle])]))
-    ...  == Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0),
-    ...                                    Point(3, 6), Point(0, 6)]),
-    ...                           [lower_left_triangle,
-    ...                            upper_left_triangle])]))
+    ...  == Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 6),
+    ...                      Point(0, 6)]),
+    ...             [lower_left_triangle, upper_left_triangle]))
     True
     >>> (symmetric_subtract_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
@@ -1038,11 +1036,10 @@ def symmetric_subtract_multipolygons(first: _Multipolygon,
     ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle]),
     ...                    Polygon(lower_right_square,
     ...                            [lower_right_triangle])]))
-    ...  == Multipolygon([Polygon(Contour([Point(0, 0), Point(6, 0),
-    ...                                    Point(6, 6), Point(0, 6)]),
-    ...                           [lower_left_triangle, upper_left_triangle,
-    ...                            lower_right_triangle,
-    ...                            upper_right_triangle])]))
+    ...  == Polygon(Contour([Point(0, 0), Point(6, 0), Point(6, 6),
+    ...                      Point(0, 6)]),
+    ...             [lower_left_triangle, upper_left_triangle,
+    ...              lower_right_triangle, upper_right_triangle]))
     True
     >>> (symmetric_subtract_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
@@ -1051,11 +1048,12 @@ def symmetric_subtract_multipolygons(first: _Multipolygon,
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
     ...                    Polygon(upper_right_square,
     ...                            [upper_right_triangle])]))
-    ...  == Multipolygon([]))
+    ...  is EMPTY)
     True
     """
     return _holey.SymmetricDifference(
-            first.polygons, second.polygons,
+            _holey.MultipolygonOperand(first),
+            _holey.MultipolygonOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -1108,24 +1106,22 @@ def unite_multipolygons(first: _Multipolygon,
     >>> (unite_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
-    ...  == Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]))
+    ...  == Polygon(lower_left_square, [lower_left_triangle]))
     True
     >>> (unite_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(lower_right_square,
     ...                            [lower_right_triangle])]))
-    ...  == Multipolygon([Polygon(Contour([Point(0, 0), Point(6, 0),
-    ...                                    Point(6, 3), Point(0, 3)]),
-    ...                           [lower_left_triangle,
-    ...                            lower_right_triangle])]))
+    ...  == Polygon(Contour([Point(0, 0), Point(6, 0), Point(6, 3),
+    ...                      Point(0, 3)]),
+    ...             [lower_left_triangle, lower_right_triangle]))
     True
     >>> (unite_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
     ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle])]))
-    ...  == Multipolygon([Polygon(Contour([Point(0, 0), Point(3, 0),
-    ...                                    Point(3, 6), Point(0, 6)]),
-    ...                           [lower_left_triangle,
-    ...                            upper_left_triangle])]))
+    ...  == Polygon(Contour([Point(0, 0), Point(3, 0), Point(3, 6),
+    ...                      Point(0, 6)]),
+    ...             [lower_left_triangle, upper_left_triangle]))
     True
     >>> (unite_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle])]),
@@ -1142,11 +1138,10 @@ def unite_multipolygons(first: _Multipolygon,
     ...      Multipolygon([Polygon(upper_left_square, [upper_left_triangle]),
     ...                    Polygon(lower_right_square,
     ...                            [lower_right_triangle])]))
-    ...  == Multipolygon([Polygon(Contour([Point(0, 0), Point(6, 0),
-    ...                                    Point(6, 6), Point(0, 6)]),
-    ...                           [lower_left_triangle, upper_left_triangle,
-    ...                            lower_right_triangle,
-    ...                            upper_right_triangle])]))
+    ...  == Polygon(Contour([Point(0, 0), Point(6, 0), Point(6, 6),
+    ...                      Point(0, 6)]),
+    ...             [lower_left_triangle, upper_left_triangle,
+    ...              lower_right_triangle, upper_right_triangle]))
     True
     >>> (unite_multipolygons(
     ...      Multipolygon([Polygon(lower_left_square, [lower_left_triangle]),
@@ -1160,5 +1155,6 @@ def unite_multipolygons(first: _Multipolygon,
     True
     """
     return _holey.Union(
-            first.polygons, second.polygons,
+            _holey.MultipolygonOperand(first),
+            _holey.MultipolygonOperand(second),
             _get_context() if context is None else context).compute()
