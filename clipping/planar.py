@@ -27,7 +27,7 @@ from ground.hints import (Empty as _Empty,
                           Multipoint as _Multipoint,
                           Multipolygon as _Multipolygon,
                           Multisegment as _Multisegment,
-                          Shaped as _Shaped,
+                          Polygon as _Polygon,
                           Segment as _Segment)
 
 from .core import (holeless as _holeless,
@@ -509,8 +509,8 @@ def complete_intersect_multiregions(first: _Multiregion,
                                     *,
                                     context: _Optional[_Context] = None
                                     ) -> _Union[_Empty, _Mix, _Multipoint,
-                                                _Multisegment, _Segment,
-                                                _Shaped]:
+                                                _Multipolygon, _Multisegment,
+                                                _Polygon, _Segment]:
     """
     Returns intersection of multiregions considering cases
     with regions touching each other in points/segments.
@@ -591,7 +591,7 @@ def intersect_multiregions(first: _Multiregion,
                            second: _Multiregion,
                            *,
                            context: _Optional[_Context] = None
-                           ) -> _Union[_Empty, _Shaped]:
+                           ) -> _Union[_Empty, _Multipolygon, _Polygon]:
     """
     Returns intersection of multiregions.
 
