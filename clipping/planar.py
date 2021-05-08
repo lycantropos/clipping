@@ -27,15 +27,14 @@ from ground.hints import (Empty as _Empty,
                           Multipoint as _Multipoint,
                           Multipolygon as _Multipolygon,
                           Multisegment as _Multisegment,
+                          Shaped as _Shaped,
                           Segment as _Segment)
 
 from .core import (holeless as _holeless,
                    holey as _holey,
                    linear as _linear,
                    mixed as _mixed)
-from .hints import (HolelessMix as _HolelessMix,
-                    LinearMix as _LinearMix,
-                    Multiregion as _Multiregion)
+from .hints import Multiregion as _Multiregion
 
 
 def segments_to_multisegment(segments: _Sequence[_Segment],
@@ -509,7 +508,9 @@ def complete_intersect_multiregions(first: _Multiregion,
                                     second: _Multiregion,
                                     *,
                                     context: _Optional[_Context] = None
-                                    ) -> _HolelessMix:
+                                    ) -> _Union[_Empty, _Mix, _Multipoint,
+                                                _Multisegment, _Segment,
+                                                _Shaped]:
     """
     Returns intersection of multiregions considering cases
     with regions touching each other in points/segments.
@@ -535,8 +536,10 @@ def complete_intersect_multiregions(first: _Multiregion,
     >>> context = get_context()
     >>> Contour = context.contour_cls
     >>> Multipoint = context.multipoint_cls
+    >>> Multipolygon = context.multipolygon_cls
     >>> Multisegment = context.multisegment_cls
     >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
     >>> Segment = context.segment_cls
     >>> lower_left_square = Contour([Point(0, 0), Point(1, 0), Point(1, 1),
     ...                              Point(0, 1)])
@@ -548,36 +551,35 @@ def complete_intersect_multiregions(first: _Multiregion,
     ...                               Point(1, 2)])
     >>> (complete_intersect_multiregions([lower_left_square],
     ...                                  [lower_left_square])
-    ...  == (Multipoint([]), Multisegment([]), [lower_left_square]))
+    ...  == Polygon(lower_left_square, []))
     True
-    >>> complete_intersect_multiregions([lower_left_square],
-    ...                                 [lower_right_square])
-    (Multipoint([]), Multisegment([Segment(Point(1, 0), Point(1, 1))]), [])
+    >>> (complete_intersect_multiregions([lower_left_square],
+    ...                                  [lower_right_square])
+    ...  == Segment(Point(1, 0), Point(1, 1)))
+    True
     >>> (complete_intersect_multiregions([lower_left_square],
     ...                                  [upper_left_square])
-    ...  == (Multipoint([]), Multisegment([Segment(Point(0, 1), Point(1, 1))]),
-    ...      []))
+    ...  == Segment(Point(0, 1), Point(1, 1)))
     True
     >>> (complete_intersect_multiregions([lower_left_square],
     ...                                  [upper_right_square])
-    ...  == (Multipoint([Point(1, 1)]), Multisegment([]), []))
+    ...  == Multipoint([Point(1, 1)]))
     True
     >>> (complete_intersect_multiregions([lower_left_square,
     ...                                   upper_right_square],
     ...                                  [upper_left_square,
     ...                                   lower_right_square])
-    ...  == (Multipoint([]), Multisegment([Segment(Point(0, 1), Point(1, 1)),
-    ...                                    Segment(Point(1, 0), Point(1, 1)),
-    ...                                    Segment(Point(1, 1), Point(2, 1)),
-    ...                                    Segment(Point(1, 1), Point(1, 2))]),
-    ...      []))
+    ...  == Multisegment([Segment(Point(0, 1), Point(1, 1)),
+    ...                   Segment(Point(1, 0), Point(1, 1)),
+    ...                   Segment(Point(1, 1), Point(2, 1)),
+    ...                   Segment(Point(1, 1), Point(1, 2))]))
     True
     >>> (complete_intersect_multiregions([lower_left_square,
     ...                                   upper_right_square],
     ...                                  [lower_left_square,
     ...                                   upper_right_square])
-    ...  == (Multipoint([]), Multisegment([]), [lower_left_square,
-    ...                                         upper_right_square]))
+    ...  == Multipolygon([Polygon(lower_left_square, []),
+    ...                   Polygon(upper_right_square, [])]))
     True
     """
     return _holeless.CompleteIntersection(
@@ -589,7 +591,7 @@ def intersect_multiregions(first: _Multiregion,
                            second: _Multiregion,
                            *,
                            context: _Optional[_Context] = None
-                           ) -> _Multiregion:
+                           ) -> _Union[_Empty, _Shaped]:
     """
     Returns intersection of multiregions.
 
@@ -612,7 +614,11 @@ def intersect_multiregions(first: _Multiregion,
 
     >>> from ground.base import get_context
     >>> context = get_context()
-    >>> Contour, Point = context.contour_cls, context.point_cls
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
     >>> lower_left_square = Contour([Point(0, 0), Point(1, 0), Point(1, 1),
     ...                              Point(0, 1)])
     >>> lower_right_square = Contour([Point(1, 0), Point(2, 0), Point(2, 1),
@@ -622,24 +628,25 @@ def intersect_multiregions(first: _Multiregion,
     >>> upper_right_square = Contour([Point(1, 1), Point(2, 1), Point(2, 2),
     ...                               Point(1, 2)])
     >>> (intersect_multiregions([lower_left_square], [lower_left_square])
-    ...  == [lower_left_square])
+    ...  == Polygon(lower_left_square, []))
     True
     >>> (intersect_multiregions([lower_left_square], [lower_right_square])
-    ...  == [])
+    ...  is EMPTY)
     True
     >>> (intersect_multiregions([lower_left_square], [upper_left_square])
-    ...  == [])
+    ...  is EMPTY)
     True
     >>> (intersect_multiregions([lower_left_square], [upper_right_square])
-    ...  == [])
+    ...  is EMPTY)
     True
     >>> (intersect_multiregions([lower_left_square, upper_right_square],
     ...                         [upper_left_square, lower_right_square])
-    ...  == [])
+    ...  is EMPTY)
     True
     >>> (intersect_multiregions([lower_left_square, upper_right_square],
     ...                         [lower_left_square, upper_right_square])
-    ...  == [lower_left_square, upper_right_square])
+    ...  == Multipolygon([Polygon(lower_left_square, []),
+    ...                   Polygon(upper_right_square, [])]))
     True
     """
     return _holeless.Intersection(
