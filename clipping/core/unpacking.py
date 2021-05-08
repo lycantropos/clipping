@@ -12,6 +12,17 @@ from ground.hints import (Empty,
                           Segment)
 
 
+def unpack_linear_mix(discrete: Maybe[Multipoint],
+                      linear: Maybe[Linear],
+                      context: Context
+                      ) -> Union[Empty, Mix, Multipoint, Linear]:
+    return (linear
+            if discrete is context.empty
+            else (discrete
+                  if linear is context.empty
+                  else context.mix_cls(discrete, linear, context.empty)))
+
+
 def unpack_points(points: Sequence[Point],
                   context: Context) -> Union[Empty, Multipoint]:
     return context.multipoint_cls(points) if points else context.empty
@@ -24,14 +35,3 @@ def unpack_segments(segments: Sequence[Segment],
              else segments[0])
             if segments
             else context.empty)
-
-
-def unpack_linear_mix(discrete: Maybe[Multipoint],
-                      linear: Maybe[Linear],
-                      context: Context
-                      ) -> Union[Empty, Mix, Multipoint, Linear]:
-    return (linear
-            if discrete is context.empty
-            else (discrete
-                  if linear is context.empty
-                  else context.mix_cls(discrete, linear, context.empty)))
