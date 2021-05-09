@@ -569,6 +569,12 @@ def complete_intersect_multiregions(first: _Multiregion,
     ...                   Segment(Point(4, 4), Point(8, 4)),
     ...                   Segment(Point(4, 4), Point(4, 8))]))
     True
+    >>> (complete_intersect_multiregions([first_square, second_inner_square],
+    ...                                  [first_inner_square, second_square])
+    ...  == Mix(EMPTY, Segment(Point(4, 0), Point(4, 4)),
+    ...         Multipolygon([Polygon(first_inner_square, []),
+    ...                       Polygon(second_inner_square, [])])))
+    True
     >>> (complete_intersect_multiregions([first_square, third_inner_square],
     ...                                  [first_inner_square, third_square])
     ...  == Mix(Multipoint([Point(4, 4)]), EMPTY,
@@ -581,23 +587,20 @@ def complete_intersect_multiregions(first: _Multiregion,
     ...  == complete_intersect_multiregions(
     ...          [first_inner_square, third_inner_square],
     ...          [first_square, third_square])
-    ...  == Multipolygon([Polygon(first_inner_square, []),
-    ...                   Polygon(third_inner_square, [])]))
-    True
-    >>> (complete_intersect_multiregions(
-    ...      [first_square, second_inner_square],
-    ...      [first_inner_square, second_inner_square])
     ...  == complete_intersect_multiregions(
-    ...          [first_inner_square, second_inner_square],
-    ...          [first_square, second_inner_square])
+    ...          [first_square, third_inner_square],
+    ...          [first_inner_square, third_inner_square])
     ...  == complete_intersect_multiregions(
-    ...          [first_inner_square, second_inner_square],
+    ...          [first_inner_square, third_inner_square],
+    ...          [first_square, third_inner_square])
+    ...  == complete_intersect_multiregions(
+    ...          [first_inner_square, third_inner_square],
     ...          [first_inner_square, second_inner_square, third_inner_square])
     ...  == complete_intersect_multiregions(
     ...          [first_inner_square, second_inner_square, third_inner_square],
-    ...          [first_inner_square, second_inner_square])
+    ...          [first_inner_square, third_inner_square])
     ...  == Multipolygon([Polygon(first_inner_square, []),
-    ...                   Polygon(second_inner_square, [])]))
+    ...                   Polygon(third_inner_square, [])]))
     True
     >>> (complete_intersect_multiregions([first_square, third_square],
     ...                                  [first_square, third_square])
