@@ -901,6 +901,13 @@ def complete_intersect_multipolygons(first: _Multipolygon,
     ...  is EMPTY)
     True
     >>> (complete_intersect_multipolygons(
+    ...      Multipolygon([Polygon(first_inner_square, []),
+    ...                    Polygon(second_square, [])]),
+    ...      Multipolygon([Polygon(third_inner_square, []),
+    ...                    Polygon(fourth_square, [])]))
+    ...  == Multipoint([Point(4, 4)]))
+    True
+    >>> (complete_intersect_multipolygons(
     ...      Multipolygon([Polygon(first_square, []),
     ...                    Polygon(third_square, [])]),
     ...      Multipolygon([Polygon(second_square, []),
