@@ -698,6 +698,138 @@ def intersect_multiregions(first: _Multiregion,
             _get_context() if context is None else context).compute()
 
 
+def complete_intersect_polygon_with_multipolygon(
+        polygon: _Polygon,
+        multipolygon: _Multipolygon,
+        *,
+        context: _Optional[_Context] = None
+) -> _Union[_Empty, _Mix, _Multipoint, _Multipolygon, _Multisegment, _Polygon]:
+    """
+    Returns intersection of polygon with multipolygon considering cases
+    with polygons touching each other in points/segments.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = edges_count + intersections_count``,
+    ``edges_count = left_edges_count + right_edges_count``,
+    ``first_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in first.polygons)``,
+    ``second_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in second.polygons)``,
+    ``intersections_count`` --- number of intersections between multipolygons
+    edges.
+
+    :param polygon: first operand.
+    :param multipolygon: second operand.
+    :param context: geometric context
+    :returns: intersection of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Mix = context.mix_cls
+    >>> Multipoint = context.multipoint_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> first_square = Contour([Point(0, 0), Point(4, 0), Point(4, 4),
+    ...                         Point(0, 4)])
+    >>> second_square = Contour([Point(4, 0), Point(8, 0), Point(8, 4),
+    ...                          Point(4, 4)])
+    >>> third_square = Contour([Point(4, 4), Point(8, 4), Point(8, 8),
+    ...                         Point(4, 8)])
+    >>> fourth_square = Contour([Point(0, 4), Point(4, 4), Point(4, 8),
+    ...                          Point(0, 8)])
+    >>> first_inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
+    ...                               Point(1, 3)])
+    >>> second_inner_square = Contour([Point(5, 1), Point(7, 1), Point(7, 3),
+    ...                                Point(5, 3)])
+    >>> third_inner_square = Contour([Point(5, 5), Point(7, 5), Point(7, 7),
+    ...                               Point(5, 7)])
+    >>> (complete_intersect_polygon_with_multipolygon(
+    ...      Polygon(first_inner_square, []),
+    ...      Multipolygon([Polygon(second_square, []),
+    ...                    Polygon(fourth_square, [])]))
+    ...  is EMPTY)
+    True
+    >>> (complete_intersect_polygon_with_multipolygon(
+    ...      Polygon(first_square, []),
+    ...      Multipolygon([Polygon(second_square, []),
+    ...                    Polygon(fourth_square, [])]))
+    ... == Multisegment([Segment(Point(0, 4), Point(4, 4)),
+    ...                  Segment(Point(4, 0), Point(4, 4))]))
+    True
+    >>> (complete_intersect_polygon_with_multipolygon(
+    ...      Polygon(first_inner_square, []),
+    ...      Multipolygon([Polygon(first_square, [first_inner_square]),
+    ...                    Polygon(third_square, [third_inner_square])]))
+    ...  == Multisegment([Segment(Point(1, 1), Point(3, 1)),
+    ...                   Segment(Point(1, 1), Point(1, 3)),
+    ...                   Segment(Point(1, 3), Point(3, 3)),
+    ...                   Segment(Point(3, 1), Point(3, 3))]))
+    True
+    >>> (complete_intersect_polygon_with_multipolygon(
+    ...      Polygon(first_square, []),
+    ...      Multipolygon([Polygon(first_inner_square, []),
+    ...                    Polygon(second_square, [])]))
+    ...  == Mix(EMPTY, Segment(Point(4, 0), Point(4, 4)),
+    ...         Polygon(first_inner_square, [])))
+    True
+    >>> (complete_intersect_polygon_with_multipolygon(
+    ...      Polygon(first_square, []),
+    ...      Multipolygon([Polygon(first_inner_square, []),
+    ...                    Polygon(third_square, [])]))
+    ...  == Mix(Multipoint([Point(4, 4)]), EMPTY,
+    ...         Polygon(first_inner_square, [])))
+    True
+    >>> (complete_intersect_polygon_with_multipolygon(
+    ...      Polygon(first_square, []),
+    ...      Multipolygon([Polygon(first_inner_square, []),
+    ...                    Polygon(third_inner_square, [])]))
+    ...  == complete_intersect_polygon_with_multipolygon(
+    ...          Polygon(first_inner_square, []),
+    ...          Multipolygon([Polygon(first_square, []),
+    ...                        Polygon(third_square, [])]))
+    ...  == complete_intersect_polygon_with_multipolygon(
+    ...          Polygon(first_square, []),
+    ...          Multipolygon([Polygon(first_inner_square, []),
+    ...                        Polygon(third_inner_square, [])]))
+    ...  == complete_intersect_polygon_with_multipolygon(
+    ...          Polygon(first_inner_square, []),
+    ...          Multipolygon([Polygon(first_square, []),
+    ...                        Polygon(third_inner_square, [])]))
+    ...  == complete_intersect_polygon_with_multipolygon(
+    ...          Polygon(first_inner_square, []),
+    ...          Multipolygon([Polygon(first_inner_square, []),
+    ...                        Polygon(third_inner_square, [])]))
+    ...  == complete_intersect_polygon_with_multipolygon(
+    ...          Polygon(first_inner_square, []),
+    ...          Multipolygon([Polygon(first_inner_square, []),
+    ...                        Polygon(second_inner_square, []),
+    ...                        Polygon(third_inner_square, [])]))
+    ...  == Polygon(first_inner_square, []))
+    True
+    >>> (complete_intersect_polygon_with_multipolygon(
+    ...      Polygon(first_square, []),
+    ...      Multipolygon([Polygon(first_square, []),
+    ...                    Polygon(third_square, [])]))
+    ...  == Polygon(first_square, []))
+    True
+    """
+    return _holey.CompleteIntersection(
+            _holey.PolygonOperand(polygon),
+            _holey.MultipolygonOperand(multipolygon),
+            _get_context() if context is None else context).compute()
+
+
 def complete_intersect_multipolygons(first: _Multipolygon,
                                      second: _Multipolygon,
                                      *,
