@@ -1283,7 +1283,7 @@ def subtract_multipolygons(minuend: _Multipolygon,
                            subtrahend: _Multipolygon,
                            *,
                            context: _Optional[_Context] = None
-                           ) -> _Multipolygon:
+                           ) -> _Union[_Empty, _Multipolygon, _Polygon]:
     """
     Returns difference of multipolygons.
 
