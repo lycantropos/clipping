@@ -715,9 +715,8 @@ def complete_intersect_polygon_with_multipolygon(
 
     where ``segments_count = edges_count + intersections_count``,
     ``edges_count = left_edges_count + right_edges_count``,
-    ``first_edges_count = sum(len(polygon.border.vertices)\
- + sum(len(hole.vertices) for hole in polygon.holes)\
- for polygon in first.polygons)``,
+    ``first_edges_count = len(first.border.vertices)\
+ + sum(len(hole.vertices) for hole in first.holes)``,
     ``second_edges_count = sum(len(polygon.border.vertices)\
  + sum(len(hole.vertices) for hole in polygon.holes)\
  for polygon in second.polygons)``,
