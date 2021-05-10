@@ -1,29 +1,33 @@
+from functools import singledispatch
 from typing import (Any,
                     Callable,
                     Iterable,
                     Sequence,
                     Tuple,
-                    TypeVar)
+                    TypeVar,
+                    Union)
 
 from ground.base import (Orientation,
                          Relation,
                          get_context)
+from ground.hints import Shaped
 from hypothesis import strategies
 from hypothesis.strategies import SearchStrategy
 from orient.planar import multisegment_in_multisegment
 
 from clipping.core.utils import to_endpoints
-from clipping.hints import (HolelessMix,
-                            LinearMix,
-                            Mix,
+from clipping.hints import (LinearMix,
                             Multiregion)
 
 Strategy = SearchStrategy
 Domain = TypeVar('Domain')
 Key = Callable[[Domain], Any]
 _context = get_context()
+EMPTY = _context.empty
 Box = _context.box_cls
 Contour = _context.contour_cls
+Empty = _context.empty_cls
+Mix = _context.mix_cls
 Multipoint = _context.multipoint_cls
 Multipolygon = _context.multipolygon_cls
 Multisegment = _context.multisegment_cls
@@ -52,56 +56,52 @@ def arg_min(values: Sequence[Domain]) -> int:
                key=values.__getitem__)
 
 
-def linear_mix_equivalent_to_multisegment(mix: LinearMix,
-                                          other: Multisegment) -> bool:
-    multipoint, multisegment = mix
-    return (not multipoint.points
-            and are_multisegments_equivalent(multisegment, other))
+@singledispatch
+def are_compounds_similar(left: Domain, right: Domain) -> bool:
+    raise TypeError('Unsupported object type: {!r}.'
+                    .format(type(left)))
 
 
-def mix_similar_to_multipolygon(mix: Mix, other: Multipolygon) -> bool:
-    multipoint, multisegment, multipolygon = mix
-    return (not multipoint.points and not multisegment.segments
-            and are_multipolygons_similar(multipolygon, other))
+@are_compounds_similar.register(Empty)
+def _(left: Empty, right: Empty) -> bool:
+    return left is right
 
 
-def holeless_mix_similar_to_multiregion(mix: HolelessMix,
-                                        other: Multiregion) -> bool:
-    multipoint, multisegment, multiregion = mix
-    return (not multipoint.points and not multisegment.segments
-            and are_multiregions_similar(multiregion, other))
+@are_compounds_similar.register(Mix)
+def _(left: Mix, right: Mix) -> bool:
+    return (are_compounds_similar(left.discrete, right.discrete)
+            and are_compounds_similar(left.linear, right.linear)
+            and are_compounds_similar(left.shaped, right.shaped))
 
 
-def are_holeless_mixes_similar(left: HolelessMix, right: HolelessMix) -> bool:
-    left_multipoint, left_multisegment, left_multiregion = left
-    right_multipoint, right_multisegment, right_multiregion = right
-    return (are_multipoints_similar(left_multipoint, right_multipoint)
-            and are_multisegments_similar(left_multisegment,
-                                          right_multisegment)
-            and are_multiregions_similar(left_multiregion, right_multiregion))
-
-
-def are_linear_mixes_similar(left: LinearMix, right: LinearMix) -> bool:
-    left_multipoint, left_multisegment = left
-    right_multipoint, right_multisegment = right
-    return (are_multipoints_similar(left_multipoint, right_multipoint)
-            and are_multisegments_similar(left_multisegment,
-                                          right_multisegment))
-
-
-def are_mixes_similar(left: Mix, right: Mix) -> bool:
-    left_multipoint, left_multisegment, left_multipolygon = left
-    right_multipoint, right_multisegment, right_multipolygon = right
-    return (are_multipoints_similar(left_multipoint, right_multipoint)
-            and are_multisegments_similar(left_multisegment,
-                                          right_multisegment)
-            and are_multipolygons_similar(left_multipolygon,
-                                          right_multipolygon))
-
-
-def are_multipoints_similar(left: Multipoint, right: Multipoint) -> bool:
+@are_compounds_similar.register(Multipoint)
+def _(left: Multipoint, right: Multipoint) -> bool:
     return (len(left.points) == len(right.points)
             and set(left.points) == set(right.points))
+
+
+@are_compounds_similar.register(Multipolygon)
+def _(left: Multipolygon, right: Multipolygon) -> bool:
+    return normalize_multipolygon(left) == normalize_multipolygon(right)
+
+
+@are_compounds_similar.register(Multisegment)
+def _(left: Multisegment, right: Multisegment) -> bool:
+    return (len(left.segments) == len(right.segments)
+            and (frozenset(map(to_endpoints,
+                               map(to_sorted_segment, left.segments)))
+                 == frozenset(map(to_endpoints,
+                                  map(to_sorted_segment, right.segments)))))
+
+
+@are_compounds_similar.register(Polygon)
+def _(left: Polygon, right: Polygon) -> bool:
+    return normalize_polygon(left) == normalize_polygon(right)
+
+
+@are_compounds_similar.register(Segment)
+def _(left: Segment, right: Segment) -> bool:
+    return {left.start, left.end} == {right.start, right.end}
 
 
 def are_multisegments_equivalent(left: Multisegment,
@@ -110,20 +110,11 @@ def are_multisegments_equivalent(left: Multisegment,
             or multisegment_in_multisegment(left, right) is Relation.EQUAL)
 
 
-def are_multisegments_similar(left: Multisegment, right: Multisegment) -> bool:
-    return (len(left.segments) == len(right.segments)
-            and (frozenset(map(to_endpoints,
-                               map(to_sorted_segment, left.segments)))
-                 == frozenset(map(to_endpoints,
-                                  map(to_sorted_segment, right.segments)))))
-
-
-def are_multipolygons_similar(left: Multipolygon, right: Multipolygon) -> bool:
-    return normalize_multipolygon(left) == normalize_multipolygon(right)
-
-
-def are_multiregions_similar(left: Multiregion, right: Multiregion) -> bool:
-    return normalize_multiregion(left) == normalize_multiregion(right)
+def is_multipolygon_similar_to_multiregion(multipolygon: Multipolygon,
+                                           multiregion: Multiregion) -> bool:
+    return (normalize_multipolygon(multipolygon)
+            == Multipolygon([Polygon(border, [])
+                             for border in normalize_regions(multiregion)]))
 
 
 def are_segments_sequences_similar(left: Sequence[Segment],
@@ -133,14 +124,18 @@ def are_segments_sequences_similar(left: Sequence[Segment],
 
 
 def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
-    polygons = [Polygon(normalize_region(polygon.border),
-                        normalize_multiregion(polygon.holes))
+    polygons = [normalize_polygon(polygon)
                 for polygon in multipolygon.polygons]
     polygons.sort(key=lambda polygon: polygon.border.vertices[0])
     return Multipolygon(polygons)
 
 
-def normalize_multiregion(multiregion: Multiregion) -> Multiregion:
+def normalize_polygon(polygon: Polygon) -> Polygon:
+    return Polygon(normalize_region(polygon.border),
+                   normalize_regions(polygon.holes))
+
+
+def normalize_regions(multiregion: Multiregion) -> Multiregion:
     result = [normalize_region(region) for region in multiregion]
     result.sort(key=lambda region: region.vertices[:2])
     return result
@@ -179,19 +174,22 @@ contour_to_edges = _context.contour_edges
 is_contour = Contour.__instancecheck__
 
 
-def is_holeless_mix(object_: Any) -> bool:
-    return (isinstance(object_, tuple)
-            and len(object_) == 3
-            and is_multipoint(object_[0])
-            and is_multisegment(object_[1])
-            and is_multiregion(object_[2]))
+def is_holeless_compound(object_: Any) -> bool:
+    return (is_compound(object_)
+            and (not is_shaped(object_) or not shaped_has_holes(object_))
+            and (not is_mix(object_) or not shaped_has_holes(object_.shaped)))
 
 
-def is_linear_mix(object_: Any) -> bool:
-    return (isinstance(object_, tuple)
-            and len(object_) == 2
-            and is_multipoint(object_[0])
-            and is_multisegment(object_[1]))
+def shaped_has_holes(shaped: Shaped) -> bool:
+    return (bool(shaped.holes)
+            if is_polygon(shaped)
+            else any(polygon.holes for polygon in shaped.polygons))
+
+
+def is_linear_compound(object_: Any) -> bool:
+    return (is_empty(object_)
+            or isinstance(object_, (Multipoint, Multisegment, Segment))
+            or isinstance(object_, Mix) and is_empty(object_.shaped))
 
 
 def is_linear_mix_empty(mix: LinearMix) -> bool:
@@ -199,14 +197,21 @@ def is_linear_mix_empty(mix: LinearMix) -> bool:
     return not (multipoint.points or multisegment.segments)
 
 
-def is_mix(object_: Any) -> bool:
-    return (isinstance(object_, tuple)
-            and len(object_) == 3
-            and is_multipoint(object_[0])
-            and is_multisegment(object_[1])
-            and is_multipolygon(object_[2]))
+def is_compound(object_: Any) -> bool:
+    return (is_empty(object_)
+            or isinstance(object_, (Mix, Multipoint, Multipolygon,
+                                    Multisegment, Polygon, Segment)))
 
 
+def is_shaped(object_: Any) -> bool:
+    return isinstance(object_, (Multipolygon, Polygon))
+
+
+def is_empty(object_: Any) -> bool:
+    return object_ is EMPTY
+
+
+is_mix = Mix.__instancecheck__
 is_multipoint = Multipoint.__instancecheck__
 is_multipolygon = Multipolygon.__instancecheck__
 
@@ -217,6 +222,7 @@ def is_multiregion(object_: Any) -> bool:
 
 is_multisegment = Multisegment.__instancecheck__
 is_region = is_contour
+is_polygon = Polygon.__instancecheck__
 
 
 def reverse_contour(contour: Contour) -> Contour:
@@ -228,27 +234,26 @@ def reverse_contour_coordinates(contour: Contour) -> Contour:
                     for vertex in contour.vertices])
 
 
-def reverse_holeless_mix_coordinates(mix: HolelessMix) -> HolelessMix:
-    multipoint, multisegment, multiregion = mix
-    return (reverse_multipoint_coordinates(multipoint),
-            reverse_multisegment_coordinates(multisegment),
-            reverse_multiregion_coordinates(multiregion))
+@singledispatch
+def reverse_compound_coordinates(compound: Domain) -> Domain:
+    raise TypeError('Unsupported object type: {!r}.'
+                    .format(type(compound)))
 
 
-def reverse_mix_coordinates(mix: Mix) -> Mix:
-    multipoint, multisegment, multipolygon = mix
-    return (reverse_multipoint_coordinates(multipoint),
-            reverse_multisegment_coordinates(multisegment),
-            reverse_multipolygon_coordinates(multipolygon))
+@reverse_compound_coordinates.register(Empty)
+def _(compound: Empty) -> Empty:
+    return compound
 
 
-def reverse_linear_mix_coordinates(mix: LinearMix) -> LinearMix:
-    multipoint, multisegment = mix
-    return (reverse_multipoint_coordinates(multipoint),
-            reverse_multisegment_coordinates(multisegment))
+@reverse_compound_coordinates.register(Mix)
+def _(compound: Mix) -> Mix:
+    return type(compound)(reverse_compound_coordinates(compound.discrete),
+                          reverse_compound_coordinates(compound.linear),
+                          reverse_compound_coordinates(compound.shaped))
 
 
-def reverse_multipoint_coordinates(multipoint: Multipoint) -> Multipoint:
+@reverse_compound_coordinates.register(Multipoint)
+def _(multipoint: Multipoint) -> Multipoint:
     return Multipoint([reverse_point_coordinates(point)
                        for point in multipoint.points])
 
@@ -263,6 +268,7 @@ def reverse_multipolygon_borders(multipolygon: Multipolygon) -> Multipolygon:
                          for polygon in multipolygon.polygons])
 
 
+@reverse_compound_coordinates.register(Multipolygon)
 def reverse_multipolygon_coordinates(multipolygon: Multipolygon
                                      ) -> Multipolygon:
     return Multipolygon([reverse_polygon_coordinates(polygon)
@@ -286,8 +292,11 @@ def reverse_multipolygon_holes_contours(multipolygon: Multipolygon
 reverse_multiregion = reverse_sequence
 
 
-def reverse_multiregion_coordinates(multiregion: Multiregion) -> Multiregion:
+def reverse_regions_coordinates(multiregion: Multiregion) -> Multiregion:
     return [reverse_region_coordinates(region) for region in multiregion]
+
+
+reverse_multiregion_coordinates = reverse_regions_coordinates
 
 
 def reverse_multiregion_regions(multiregion: Multiregion) -> Multiregion:
@@ -298,6 +307,7 @@ def reverse_multisegment(multisegment: Multisegment) -> Multisegment:
     return Multisegment(reverse_sequence(multisegment.segments))
 
 
+@reverse_compound_coordinates.register(Multisegment)
 def reverse_multisegment_coordinates(multisegment: Multisegment
                                      ) -> Multisegment:
     return Multisegment(reverse_segments_sequence_coordinates(
@@ -313,9 +323,10 @@ def reverse_point_coordinates(point: Point) -> Point:
     return Point(point.y, point.x)
 
 
+@reverse_compound_coordinates.register(Polygon)
 def reverse_polygon_coordinates(polygon: Polygon) -> Polygon:
     return Polygon(reverse_contour_coordinates(polygon.border),
-                   reverse_multiregion_coordinates(polygon.holes))
+                   reverse_regions_coordinates(polygon.holes))
 
 
 reverse_region = reverse_contour
@@ -326,6 +337,7 @@ def reverse_segment(segment: Segment) -> Segment:
     return Segment(segment.end, segment.start)
 
 
+@reverse_compound_coordinates.register(Segment)
 def reverse_segment_coordinates(segment: Segment) -> Segment:
     return Segment(reverse_point_coordinates(segment.start),
                    reverse_point_coordinates(segment.end))
@@ -353,6 +365,25 @@ def multipolygon_to_multiregion(multipolygon: Multipolygon) -> Multiregion:
     return [polygon.border for polygon in multipolygon.polygons]
 
 
+def pack_linear_compound(object_: Union[Empty, Mix, Multipoint, Multisegment,
+                                        Segment]
+                         ) -> Tuple[Sequence[Point], Sequence[Segment]]:
+    if object_ is EMPTY:
+        return [], []
+    elif isinstance(object_, Mix):
+        discrete_points, _ = pack_linear_compound(object_.discrete)
+        _, linear_segments = pack_linear_compound(object_.linear)
+        return discrete_points, linear_segments
+    elif isinstance(object_, Multipoint):
+        return object_.points, []
+    elif isinstance(object_, Multisegment):
+        return [], object_.segments
+    elif isinstance(object_, Segment):
+        return [], [object_]
+    else:
+        raise TypeError('Unsupported object type: {!r}.'.format(type(object_)))
+
+
 def multiregion_to_multipolygon(multiregion: Multiregion) -> Multipolygon:
     return Multipolygon([Polygon(region, []) for region in multiregion])
 
@@ -370,18 +401,6 @@ def segments_intersections(first: Segment, second: Segment
         _, first_point, second_point, _ = sorted([first_start, first_end,
                                                   second_start, second_end])
         return first_point, second_point
-
-
-def is_holeless_mix_empty(mix: HolelessMix) -> bool:
-    multipoint, multisegment, multiregion = mix
-    return not (multipoint.points or multisegment.segments
-                or multiregion)
-
-
-def is_mix_empty(mix: Mix) -> bool:
-    multipoint, multisegment, multipolygon = mix
-    return not (multipoint.points or multisegment.segments
-                or multipolygon.polygons)
 
 
 def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:

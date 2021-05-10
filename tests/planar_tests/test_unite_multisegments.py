@@ -8,7 +8,7 @@ from clipping.planar import (intersect_multisegments,
 from tests.utils import (MultisegmentsPair,
                          MultisegmentsTriplet,
                          are_multisegments_equivalent,
-                         are_multisegments_similar,
+                         are_compounds_similar,
                          is_multisegment,
                          reverse_multisegment,
                          reverse_multisegment_coordinates)
@@ -60,7 +60,7 @@ def test_associativity(multisegments_triplet: MultisegmentsTriplet) -> None:
             unite_multisegments(left_multisegment, mid_multisegment),
             right_multisegment)
 
-    assert are_multisegments_similar(
+    assert are_compounds_similar(
             result,
             unite_multisegments(left_multisegment,
                                 unite_multisegments(mid_multisegment,
@@ -121,15 +121,15 @@ def test_reversals(multisegments_pair: MultisegmentsPair) -> None:
 
     result = unite_multisegments(left_multisegment, right_multisegment)
 
-    assert are_multisegments_similar(
+    assert are_compounds_similar(
             result,
             unite_multisegments(reverse_multisegment(left_multisegment),
                                 right_multisegment))
-    assert are_multisegments_similar(
+    assert are_compounds_similar(
             result,
             unite_multisegments(left_multisegment,
                                 reverse_multisegment(right_multisegment)))
-    assert are_multisegments_similar(
+    assert are_compounds_similar(
             result, reverse_multisegment_coordinates(unite_multisegments(
                     reverse_multisegment_coordinates(left_multisegment),
                     reverse_multisegment_coordinates(right_multisegment))))

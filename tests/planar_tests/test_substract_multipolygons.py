@@ -5,7 +5,7 @@ from clipping.planar import (intersect_multipolygons,
                              unite_multipolygons)
 from tests.utils import (MultipolygonsPair,
                          MultipolygonsTriplet,
-                         are_multipolygons_similar,
+                         are_compounds_similar,
                          equivalence,
                          is_multipolygon,
                          reverse_multipolygon,
@@ -33,8 +33,8 @@ def test_commutative_case(multipolygons_pair: MultipolygonsPair) -> None:
 
     assert equivalence(result == subtract_multipolygons(right_multipolygon,
                                                         left_multipolygon),
-                       are_multipolygons_similar(left_multipolygon,
-                                                 right_multipolygon))
+                       are_compounds_similar(left_multipolygon,
+                                             right_multipolygon))
 
 
 @given(strategies.multipolygons_triplets)
@@ -47,7 +47,7 @@ def test_difference_subtrahend(multipolygons_triplet: MultipolygonsTriplet
                                     subtract_multipolygons(mid_multipolygon,
                                                            right_multipolygon))
 
-    assert are_multipolygons_similar(
+    assert are_compounds_similar(
             result,
             unite_multipolygons(subtract_multipolygons(left_multipolygon,
                                                        mid_multipolygon),
@@ -80,7 +80,7 @@ def test_intersection_subtrahend(multipolygons_triplet: MultipolygonsTriplet
             left_multipolygon, intersect_multipolygons(mid_multipolygon,
                                                        right_multipolygon))
 
-    assert are_multipolygons_similar(
+    assert are_compounds_similar(
             result,
             unite_multipolygons(subtract_multipolygons(left_multipolygon,
                                                        mid_multipolygon),
@@ -97,7 +97,7 @@ def test_union_subtrahend(multipolygons_triplet: MultipolygonsTriplet) -> None:
                                     unite_multipolygons(mid_multipolygon,
                                                         right_multipolygon))
 
-    assert are_multipolygons_similar(
+    assert are_compounds_similar(
             result, intersect_multipolygons(
                     subtract_multipolygons(left_multipolygon,
                                            mid_multipolygon),
@@ -111,26 +111,26 @@ def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
 
     result = subtract_multipolygons(left_multipolygon, right_multipolygon)
 
-    assert are_multipolygons_similar(
+    assert are_compounds_similar(
             result,
             subtract_multipolygons(reverse_multipolygon(left_multipolygon),
                                    right_multipolygon))
     assert result == subtract_multipolygons(
             left_multipolygon, reverse_multipolygon(right_multipolygon))
-    assert are_multipolygons_similar(
+    assert are_compounds_similar(
             result, subtract_multipolygons(
                     reverse_multipolygon_borders(left_multipolygon),
                     right_multipolygon))
     assert result == subtract_multipolygons(
             left_multipolygon,
             reverse_multipolygon_borders(right_multipolygon))
-    assert are_multipolygons_similar(
+    assert are_compounds_similar(
             result, subtract_multipolygons(
                     reverse_multipolygon_holes(left_multipolygon),
                     right_multipolygon))
     assert result == subtract_multipolygons(
             left_multipolygon, reverse_multipolygon_holes(right_multipolygon))
-    assert are_multipolygons_similar(
+    assert are_compounds_similar(
             result,
             subtract_multipolygons(
                     reverse_multipolygon_holes_contours(left_multipolygon),
@@ -138,7 +138,7 @@ def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
     assert result == subtract_multipolygons(
             left_multipolygon,
             reverse_multipolygon_holes_contours(right_multipolygon))
-    assert are_multipolygons_similar(
+    assert are_compounds_similar(
             result,
             reverse_multipolygon_coordinates(subtract_multipolygons(
                     reverse_multipolygon_coordinates(left_multipolygon),

@@ -6,7 +6,7 @@ from orient.planar import (segment_in_multipolygon,
 
 from clipping.planar import subtract_multipolygon_from_multisegment
 from tests.utils import (MultipolygonWithMultisegment,
-                         are_multisegments_similar,
+                         are_compounds_similar,
                          is_multisegment,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
@@ -72,14 +72,14 @@ def test_reversals(multipolygon_with_multisegment: MultipolygonWithMultisegment
             multisegment, reverse_multipolygon_holes(multipolygon))
     assert result == subtract_multipolygon_from_multisegment(
             multisegment, reverse_multipolygon_holes_contours(multipolygon))
-    assert are_multisegments_similar(
+    assert are_compounds_similar(
             result, subtract_multipolygon_from_multisegment(
                     reverse_multisegment(multisegment), multipolygon))
-    assert are_multisegments_similar(
+    assert are_compounds_similar(
             result, subtract_multipolygon_from_multisegment(
                     reverse_multisegment_endpoints(multisegment),
                     multipolygon))
-    assert are_multisegments_similar(
+    assert are_compounds_similar(
             result, reverse_multisegment_coordinates(
                     subtract_multipolygon_from_multisegment(
                             reverse_multisegment_coordinates(multisegment),

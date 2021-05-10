@@ -6,7 +6,7 @@ from clipping.planar import (intersect_multipolygons,
                              unite_multipolygons)
 from tests.utils import (MultipolygonsPair,
                          MultipolygonsTriplet,
-                         are_multipolygons_similar,
+                         are_compounds_similar,
                          is_multipolygon,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
@@ -29,7 +29,7 @@ def test_basic(multipolygons_pair: MultipolygonsPair) -> None:
 def test_idempotence(multipolygon: Multipolygon) -> None:
     result = intersect_multipolygons(multipolygon, multipolygon)
 
-    assert are_multipolygons_similar(result, multipolygon)
+    assert are_compounds_similar(result, multipolygon)
 
 
 @given(strategies.multipolygons_pairs)
@@ -40,7 +40,7 @@ def test_absorption_identity(multipolygons_pair: MultipolygonsPair) -> None:
                                      unite_multipolygons(left_multipolygon,
                                                          right_multipolygon))
 
-    assert are_multipolygons_similar(result, left_multipolygon)
+    assert are_compounds_similar(result, left_multipolygon)
 
 
 @given(strategies.multipolygons_pairs)
@@ -104,7 +104,7 @@ def test_equivalents(multipolygons_pair: MultipolygonsPair) -> None:
 
     result = intersect_multipolygons(left_multipolygon, right_multipolygon)
 
-    assert are_multipolygons_similar(
+    assert are_compounds_similar(
             result,
             subtract_multipolygons(left_multipolygon,
                                    subtract_multipolygons(left_multipolygon,
@@ -137,7 +137,7 @@ def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
     assert result == intersect_multipolygons(
             left_multipolygon,
             reverse_multipolygon_holes_contours(right_multipolygon))
-    assert are_multipolygons_similar(
+    assert are_compounds_similar(
             result, reverse_multipolygon_coordinates(intersect_multipolygons(
                     reverse_multipolygon_coordinates(left_multipolygon),
                     reverse_multipolygon_coordinates(right_multipolygon))))

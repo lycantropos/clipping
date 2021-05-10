@@ -6,7 +6,7 @@ from clipping.planar import (intersect_multipolygons,
                              subtract_multipolygons)
 from tests.utils import (MultiregionsPair,
                          MultiregionsTriplet,
-                         are_multiregions_similar,
+                         is_multipolygon_similar_to_multiregion,
                          is_multiregion,
                          multipolygon_to_multiregion,
                          multiregion_to_multipolygon,
@@ -29,7 +29,7 @@ def test_basic(multiregions_pair: MultiregionsPair) -> None:
 def test_idempotence(multiregion: Multiregion) -> None:
     result = intersect_multiregions(multiregion, multiregion)
 
-    assert are_multiregions_similar(result, multiregion)
+    assert is_multipolygon_similar_to_multiregion(result, multiregion)
 
 
 @given(strategies.multiregions_pairs)
@@ -65,13 +65,13 @@ def test_equivalents(multiregions_pair: MultiregionsPair) -> None:
 
     left_multipolygon = multiregion_to_multipolygon(left_multiregion)
     right_multipolygon = multiregion_to_multipolygon(right_multiregion)
-    assert are_multiregions_similar(
+    assert is_multipolygon_similar_to_multiregion(
             result,
             multipolygon_to_multiregion(subtract_multipolygons(
                     left_multipolygon,
                     subtract_multipolygons(left_multipolygon,
                                            right_multipolygon))))
-    assert are_multiregions_similar(
+    assert is_multipolygon_similar_to_multiregion(
             result,
             multipolygon_to_multiregion(intersect_multipolygons(
                     left_multipolygon, right_multipolygon)))
@@ -91,7 +91,7 @@ def test_reversals(multiregions_pair: MultiregionsPair) -> None:
             reverse_multiregion_regions(left_multiregion), right_multiregion)
     assert result == intersect_multiregions(
             left_multiregion, reverse_multiregion_regions(right_multiregion))
-    assert are_multiregions_similar(
+    assert is_multipolygon_similar_to_multiregion(
             result,
             reverse_multiregion_coordinates(intersect_multiregions(
                     reverse_multiregion_coordinates(left_multiregion),

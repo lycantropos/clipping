@@ -5,7 +5,7 @@ from ground.hints import Segment
 from hypothesis import given
 
 from clipping.planar import segments_to_multisegment
-from tests.utils import (are_multisegments_similar,
+from tests.utils import (are_compounds_similar,
                          are_segments_sequences_similar,
                          equivalence,
                          is_multisegment,
@@ -43,6 +43,6 @@ def test_reversals(segments: List[Segment]) -> None:
             reverse_segments_sequence(segments))
     assert result == segments_to_multisegment(
             reverse_segments_sequence_endpoints(segments))
-    assert are_multisegments_similar(
+    assert are_compounds_similar(
             result, reverse_multisegment_coordinates(segments_to_multisegment(
                     reverse_segments_sequence_coordinates(segments))))

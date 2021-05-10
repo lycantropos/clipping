@@ -4,10 +4,11 @@ from clipping.hints import Multiregion
 from clipping.planar import (complete_intersect_multiregions,
                              intersect_multiregions)
 from tests.utils import (MultiregionsPair,
-                         are_holeless_mixes_similar,
-                         holeless_mix_similar_to_multiregion,
-                         is_holeless_mix,
-                         reverse_holeless_mix_coordinates,
+                         are_compounds_similar,
+                         is_holeless_compound,
+                         is_mix,
+                         is_multipolygon_similar_to_multiregion,
+                         reverse_compound_coordinates,
                          reverse_multiregion,
                          reverse_multiregion_coordinates,
                          reverse_multiregion_regions)
@@ -21,14 +22,14 @@ def test_basic(multiregions_pair: MultiregionsPair) -> None:
     result = complete_intersect_multiregions(left_multiregion,
                                              right_multiregion)
 
-    assert is_holeless_mix(result)
+    assert is_holeless_compound(result)
 
 
 @given(strategies.multiregions)
 def test_idempotence(multiregion: Multiregion) -> None:
     result = complete_intersect_multiregions(multiregion, multiregion)
 
-    assert holeless_mix_similar_to_multiregion(result, multiregion)
+    assert is_multipolygon_similar_to_multiregion(result, multiregion)
 
 
 @given(strategies.multiregions_pairs)
@@ -50,9 +51,10 @@ def test_connection_with_intersect(multiregions_pair: MultiregionsPair
     result = complete_intersect_multiregions(left_multiregion,
                                              right_multiregion)
 
-    _, _, multiregion = result
-    assert multiregion == intersect_multiregions(left_multiregion,
-                                                 right_multiregion)
+    assert (result.shaped
+            if is_mix(result)
+            else result) == intersect_multiregions(left_multiregion,
+                                                   right_multiregion)
 
 
 @given(strategies.multiregions_pairs)
@@ -70,8 +72,8 @@ def test_reversals(multiregions_pair: MultiregionsPair) -> None:
             reverse_multiregion_regions(left_multiregion), right_multiregion)
     assert result == complete_intersect_multiregions(
             left_multiregion, reverse_multiregion_regions(right_multiregion))
-    assert are_holeless_mixes_similar(
+    assert are_compounds_similar(
             result,
-            reverse_holeless_mix_coordinates(complete_intersect_multiregions(
+            reverse_compound_coordinates(complete_intersect_multiregions(
                     reverse_multiregion_coordinates(left_multiregion),
                     reverse_multiregion_coordinates(right_multiregion))))

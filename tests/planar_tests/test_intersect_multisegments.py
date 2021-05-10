@@ -7,7 +7,7 @@ from clipping.planar import (intersect_multisegments,
 from tests.utils import (MultisegmentsPair,
                          MultisegmentsTriplet,
                          are_multisegments_equivalent,
-                         are_multisegments_similar,
+                         are_compounds_similar,
                          is_multisegment,
                          reverse_multisegment,
                          reverse_multisegment_coordinates)
@@ -109,7 +109,7 @@ def test_reversals(multisegments_pair: MultisegmentsPair) -> None:
             reverse_multisegment(left_multisegment), right_multisegment)
     assert result == intersect_multisegments(
             left_multisegment, reverse_multisegment(right_multisegment))
-    assert are_multisegments_similar(
+    assert are_compounds_similar(
             result, reverse_multisegment_coordinates(intersect_multisegments(
                     reverse_multisegment_coordinates(left_multisegment),
                     reverse_multisegment_coordinates(right_multisegment))))

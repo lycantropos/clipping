@@ -11,7 +11,9 @@ from clipping.planar import (complete_intersect_multisegment_with_multipolygon,
                              intersect_multisegment_with_multipolygon)
 from tests.utils import (MultipolygonWithMultisegment,
                          contour_to_edges,
-                         is_linear_mix,
+                         is_linear_compound,
+                         is_mix,
+                         pack_linear_compound,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
                          reverse_multipolygon_holes,
@@ -32,7 +34,7 @@ def test_basic(multipolygon_with_multisegment: MultipolygonWithMultisegment
     result = complete_intersect_multisegment_with_multipolygon(multisegment,
                                                                multipolygon)
 
-    assert is_linear_mix(result)
+    assert is_linear_compound(result)
 
 
 @given(strategies.multipolygons_with_multisegments)
@@ -43,17 +45,17 @@ def test_properties(multipolygon_with_multisegment
     result = complete_intersect_multisegment_with_multipolygon(multisegment,
                                                                multipolygon)
 
-    result_multipoint, result_multisegment = result
+    result_points, result_segments = pack_linear_compound(result)
     assert all(point_in_multisegment(point, multisegment) is Relation.COMPONENT
-               for point in result_multipoint.points)
+               for point in result_points)
     assert all(point_in_multipolygon(point, multipolygon) is Relation.COMPONENT
-               for point in result_multipoint.points)
+               for point in result_points)
     assert all(any(point_in_segment(point, segment) is Relation.COMPONENT
-                   for point in result_multipoint.points)
+                   for point in result_points)
                or any(segments_relation(segment.start, segment.end,
                                         result_segment.start,
                                         result_segment.end) is Relation.TOUCH
-                      for result_segment in result_multisegment.segments)
+                      for result_segment in result_segments)
                for segment in multisegment.segments
                if (segment_in_multipolygon(segment, multipolygon)
                    is Relation.TOUCH
@@ -67,15 +69,15 @@ def test_properties(multipolygon_with_multisegment
                            in contour_to_edges(contour))))
     assert all(segment_in_multisegment(segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
-               for segment in result_multisegment.segments)
+               for segment in result_segments)
     assert all(segment_in_multipolygon(segment, multipolygon)
                in (Relation.COMPONENT, Relation.ENCLOSED, Relation.WITHIN)
-               for segment in result_multisegment.segments)
-    assert all(to_sorted_segment(segment) in result_multisegment.segments
+               for segment in result_segments)
+    assert all(to_sorted_segment(segment) in result_segments
                # in case of cross
                or any(segment_in_segment(result_segment, segment)
                       is Relation.COMPONENT
-                      for result_segment in result_multisegment.segments)
+                      for result_segment in result_segments)
                for segment in multisegment.segments
                if (segment_in_multipolygon(segment, multipolygon)
                    in (Relation.CROSS, Relation.COMPONENT, Relation.ENCLOSED,
@@ -90,9 +92,9 @@ def test_connection_with_intersect(multipolygon_with_multisegment
     result = complete_intersect_multisegment_with_multipolygon(multisegment,
                                                                multipolygon)
 
-    _, multisegment = result
-    assert multisegment == intersect_multisegment_with_multipolygon(
-            multisegment, multipolygon)
+    assert ((result.linear if is_mix(result) else result)
+            == intersect_multisegment_with_multipolygon(multisegment,
+                                                        multipolygon))
 
 
 @given(strategies.multipolygons_with_multisegments)
