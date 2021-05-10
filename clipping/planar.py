@@ -818,15 +818,15 @@ def complete_intersect_polygon_with_multipolygon(
     >>> (complete_intersect_polygon_with_multipolygon(
     ...      Polygon(first_square, []),
     ...      Multipolygon([Polygon(first_inner_square, []),
-    ...                    Polygon(second_square, [])]))
-    ...  == Mix(EMPTY, Segment(Point(4, 0), Point(4, 4)),
+    ...                    Polygon(third_square, [])]))
+    ...  == Mix(Multipoint([Point(4, 4)]), EMPTY,
     ...         Polygon(first_inner_square, [])))
     True
     >>> (complete_intersect_polygon_with_multipolygon(
     ...      Polygon(first_square, []),
     ...      Multipolygon([Polygon(first_inner_square, []),
-    ...                    Polygon(third_square, [])]))
-    ...  == Mix(Multipoint([Point(4, 4)]), EMPTY,
+    ...                    Polygon(second_square, [])]))
+    ...  == Mix(EMPTY, Segment(Point(4, 0), Point(4, 4)),
     ...         Polygon(first_inner_square, [])))
     True
     """
