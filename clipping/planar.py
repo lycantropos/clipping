@@ -714,14 +714,13 @@ def complete_intersect_polygon_with_multipolygon(
         ``O(segments_count)``
 
     where ``segments_count = edges_count + intersections_count``,
-    ``edges_count = first_edges_count + second_edges_count``,
-    ``first_edges_count = len(first.border.vertices)\
- + sum(len(hole.vertices) for hole in first.holes)``,
-    ``second_edges_count = sum(len(polygon.border.vertices)\
+    ``edges_count = polygon_edges_count + multipolygon_edges_count``,
+    ``polygon_edges_count = len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)``,
+    ``multipolygon_edges_count = sum(len(polygon.border.vertices)\
  + sum(len(hole.vertices) for hole in polygon.holes)\
- for polygon in second.polygons)``,
-    ``intersections_count`` --- number of intersections between multipolygons
-    edges.
+ for polygon in multipolygon.polygons)``,
+    ``intersections_count`` --- number of intersections between polygons edges.
 
     :param polygon: first operand.
     :param multipolygon: second operand.
@@ -857,14 +856,13 @@ def intersect_polygon_with_multipolygon(polygon: _Polygon,
         ``O(segments_count)``
 
     where ``segments_count = edges_count + intersections_count``,
-    ``edges_count = first_edges_count + second_edges_count``,
-    ``first_edges_count = len(first.border.vertices)\
- + sum(len(hole.vertices) for hole in first.holes)``,
-    ``second_edges_count = sum(len(polygon.border.vertices)\
+    ``edges_count = polygon_edges_count + multipolygon_edges_count``,
+    ``polygon_edges_count = len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)``,
+    ``multipolygon_edges_count = sum(len(polygon.border.vertices)\
  + sum(len(hole.vertices) for hole in polygon.holes)\
- for polygon in second.polygons)``,
-    ``intersections_count`` --- number of intersections between multipolygons
-    edges.
+ for polygon in multipolygon.polygons)``,
+    ``intersections_count`` --- number of intersections between polygons edges.
 
     :param polygon: first operand.
     :param multipolygon: second operand.
@@ -985,8 +983,7 @@ def subtract_multipolygon_from_polygon(minuend: _Polygon,
     ``second_edges_count = sum(len(polygon.border.vertices)\
  + sum(len(hole.vertices) for hole in polygon.holes)\
  for polygon in subtrahend.polygons)``,
-    ``intersections_count`` --- number of intersections between multipolygons
-    edges.
+    ``intersections_count`` --- number of intersections between polygons edges.
 
     :param minuend: polygon to subtract from.
     :param subtrahend: multipolygon to subtract.
@@ -1118,8 +1115,7 @@ def subtract_polygon_from_multipolygon(minuend: _Multipolygon,
  for polygon in minuend.polygons)``,
     ``subtrahend_edges_count = len(subtrahend.border.vertices)\
  + sum(len(hole.vertices) for hole in subtrahend.holes)``,
-    ``intersections_count`` --- number of intersections between multipolygons
-    edges.
+    ``intersections_count`` --- number of intersections between polygons edges.
 
     :param minuend: multipolygon to subtract from.
     :param subtrahend: polygon to subtract.
