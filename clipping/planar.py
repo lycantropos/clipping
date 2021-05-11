@@ -1097,6 +1097,124 @@ def subtract_multipolygon_from_polygon(minuend: _Polygon,
             _get_context() if context is None else context).compute()
 
 
+def subtract_polygon_from_multipolygon(minuend: _Multipolygon,
+                                       subtrahend: _Polygon,
+                                       *,
+                                       context: _Optional[_Context] = None
+                                       ) -> _Union[_Empty, _Multipolygon,
+                                                   _Polygon]:
+    """
+    Returns difference of multipolygon with polygon.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = edges_count + intersections_count``,
+    ``edges_count = minuend_edges_count + subtrahend_edges_count``,
+    ``minuend_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in minuend.polygons)``,
+    ``subtrahend_edges_count = len(subtrahend.border.vertices)\
+ + sum(len(hole.vertices) for hole in subtrahend.holes)``,
+    ``intersections_count`` --- number of intersections between multipolygons
+    edges.
+
+    :param minuend: multipolygon to subtract from.
+    :param subtrahend: polygon to subtract.
+    :param context: geometric context
+    :returns: difference between minuend and subtrahend.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> first_square = Contour([Point(0, 0), Point(4, 0), Point(4, 4),
+    ...                         Point(0, 4)])
+    >>> second_square = Contour([Point(4, 0), Point(8, 0), Point(8, 4),
+    ...                          Point(4, 4)])
+    >>> third_square = Contour([Point(4, 4), Point(8, 4), Point(8, 8),
+    ...                         Point(4, 8)])
+    >>> fourth_square = Contour([Point(0, 4), Point(4, 4), Point(4, 8),
+    ...                          Point(0, 8)])
+    >>> outer_square = Contour([Point(0, 0), Point(8, 0), Point(8, 8),
+    ...                         Point(0, 8)])
+    >>> first_inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
+    ...                               Point(1, 3)])
+    >>> second_inner_square = Contour([Point(5, 1), Point(7, 1), Point(7, 3),
+    ...                                Point(5, 3)])
+    >>> third_inner_square = Contour([Point(5, 5), Point(7, 5), Point(7, 7),
+    ...                               Point(5, 7)])
+    >>> clockwise_first_inner_square = Contour([Point(1, 1), Point(1, 3),
+    ...                                         Point(3, 3), Point(3, 1)])
+    >>> clockwise_second_inner_square = Contour([Point(5, 1), Point(5, 3),
+    ...                                          Point(7, 3), Point(7, 1)])
+    >>> clockwise_third_inner_square = Contour([Point(5, 5), Point(5, 7),
+    ...                                         Point(7, 7), Point(7, 5)])
+    >>> (subtract_polygon_from_multipolygon(
+    ...      Multipolygon([Polygon(first_square, []),
+    ...                    Polygon(third_square, [])]),
+    ...      Polygon(outer_square, []))
+    ...  is subtract_polygon_from_multipolygon(
+    ...          Multipolygon([Polygon(first_inner_square, []),
+    ...                        Polygon(second_inner_square, []),
+    ...                        Polygon(third_inner_square, [])]),
+    ...          Polygon(outer_square, []))
+    ...  is EMPTY)
+    True
+    >>> (subtract_polygon_from_multipolygon(
+    ...      Multipolygon([Polygon(first_square, []),
+    ...                    Polygon(third_square, [])]),
+    ...      Polygon(third_square, []))
+    ...  == Polygon(first_square, []))
+    True
+    >>> (subtract_polygon_from_multipolygon(
+    ...          Multipolygon([Polygon(first_inner_square, []),
+    ...                        Polygon(second_inner_square, [])]),
+    ...          Polygon(third_inner_square, []))
+    ...  == subtract_polygon_from_multipolygon(
+    ...              Multipolygon([Polygon(first_inner_square, []),
+    ...                            Polygon(second_inner_square, []),
+    ...                            Polygon(third_inner_square, [])]),
+    ...              Polygon(third_inner_square, []))
+    ...  == subtract_polygon_from_multipolygon(
+    ...              Multipolygon([Polygon(first_square, []),
+    ...                            Polygon(second_inner_square, [])]),
+    ...              Polygon(first_square, [clockwise_first_inner_square]))
+    ...  == Multipolygon([Polygon(first_inner_square, []),
+    ...                   Polygon(second_inner_square, [])]))
+    True
+    >>> (subtract_polygon_from_multipolygon(
+    ...      Multipolygon([Polygon(first_square, []),
+    ...                    Polygon(third_square, [])]),
+    ...      Polygon(second_square, []))
+    ...  == Multipolygon([Polygon(first_square, []),
+    ...                   Polygon(third_square, [])]))
+    True
+    >>> (subtract_polygon_from_multipolygon(
+    ...          Multipolygon([Polygon(first_square, []),
+    ...                        Polygon(third_square, [])]),
+    ...          Polygon(first_inner_square, []))
+    ...  == subtract_polygon_from_multipolygon(
+    ...              Multipolygon([Polygon(first_square,
+    ...                                    [clockwise_first_inner_square]),
+    ...                            Polygon(third_square, [])]),
+    ...              Polygon(first_inner_square, []))
+    ...  == Multipolygon([Polygon(first_square,
+    ...                           [clockwise_first_inner_square]),
+    ...                   Polygon(third_square, [])]))
+    True
+    """
+    return _holey.Difference(
+            _holey.MultipolygonOperand(minuend),
+            _holey.PolygonOperand(subtrahend),
+            _get_context() if context is None else context).compute()
+
+
 def complete_intersect_multipolygons(
         first: _Multipolygon,
         second: _Multipolygon,
