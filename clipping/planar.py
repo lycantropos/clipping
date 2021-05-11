@@ -2003,7 +2003,7 @@ def unite_multipolygons(first: _Multipolygon,
                         second: _Multipolygon,
                         *,
                         context: _Optional[_Context] = None
-                        ) -> _Union[_Empty, _Multipolygon, _Polygon]:
+                        ) -> _Union[_Multipolygon, _Polygon]:
     """
     Returns union of multipolygons.
 

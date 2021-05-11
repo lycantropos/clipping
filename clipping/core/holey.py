@@ -368,7 +368,7 @@ class SymmetricDifference(Operation):
 class Union(Operation):
     __slots__ = ()
 
-    def compute(self) -> Union_[Empty, Multipolygon, Polygon]:
+    def compute(self) -> Union_[Multipolygon, Polygon]:
         context = self.context
         if bounding.disjoint_with(context.polygons_box(self.first.polygons),
                                   context.polygons_box(self.second.polygons)):
