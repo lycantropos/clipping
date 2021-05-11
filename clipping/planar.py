@@ -1008,6 +1008,8 @@ def subtract_multipolygon_from_polygon(minuend: _Polygon,
     ...                         Point(4, 8)])
     >>> fourth_square = Contour([Point(0, 4), Point(4, 4), Point(4, 8),
     ...                          Point(0, 8)])
+    >>> outer_square = Contour([Point(0, 0), Point(8, 0), Point(8, 8),
+    ...                         Point(0, 8)])
     >>> first_inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
     ...                               Point(1, 3)])
     >>> second_inner_square = Contour([Point(5, 1), Point(7, 1), Point(7, 3),
@@ -1058,6 +1060,35 @@ def subtract_multipolygon_from_polygon(minuend: _Polygon,
     ...      Multipolygon([Polygon(first_inner_square, []),
     ...                    Polygon(second_square, [])]))
     ...  == Polygon(first_square, [clockwise_first_inner_square]))
+    True
+    >>> (subtract_multipolygon_from_polygon(
+    ...      Polygon(outer_square, []),
+    ...      Multipolygon([Polygon(first_square, []),
+    ...                    Polygon(third_square, [])]))
+    ...  == Multipolygon([Polygon(fourth_square, []),
+    ...                   Polygon(second_square, [])]))
+    True
+    >>> (subtract_multipolygon_from_polygon(
+    ...      Polygon(outer_square, []),
+    ...      Multipolygon([Polygon(first_square,
+    ...                            [clockwise_first_inner_square]),
+    ...                    Polygon(third_square,
+    ...                            [clockwise_third_inner_square])]))
+    ...  == Multipolygon([Polygon(fourth_square, []),
+    ...                   Polygon(first_inner_square, []),
+    ...                   Polygon(second_square, []),
+    ...                   Polygon(third_inner_square, [])]))
+    True
+    >>> (subtract_multipolygon_from_polygon(
+    ...      Polygon(outer_square, []),
+    ...      Multipolygon([Polygon(first_inner_square, []),
+    ...                    Polygon(second_square, []),
+    ...                    Polygon(third_inner_square, []),
+    ...                    Polygon(fourth_square, [])]))
+    ...  == Multipolygon([Polygon(first_square,
+    ...                           [clockwise_first_inner_square]),
+    ...                   Polygon(third_square,
+    ...                           [clockwise_third_inner_square])]))
     True
     """
     return _holey.Difference(
