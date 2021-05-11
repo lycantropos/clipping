@@ -217,12 +217,12 @@ class Difference(Operation):
         first_box = context.polygons_box(self.first.polygons)
         if bounding.disjoint_with(first_box,
                                   context.polygons_box(self.second.polygons)):
-            return self.first
+            return self.first.value
         self.second.polygons = bounding.to_coupled_polygons(
                 first_box, self.second.polygons, context)
         return (unpack_polygons(self.events_to_polygons(self.sweep()), context)
                 if self.second.polygons
-                else self.first)
+                else self.first.value)
 
     def in_result(self, event: LeftEvent) -> bool:
         return (event.outside
