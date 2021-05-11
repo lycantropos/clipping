@@ -1419,7 +1419,7 @@ def intersect_multipolygons(first: _Multipolygon,
                             second: _Multipolygon,
                             *,
                             context: _Optional[_Context] = None
-                            ) -> _Multipolygon:
+                            ) -> _Union[_Empty, _Multipolygon, _Polygon]:
     """
     Returns intersection of multipolygons.
 
@@ -1699,7 +1699,8 @@ def symmetric_subtract_multipolygons(first: _Multipolygon,
                                      second: _Multipolygon,
                                      *,
                                      context: _Optional[_Context] = None
-                                     ) -> _Multipolygon:
+                                     ) -> _Union[_Empty, _Multipolygon,
+                                                 _Polygon]:
     """
     Returns symmetric difference of multipolygons.
 
@@ -1852,7 +1853,8 @@ def symmetric_subtract_multipolygons(first: _Multipolygon,
 def unite_multipolygons(first: _Multipolygon,
                         second: _Multipolygon,
                         *,
-                        context: _Optional[_Context] = None) -> _Multipolygon:
+                        context: _Optional[_Context] = None
+                        ) -> _Union[_Empty, _Multipolygon, _Polygon]:
     """
     Returns union of multipolygons.
 
