@@ -753,6 +753,12 @@ def complete_intersect_polygon_with_multipolygon(
     ...                                Point(5, 3)])
     >>> third_inner_square = Contour([Point(5, 5), Point(7, 5), Point(7, 7),
     ...                               Point(5, 7)])
+    >>> clockwise_first_inner_square = Contour([Point(1, 1), Point(3, 1),
+    ...                                         Point(3, 3), Point(1, 3)])
+    >>> clockwise_second_inner_square = Contour([Point(5, 1), Point(7, 1),
+    ...                                          Point(7, 3), Point(5, 3)])
+    >>> clockwise_third_inner_square = Contour([Point(5, 5), Point(7, 5),
+    ...                                         Point(7, 7), Point(5, 7)])
     >>> (complete_intersect_polygon_with_multipolygon(
     ...      Polygon(first_inner_square, []),
     ...      Multipolygon([Polygon(second_square, []),
@@ -774,8 +780,10 @@ def complete_intersect_polygon_with_multipolygon(
     True
     >>> (complete_intersect_polygon_with_multipolygon(
     ...      Polygon(first_inner_square, []),
-    ...      Multipolygon([Polygon(first_square, [first_inner_square]),
-    ...                    Polygon(third_square, [third_inner_square])]))
+    ...      Multipolygon([Polygon(first_square,
+    ...                            [clockwise_first_inner_square]),
+    ...                    Polygon(third_square,
+    ...                            [clockwise_third_inner_square])]))
     ...  == Multisegment([Segment(Point(1, 1), Point(3, 1)),
     ...                   Segment(Point(1, 1), Point(1, 3)),
     ...                   Segment(Point(1, 3), Point(3, 3)),
@@ -1199,6 +1207,12 @@ def intersect_multipolygons(first: _Multipolygon,
     ...                                Point(5, 3)])
     >>> third_inner_square = Contour([Point(5, 5), Point(7, 5), Point(7, 7),
     ...                               Point(5, 7)])
+    >>> clockwise_first_inner_square = Contour([Point(1, 1), Point(3, 1),
+    ...                                         Point(3, 3), Point(1, 3)])
+    >>> clockwise_second_inner_square = Contour([Point(5, 1), Point(7, 1),
+    ...                                          Point(7, 3), Point(5, 3)])
+    >>> clockwise_third_inner_square = Contour([Point(5, 5), Point(7, 5),
+    ...                                         Point(7, 7), Point(5, 7)])
     >>> (intersect_multipolygons(
     ...      Multipolygon([Polygon(first_inner_square, []),
     ...                    Polygon(third_inner_square, [])]),
@@ -1212,8 +1226,10 @@ def intersect_multipolygons(first: _Multipolygon,
     ...  is intersect_multipolygons(
     ...          Multipolygon([Polygon(first_inner_square, []),
     ...                        Polygon(third_inner_square, [])]),
-    ...          Multipolygon([Polygon(first_square, [first_inner_square]),
-    ...                        Polygon(third_square, [third_inner_square])]))
+    ...          Multipolygon([Polygon(first_square,
+    ...                                [clockwise_first_inner_square]),
+    ...                        Polygon(third_square,
+    ...                                [clockwise_third_inner_square])]))
     ...  is EMPTY)
     True
     >>> (intersect_multipolygons(
@@ -1397,8 +1413,10 @@ def subtract_multipolygons(minuend: _Multipolygon,
     ... == subtract_multipolygons(
     ...          Multipolygon([Polygon(first_inner_square, []),
     ...                        Polygon(third_inner_square, [])]),
-    ...          Multipolygon([Polygon(first_square, [first_inner_square]),
-    ...                        Polygon(third_square, [third_inner_square])]))
+    ...          Multipolygon([Polygon(first_square,
+    ...                                [clockwise_first_inner_square]),
+    ...                        Polygon(third_square,
+    ...                                [clockwise_third_inner_square])]))
     ... == Multipolygon([Polygon(first_inner_square, []),
     ...                  Polygon(third_inner_square, [])]))
     True
@@ -1622,6 +1640,12 @@ def unite_multipolygons(first: _Multipolygon,
     ...                                Point(5, 3)])
     >>> third_inner_square = Contour([Point(5, 5), Point(7, 5), Point(7, 7),
     ...                               Point(5, 7)])
+    >>> clockwise_first_inner_square = Contour([Point(1, 1), Point(3, 1),
+    ...                                         Point(3, 3), Point(1, 3)])
+    >>> clockwise_second_inner_square = Contour([Point(5, 1), Point(7, 1),
+    ...                                          Point(7, 3), Point(5, 3)])
+    >>> clockwise_third_inner_square = Contour([Point(5, 5), Point(7, 5),
+    ...                                         Point(7, 7), Point(5, 7)])
     >>> (unite_multipolygons(Multipolygon([Polygon(first_square, []),
     ...                                    Polygon(second_inner_square, [])]),
     ...                      Multipolygon([Polygon(first_inner_square, []),
@@ -1655,8 +1679,10 @@ def unite_multipolygons(first: _Multipolygon,
     ...  == unite_multipolygons(
     ...          Multipolygon([Polygon(first_inner_square, []),
     ...                        Polygon(third_inner_square, [])]),
-    ...          Multipolygon([Polygon(first_square, [first_inner_square]),
-    ...                        Polygon(third_square, [third_inner_square])]))
+    ...          Multipolygon([Polygon(first_square,
+    ...                                [clockwise_first_inner_square]),
+    ...                        Polygon(third_square,
+    ...                                [clockwise_third_inner_square])]))
     ... == unite_multipolygons(Multipolygon([Polygon(first_inner_square, []),
     ...                                      Polygon(third_inner_square, [])]),
     ...                        Multipolygon([Polygon(first_square, []),
