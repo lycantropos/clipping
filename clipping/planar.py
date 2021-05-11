@@ -1066,13 +1066,12 @@ def subtract_multipolygon_from_polygon(minuend: _Polygon,
             _get_context() if context is None else context).compute()
 
 
-def complete_intersect_multipolygons(first: _Multipolygon,
-                                     second: _Multipolygon,
-                                     *,
-                                     context: _Optional[_Context] = None
-                                     ) -> _Union[_Empty, _Mix, _Multipoint,
-                                                 _Multipolygon, _Multisegment,
-                                                 _Polygon]:
+def complete_intersect_multipolygons(
+        first: _Multipolygon,
+        second: _Multipolygon,
+        *,
+        context: _Optional[_Context] = None
+) -> _Union[_Empty, _Mix, _Multipoint, _Multipolygon, _Multisegment, _Polygon]:
     """
     Returns intersection of multipolygons considering cases
     with polygons touching each other in points/segments.
