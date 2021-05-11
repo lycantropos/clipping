@@ -892,6 +892,12 @@ def intersect_polygon_with_multipolygon(polygon: _Polygon,
     ...                                Point(5, 3)])
     >>> third_inner_square = Contour([Point(5, 5), Point(7, 5), Point(7, 7),
     ...                               Point(5, 7)])
+    >>> clockwise_first_inner_square = Contour([Point(1, 1), Point(1, 3),
+    ...                                         Point(3, 3), Point(3, 1)])
+    >>> clockwise_second_inner_square = Contour([Point(5, 1), Point(5, 3),
+    ...                                          Point(7, 3), Point(7, 1)])
+    >>> clockwise_third_inner_square = Contour([Point(5, 5), Point(5, 7),
+    ...                                         Point(7, 7), Point(7, 5)])
     >>> (intersect_polygon_with_multipolygon(
     ...      Polygon(first_inner_square, []),
     ...      Multipolygon([Polygon(second_square, []),
@@ -902,8 +908,10 @@ def intersect_polygon_with_multipolygon(polygon: _Polygon,
     ...                        Polygon(fourth_square, [])]))
     ...  is intersect_polygon_with_multipolygon(
     ...          Polygon(first_inner_square, []),
-    ...          Multipolygon([Polygon(first_square, [first_inner_square]),
-    ...                        Polygon(third_square, [third_inner_square])]))
+    ...          Multipolygon([Polygon(first_square,
+    ...                                [clockwise_first_inner_square]),
+    ...                        Polygon(third_square,
+    ...                                [clockwise_third_inner_square])]))
     ...  is EMPTY)
     True
     >>> (intersect_polygon_with_multipolygon(
