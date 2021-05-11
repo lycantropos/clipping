@@ -447,8 +447,8 @@ def complete_intersect_multisegment_with_multipolygon(
             _get_context() if context is None else context).compute()
 
 
-def subtract_multipolygon_from_multisegment(multisegment: _Multisegment,
-                                            multipolygon: _Multipolygon,
+def subtract_multipolygon_from_multisegment(minuend: _Multisegment,
+                                            subtrahend: _Multipolygon,
                                             *,
                                             context: _Optional[_Context] = None
                                             ) -> _Multisegment:
@@ -461,18 +461,18 @@ def subtract_multipolygon_from_multisegment(multisegment: _Multisegment,
         ``O(segments_count)``
 
     where ``segments_count = start_segments_count + intersections_count``,
-    ``start_segments_count = len(multisegment.segments)\
+    ``start_segments_count = len(minuend.segments)\
  + multipolygon_edges_count``,
-    ``multipolygon_edges_count = sum(len(polygon.border.vertices)\
+    ``subtrahend_edges_count = sum(len(polygon.border.vertices)\
  + sum(len(hole.vertices) for hole in polygon.holes)\
- for polygon in multipolygon.polygons)``,
+ for polygon in subtrahend.polygons)``,
     ``intersections_count`` --- number of intersections between multisegment
     and multipolygon edges.
 
-    :param multisegment: multisegment to subtract from.
-    :param multipolygon: multipolygon to subtract.
+    :param minuend: multisegment to subtract from.
+    :param subtrahend: multipolygon to subtract.
     :param context: geometric context
-    :returns: difference of multisegment with multipolygon.
+    :returns: difference of minuend with subtrahend.
 
     >>> from ground.base import get_context
     >>> context = get_context()
@@ -500,7 +500,7 @@ def subtract_multipolygon_from_multisegment(multisegment: _Multisegment,
     True
     """
     return _mixed.Difference(
-            multisegment, multipolygon,
+            minuend, subtrahend,
             _get_context() if context is None else context).compute()
 
 
@@ -521,7 +521,7 @@ def complete_intersect_multiregions(first: _Multiregion,
         ``O(segments_count)``
 
     where ``segments_count = edges_count + intersections_count``,
-    ``edges_count = left_edges_count + right_edges_count``,
+    ``edges_count = first_edges_count + second_edges_count``,
     ``first_edges_count = sum(len(region.vertices) for region in first)``,
     ``second_edges_count = sum(len(region.vertices) for region in second)``,
     ``intersections_count`` --- number of intersections between multiregions
@@ -627,7 +627,7 @@ def intersect_multiregions(first: _Multiregion,
         ``O(segments_count)``
 
     where ``segments_count = edges_count + intersections_count``,
-    ``edges_count = left_edges_count + right_edges_count``,
+    ``edges_count = first_edges_count + second_edges_count``,
     ``first_edges_count = sum(len(region.vertices) for region in first)``,
     ``second_edges_count = sum(len(region.vertices) for region in second)``,
     ``intersections_count`` --- number of intersections between multiregions
@@ -714,7 +714,7 @@ def complete_intersect_polygon_with_multipolygon(
         ``O(segments_count)``
 
     where ``segments_count = edges_count + intersections_count``,
-    ``edges_count = left_edges_count + right_edges_count``,
+    ``edges_count = first_edges_count + second_edges_count``,
     ``first_edges_count = len(first.border.vertices)\
  + sum(len(hole.vertices) for hole in first.holes)``,
     ``second_edges_count = sum(len(polygon.border.vertices)\
@@ -857,7 +857,7 @@ def intersect_polygon_with_multipolygon(polygon: _Polygon,
         ``O(segments_count)``
 
     where ``segments_count = edges_count + intersections_count``,
-    ``edges_count = left_edges_count + right_edges_count``,
+    ``edges_count = first_edges_count + second_edges_count``,
     ``first_edges_count = len(first.border.vertices)\
  + sum(len(hole.vertices) for hole in first.holes)``,
     ``second_edges_count = sum(len(polygon.border.vertices)\
@@ -979,12 +979,12 @@ def subtract_multipolygon_from_polygon(minuend: _Polygon,
         ``O(segments_count)``
 
     where ``segments_count = edges_count + intersections_count``,
-    ``edges_count = left_edges_count + right_edges_count``,
-    ``first_edges_count = len(first.border.vertices)\
- + sum(len(hole.vertices) for hole in first.holes)``,
+    ``edges_count = first_edges_count + second_edges_count``,
+    ``first_edges_count = len(minuend.border.vertices)\
+ + sum(len(hole.vertices) for hole in minuend.holes)``,
     ``second_edges_count = sum(len(polygon.border.vertices)\
  + sum(len(hole.vertices) for hole in polygon.holes)\
- for polygon in second.polygons)``,
+ for polygon in subtrahend.polygons)``,
     ``intersections_count`` --- number of intersections between multipolygons
     edges.
 
@@ -1113,7 +1113,7 @@ def complete_intersect_multipolygons(
         ``O(segments_count)``
 
     where ``segments_count = edges_count + intersections_count``,
-    ``edges_count = left_edges_count + right_edges_count``,
+    ``edges_count = first_edges_count + second_edges_count``,
     ``first_edges_count = sum(len(polygon.border.vertices)\
  + sum(len(hole.vertices) for hole in polygon.holes)\
  for polygon in first.polygons)``,
@@ -1311,7 +1311,7 @@ def intersect_multipolygons(first: _Multipolygon,
         ``O(segments_count)``
 
     where ``segments_count = edges_count + intersections_count``,
-    ``edges_count = left_edges_count + right_edges_count``,
+    ``edges_count = first_edges_count + second_edges_count``,
     ``first_edges_count = sum(len(polygon.border.vertices)\
  + sum(len(hole.vertices) for hole in polygon.holes)\
  for polygon in first.polygons)``,
@@ -1448,13 +1448,13 @@ def subtract_multipolygons(minuend: _Multipolygon,
         ``O(segments_count)``
 
     where ``segments_count = edges_count + intersections_count``,
-    ``edges_count = left_edges_count + right_edges_count``,
-    ``first_edges_count = sum(len(polygon.border.vertices)\
+    ``edges_count = minuend_edges_count + subtrahend_edges_count``,
+    ``minuend_edges_count = sum(len(polygon.border.vertices)\
  + sum(len(hole.vertices) for hole in polygon.holes)\
- for polygon in first.polygons)``,
-    ``second_edges_count = sum(len(polygon.border.vertices)\
+ for polygon in minuend.polygons)``,
+    ``subtrahend_edges_count = sum(len(polygon.border.vertices)\
  + sum(len(hole.vertices) for hole in polygon.holes)\
- for polygon in second.polygons)``,
+ for polygon in subtrahend.polygons)``,
     ``intersections_count`` --- number of intersections between multipolygons
     edges.
 
@@ -1591,7 +1591,7 @@ def symmetric_subtract_multipolygons(first: _Multipolygon,
         ``O(segments_count)``
 
     where ``segments_count = edges_count + intersections_count``,
-    ``edges_count = left_edges_count + right_edges_count``,
+    ``edges_count = first_edges_count + second_edges_count``,
     ``first_edges_count = sum(len(polygon.border.vertices)\
  + sum(len(hole.vertices) for hole in polygon.holes)\
  for polygon in first.polygons)``,
@@ -1744,7 +1744,7 @@ def unite_multipolygons(first: _Multipolygon,
         ``O(segments_count)``
 
     where ``segments_count = edges_count + intersections_count``,
-    ``edges_count = left_edges_count + right_edges_count``,
+    ``edges_count = first_edges_count + second_edges_count``,
     ``first_edges_count = sum(len(polygon.border.vertices)\
  + sum(len(hole.vertices) for hole in polygon.holes)\
  for polygon in first.polygons)``,
