@@ -7,9 +7,12 @@ from clipping.planar import (intersect_multisegments,
 from tests.utils import (Multisegment,
                          MultisegmentsPair,
                          MultisegmentsTriplet,
-                         are_multisegments_equivalent,
                          are_compounds_similar,
+                         are_multisegments_equivalent,
+                         is_empty,
+                         is_maybe_linear,
                          is_multisegment,
+                         reverse_compound_coordinates,
                          reverse_multisegment,
                          reverse_multisegment_coordinates)
 from . import strategies
@@ -22,14 +25,14 @@ def test_basic(multisegments_pair: MultisegmentsPair) -> None:
     result = symmetric_subtract_multisegments(left_multisegment,
                                               right_multisegment)
 
-    assert is_multisegment(result)
+    assert is_maybe_linear(result)
 
 
 @given(strategies.multisegments)
 def test_self_inverse(multisegment: Multisegment) -> None:
     result = symmetric_subtract_multisegments(multisegment, multisegment)
 
-    assert not result.segments
+    assert is_empty(result)
 
 
 @given(strategies.multisegments_pairs)
@@ -48,17 +51,19 @@ def test_associativity(multisegments_triplet: MultisegmentsTriplet) -> None:
     (left_multisegment, mid_multisegment,
      right_multisegment) = multisegments_triplet
 
-    result = symmetric_subtract_multisegments(
-            symmetric_subtract_multisegments(left_multisegment,
-                                             mid_multisegment),
-            right_multisegment)
-
-    assert are_multisegments_equivalent(
-            result,
-            symmetric_subtract_multisegments(
-                    left_multisegment,
-                    symmetric_subtract_multisegments(mid_multisegment,
-                                                     right_multisegment)))
+    left_mid_symmetric_difference = symmetric_subtract_multisegments(
+            left_multisegment, mid_multisegment)
+    mid_right_symmetric_difference = symmetric_subtract_multisegments(
+            mid_multisegment, right_multisegment)
+    assert (not is_multisegment(left_mid_symmetric_difference)
+            or not is_multisegment(mid_right_symmetric_difference)
+            or are_multisegments_equivalent(
+                    symmetric_subtract_multisegments(
+                            left_mid_symmetric_difference,
+                            right_multisegment),
+                    symmetric_subtract_multisegments(
+                            left_multisegment,
+                            mid_right_symmetric_difference)))
 
 
 @given(strategies.multisegments_triplets)
@@ -66,16 +71,18 @@ def test_repeated(multisegments_triplet: MultisegmentsTriplet) -> None:
     (left_multisegment, mid_multisegment,
      right_multisegment) = multisegments_triplet
 
-    result = symmetric_subtract_multisegments(
-            symmetric_subtract_multisegments(left_multisegment,
-                                             mid_multisegment),
-            symmetric_subtract_multisegments(mid_multisegment,
-                                             right_multisegment))
-
-    assert are_multisegments_equivalent(
-            result,
-            symmetric_subtract_multisegments(left_multisegment,
-                                             right_multisegment))
+    left_mid_symmetric_difference = symmetric_subtract_multisegments(
+            left_multisegment, mid_multisegment)
+    mid_right_symmetric_difference = symmetric_subtract_multisegments(
+            mid_multisegment, right_multisegment)
+    assert (not is_multisegment(left_mid_symmetric_difference)
+            or not is_multisegment(mid_right_symmetric_difference)
+            or are_multisegments_equivalent(
+                    symmetric_subtract_multisegments(
+                            left_mid_symmetric_difference,
+                            mid_right_symmetric_difference),
+                    symmetric_subtract_multisegments(left_multisegment,
+                                                     right_multisegment)))
 
 
 @given(strategies.multisegments_pairs)
@@ -85,12 +92,20 @@ def test_equivalents(multisegments_pair: MultisegmentsPair) -> None:
     result = symmetric_subtract_multisegments(left_multisegment,
                                               right_multisegment)
 
-    assert result == subtract_multisegments(
-            unite_multisegments(left_multisegment, right_multisegment),
-            intersect_multisegments(right_multisegment, left_multisegment))
-    assert result == unite_multisegments(
-            subtract_multisegments(left_multisegment, right_multisegment),
-            subtract_multisegments(right_multisegment, left_multisegment))
+    left_right_difference = subtract_multisegments(left_multisegment,
+                                                   right_multisegment)
+    right_left_difference = subtract_multisegments(right_multisegment,
+                                                   left_multisegment)
+    right_left_intersection = intersect_multisegments(right_multisegment,
+                                                      left_multisegment)
+    assert (not is_multisegment(right_left_intersection)
+            or result == subtract_multisegments(
+                    unite_multisegments(left_multisegment, right_multisegment),
+                    right_left_intersection))
+    assert (not is_multisegment(left_right_difference)
+            or not is_multisegment(right_left_difference)
+            or result == unite_multisegments(left_right_difference,
+                                             right_left_difference))
 
 
 @given(strategies.multisegments_pairs)
@@ -111,6 +126,6 @@ def test_reversals(multisegments_pair: MultisegmentsPair) -> None:
                                                      right_multisegment)))
     assert are_compounds_similar(
             result,
-            reverse_multisegment_coordinates(symmetric_subtract_multisegments(
+            reverse_compound_coordinates(symmetric_subtract_multisegments(
                     reverse_multisegment_coordinates(left_multisegment),
                     reverse_multisegment_coordinates(right_multisegment))))

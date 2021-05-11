@@ -2,13 +2,12 @@ from ground.hints import Multipolygon
 from hypothesis import given
 
 from clipping.planar import (complete_intersect_multipolygons,
-                             complete_intersect_polygon_with_multipolygon,
                              intersect_multipolygons,
                              unite_multipolygons)
 from tests.utils import (MultipolygonsPair,
                          are_compounds_similar,
+                         compound_to_shaped,
                          is_compound,
-                         is_mix,
                          is_multipolygon,
                          reverse_compound_coordinates,
                          reverse_multipolygon,
@@ -40,14 +39,14 @@ def test_idempotence(multipolygon: Multipolygon) -> None:
 def test_absorption_identity(multipolygons_pair: MultipolygonsPair) -> None:
     left_multipolygon, right_multipolygon = multipolygons_pair
 
-    multipolygons_union = unite_multipolygons(left_multipolygon,
-                                              right_multipolygon)
-    result = ((complete_intersect_multipolygons
-               if is_multipolygon(multipolygons_union)
-               else complete_intersect_polygon_with_multipolygon)
-              (multipolygons_union, left_multipolygon))
+    left_right_union = unite_multipolygons(left_multipolygon,
+                                           right_multipolygon)
 
-    assert are_compounds_similar(left_multipolygon, result)
+    assert (not is_multipolygon(left_right_union)
+            or are_compounds_similar(
+                    left_multipolygon,
+                    complete_intersect_multipolygons(left_right_union,
+                                                     left_multipolygon)))
 
 
 @given(strategies.multipolygons_pairs)
@@ -69,10 +68,8 @@ def test_connection_with_intersect(multipolygons_pair: MultipolygonsPair
     result = complete_intersect_multipolygons(left_multipolygon,
                                               right_multipolygon)
 
-    assert (result.shaped
-            if is_mix(result)
-            else result) == intersect_multipolygons(left_multipolygon,
-                                                    right_multipolygon)
+    assert compound_to_shaped(result) == intersect_multipolygons(
+            left_multipolygon, right_multipolygon)
 
 
 @given(strategies.multipolygons_pairs)

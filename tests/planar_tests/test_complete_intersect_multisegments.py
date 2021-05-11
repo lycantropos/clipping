@@ -12,8 +12,9 @@ from clipping.planar import (complete_intersect_multisegments,
 from tests.utils import (MultisegmentsPair,
                          are_compounds_similar,
                          are_multisegments_equivalent,
-                         is_linear_compound,
-                         pack_linear_compound,
+                         compound_to_linear,
+                         is_non_shaped,
+                         pack_non_shaped,
                          reverse_compound_coordinates,
                          reverse_multisegment,
                          reverse_multisegment_coordinates,
@@ -30,7 +31,7 @@ def test_basic(multisegments_pair: MultisegmentsPair) -> None:
     result = complete_intersect_multisegments(left_multisegment,
                                               right_multisegment)
 
-    assert is_linear_compound(result)
+    assert is_non_shaped(result)
 
 
 @given(strategies.multisegments_pairs)
@@ -40,7 +41,7 @@ def test_properties(multisegments_pair: MultisegmentsPair) -> None:
     result = complete_intersect_multisegments(left_multisegment,
                                               right_multisegment)
 
-    result_points, result_segments = pack_linear_compound(result)
+    result_points, result_segments = pack_non_shaped(result)
     assert all(point_in_multisegment(point, left_multisegment)
                is point_in_multisegment(point, right_multisegment)
                is Relation.COMPONENT
@@ -85,11 +86,12 @@ def test_idempotence(multisegment: Multisegment) -> None:
 def test_absorption_identity(multisegments_pair: MultisegmentsPair) -> None:
     left_multisegment, right_multisegment = multisegments_pair
 
-    result = complete_intersect_multisegments(
-            left_multisegment,
-            unite_multisegments(left_multisegment, right_multisegment))
-
-    assert are_multisegments_equivalent(result, left_multisegment)
+    assert are_multisegments_equivalent(
+            complete_intersect_multisegments(
+                    left_multisegment,
+                    unite_multisegments(left_multisegment,
+                                        right_multisegment)),
+            left_multisegment)
 
 
 @given(strategies.multisegments_pairs)
@@ -111,9 +113,8 @@ def test_connection_with_intersect(multisegments_pair: MultisegmentsPair
     result = complete_intersect_multisegments(left_multisegment,
                                               right_multisegment)
 
-    _, multisegment = result
-    assert multisegment == intersect_multisegments(left_multisegment,
-                                                   right_multisegment)
+    assert (compound_to_linear(result)
+            == intersect_multisegments(left_multisegment, right_multisegment))
 
 
 @given(strategies.multisegments_pairs)

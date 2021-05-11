@@ -7,8 +7,8 @@ from clipping.planar import (intersect_multisegments,
                              unite_multisegments)
 from tests.utils import (MultisegmentsPair,
                          MultisegmentsTriplet,
-                         are_multisegments_equivalent,
                          are_compounds_similar,
+                         are_multisegments_equivalent,
                          is_multisegment,
                          reverse_multisegment,
                          reverse_multisegment_coordinates)
@@ -35,11 +35,13 @@ def test_idempotence(multisegment: Multisegment) -> None:
 def test_absorption_identity(multisegments_pair: MultisegmentsPair) -> None:
     left_multisegment, right_multisegment = multisegments_pair
 
-    result = unite_multisegments(left_multisegment,
-                                 intersect_multisegments(left_multisegment,
-                                                         right_multisegment))
-
-    assert are_multisegments_equivalent(result, left_multisegment)
+    left_right_intersection = intersect_multisegments(left_multisegment,
+                                                      right_multisegment)
+    assert (not is_multisegment(left_right_intersection)
+            or are_multisegments_equivalent(
+                    unite_multisegments(left_multisegment,
+                                        left_right_intersection),
+                    left_multisegment))
 
 
 @given(strategies.multisegments_pairs)
@@ -56,9 +58,9 @@ def test_associativity(multisegments_triplet: MultisegmentsTriplet) -> None:
     (left_multisegment, mid_multisegment,
      right_multisegment) = multisegments_triplet
 
-    result = unite_multisegments(
-            unite_multisegments(left_multisegment, mid_multisegment),
-            right_multisegment)
+    result = unite_multisegments(unite_multisegments(left_multisegment,
+                                                     mid_multisegment),
+                                 right_multisegment)
 
     assert are_compounds_similar(
             result,
@@ -73,16 +75,19 @@ def test_difference_operand(multisegments_triplet: MultisegmentsTriplet
     (left_multisegment, mid_multisegment,
      right_multisegment) = multisegments_triplet
 
-    result = unite_multisegments(
-            subtract_multisegments(left_multisegment, mid_multisegment),
-            right_multisegment)
-
-    assert are_multisegments_equivalent(
-            result,
-            subtract_multisegments(unite_multisegments(left_multisegment,
-                                                       right_multisegment),
-                                   subtract_multisegments(mid_multisegment,
-                                                          right_multisegment)))
+    left_mid_difference = subtract_multisegments(left_multisegment,
+                                                 mid_multisegment)
+    mid_right_difference = subtract_multisegments(mid_multisegment,
+                                                  right_multisegment)
+    assert (not is_multisegment(left_mid_difference)
+            or not is_multisegment(mid_right_difference)
+            or are_multisegments_equivalent(
+                    unite_multisegments(left_mid_difference,
+                                        right_multisegment),
+                    subtract_multisegments(
+                            unite_multisegments(left_multisegment,
+                                                right_multisegment),
+                            mid_right_difference)))
 
 
 @given(strategies.multisegments_triplets)
@@ -91,16 +96,17 @@ def test_distribution_over_intersection(multisegments_triplet
     (left_multisegment, mid_multisegment,
      right_multisegment) = multisegments_triplet
 
-    result = unite_multisegments(left_multisegment,
-                                 intersect_multisegments(mid_multisegment,
-                                                         right_multisegment))
-
-    assert are_multisegments_equivalent(
-            result,
-            intersect_multisegments(unite_multisegments(left_multisegment,
-                                                        mid_multisegment),
-                                    unite_multisegments(left_multisegment,
-                                                        right_multisegment)))
+    mid_right_intersection = intersect_multisegments(mid_multisegment,
+                                                     right_multisegment)
+    assert (not is_multisegment(mid_right_intersection)
+            or are_multisegments_equivalent(
+                    unite_multisegments(left_multisegment,
+                                        mid_right_intersection),
+                    intersect_multisegments(
+                            unite_multisegments(left_multisegment,
+                                                mid_multisegment),
+                            unite_multisegments(left_multisegment,
+                                                right_multisegment))))
 
 
 @given(strategies.multisegments_pairs)
@@ -109,10 +115,14 @@ def test_equivalents(multisegments_pair: MultisegmentsPair) -> None:
 
     result = unite_multisegments(left_multisegment, right_multisegment)
 
-    assert result == symmetric_subtract_multisegments(
-            symmetric_subtract_multisegments(left_multisegment,
-                                             right_multisegment),
-            intersect_multisegments(left_multisegment, right_multisegment))
+    left_right_symmetric_difference = symmetric_subtract_multisegments(
+            left_multisegment, right_multisegment)
+    left_right_intersection = intersect_multisegments(left_multisegment,
+                                                      right_multisegment)
+    assert (not is_multisegment(left_right_symmetric_difference)
+            or not is_multisegment(left_right_intersection)
+            or result == symmetric_subtract_multisegments(
+                    left_right_symmetric_difference, left_right_intersection))
 
 
 @given(strategies.multisegments_pairs)

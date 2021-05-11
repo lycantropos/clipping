@@ -7,7 +7,9 @@ from orient.planar import (segment_in_multipolygon,
 from clipping.planar import intersect_multisegment_with_multipolygon
 from tests.utils import (MultipolygonWithMultisegment,
                          are_compounds_similar,
-                         is_multisegment,
+                         is_maybe_linear,
+                         pack_non_shaped,
+                         reverse_compound_coordinates,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
                          reverse_multipolygon_coordinates,
@@ -28,7 +30,7 @@ def test_basic(multipolygon_with_multisegment: MultipolygonWithMultisegment
     result = intersect_multisegment_with_multipolygon(multisegment,
                                                       multipolygon)
 
-    assert is_multisegment(result)
+    assert is_maybe_linear(result)
 
 
 @given(strategies.multipolygons_with_multisegments)
@@ -39,17 +41,19 @@ def test_properties(multipolygon_with_multisegment
     result = intersect_multisegment_with_multipolygon(multisegment,
                                                       multipolygon)
 
+    result_points, result_segments = pack_non_shaped(result)
+    assert not result_points
     assert all(segment_in_multisegment(segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
-               for segment in result.segments)
+               for segment in result_segments)
     assert all(segment_in_multipolygon(segment, multipolygon)
                in (Relation.COMPONENT, Relation.ENCLOSED, Relation.WITHIN)
-               for segment in result.segments)
-    assert all(to_sorted_segment(segment) in result.segments
+               for segment in result_segments)
+    assert all(to_sorted_segment(segment) in result_segments
                # in case of cross
                or any(segment_in_segment(result_segment, segment)
                       is Relation.COMPONENT
-                      for result_segment in result.segments)
+                      for result_segment in result_segments)
                for segment in multisegment.segments
                if (segment_in_multipolygon(segment, multipolygon)
                    in (Relation.CROSS, Relation.COMPONENT, Relation.ENCLOSED,
@@ -77,8 +81,7 @@ def test_reversals(multipolygon_with_multisegment: MultipolygonWithMultisegment
     assert result == intersect_multisegment_with_multipolygon(
             reverse_multisegment_endpoints(multisegment), multipolygon)
     assert are_compounds_similar(
-            result,
-            reverse_multisegment_coordinates(
+            result, reverse_compound_coordinates(
                     intersect_multisegment_with_multipolygon(
                             reverse_multisegment_coordinates(multisegment),
                             reverse_multipolygon_coordinates(multipolygon))))

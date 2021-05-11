@@ -16,8 +16,7 @@ from hypothesis.strategies import SearchStrategy
 from orient.planar import multisegment_in_multisegment
 
 from clipping.core.utils import to_endpoints
-from clipping.hints import (LinearMix,
-                            Multiregion)
+from clipping.hints import Multiregion
 
 Strategy = SearchStrategy
 Domain = TypeVar('Domain')
@@ -40,7 +39,6 @@ MultisegmentsPair = Tuple[Multisegment, Multisegment]
 MultisegmentsTriplet = Tuple[Multisegment, Multisegment, Multisegment]
 MultipolygonWithMultisegment = Tuple[Multipolygon, Multisegment]
 MultiregionsPair = Tuple[Multiregion, Multiregion]
-MultiregionsTriplet = Tuple[Multiregion, Multiregion, Multiregion]
 MultipolygonsPair = Tuple[Multipolygon, Multipolygon]
 MultipolygonsTriplet = Tuple[Multipolygon, Multipolygon, Multipolygon]
 segments_intersection = _context.segments_intersection
@@ -186,21 +184,28 @@ def shaped_has_holes(shaped: Shaped) -> bool:
             else any(polygon.holes for polygon in shaped.polygons))
 
 
-def is_linear_compound(object_: Any) -> bool:
+def is_linear(object_: Any) -> bool:
+    return isinstance(object_, (Multisegment, Segment))
+
+
+def is_maybe_linear(object_: Any) -> bool:
+    return is_empty(object_) or is_linear(object_)
+
+
+def is_non_shaped(object_: Any) -> bool:
     return (is_empty(object_)
             or isinstance(object_, (Multipoint, Multisegment, Segment))
             or isinstance(object_, Mix) and is_empty(object_.shaped))
-
-
-def is_linear_mix_empty(mix: LinearMix) -> bool:
-    multipoint, multisegment = mix
-    return not (multipoint.points or multisegment.segments)
 
 
 def is_compound(object_: Any) -> bool:
     return (is_empty(object_)
             or isinstance(object_, (Mix, Multipoint, Multipolygon,
                                     Multisegment, Polygon, Segment)))
+
+
+def is_maybe_shaped(object_: Any) -> bool:
+    return is_empty(object_) or is_shaped(object_)
 
 
 def is_shaped(object_: Any) -> bool:
@@ -214,15 +219,27 @@ def is_empty(object_: Any) -> bool:
 is_mix = Mix.__instancecheck__
 is_multipoint = Multipoint.__instancecheck__
 is_multipolygon = Multipolygon.__instancecheck__
-
-
-def is_multiregion(object_: Any) -> bool:
-    return isinstance(object_, list) and all(map(is_region, object_))
-
-
 is_multisegment = Multisegment.__instancecheck__
 is_region = is_contour
 is_polygon = Polygon.__instancecheck__
+
+
+def compound_to_linear(object_: Any) -> Any:
+    if is_empty(object_) or is_multipoint(object_) or is_shaped(object_):
+        return EMPTY
+    elif is_mix(object_):
+        return object_.linear
+    else:
+        return object_
+
+
+def compound_to_shaped(object_: Any) -> Any:
+    if is_non_shaped(object_):
+        return EMPTY
+    elif is_mix(object_):
+        return object_.shaped
+    else:
+        return object_
 
 
 def reverse_contour(contour: Contour) -> Contour:
@@ -365,14 +382,14 @@ def multipolygon_to_multiregion(multipolygon: Multipolygon) -> Multiregion:
     return [polygon.border for polygon in multipolygon.polygons]
 
 
-def pack_linear_compound(object_: Union[Empty, Mix, Multipoint, Multisegment,
-                                        Segment]
-                         ) -> Tuple[Sequence[Point], Sequence[Segment]]:
+def pack_non_shaped(object_: Union[Empty, Mix, Multipoint, Multisegment,
+                                   Segment]
+                    ) -> Tuple[Sequence[Point], Sequence[Segment]]:
     if object_ is EMPTY:
         return [], []
     elif isinstance(object_, Mix):
-        discrete_points, _ = pack_linear_compound(object_.discrete)
-        _, linear_segments = pack_linear_compound(object_.linear)
+        discrete_points, _ = pack_non_shaped(object_.discrete)
+        _, linear_segments = pack_non_shaped(object_.linear)
         return discrete_points, linear_segments
     elif isinstance(object_, Multipoint):
         return object_.points, []

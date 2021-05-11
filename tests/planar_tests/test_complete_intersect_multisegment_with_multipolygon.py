@@ -10,10 +10,10 @@ from orient.planar import (point_in_multipolygon,
 from clipping.planar import (complete_intersect_multisegment_with_multipolygon,
                              intersect_multisegment_with_multipolygon)
 from tests.utils import (MultipolygonWithMultisegment,
+                         compound_to_linear,
                          contour_to_edges,
-                         is_linear_compound,
-                         is_mix,
-                         pack_linear_compound,
+                         is_non_shaped,
+                         pack_non_shaped,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
                          reverse_multipolygon_holes,
@@ -34,7 +34,7 @@ def test_basic(multipolygon_with_multisegment: MultipolygonWithMultisegment
     result = complete_intersect_multisegment_with_multipolygon(multisegment,
                                                                multipolygon)
 
-    assert is_linear_compound(result)
+    assert is_non_shaped(result)
 
 
 @given(strategies.multipolygons_with_multisegments)
@@ -45,7 +45,7 @@ def test_properties(multipolygon_with_multisegment
     result = complete_intersect_multisegment_with_multipolygon(multisegment,
                                                                multipolygon)
 
-    result_points, result_segments = pack_linear_compound(result)
+    result_points, result_segments = pack_non_shaped(result)
     assert all(point_in_multisegment(point, multisegment) is Relation.COMPONENT
                for point in result_points)
     assert all(point_in_multipolygon(point, multipolygon) is Relation.COMPONENT
@@ -92,7 +92,7 @@ def test_connection_with_intersect(multipolygon_with_multisegment
     result = complete_intersect_multisegment_with_multipolygon(multisegment,
                                                                multipolygon)
 
-    assert ((result.linear if is_mix(result) else result)
+    assert (compound_to_linear(result)
             == intersect_multisegment_with_multipolygon(multisegment,
                                                         multipolygon))
 

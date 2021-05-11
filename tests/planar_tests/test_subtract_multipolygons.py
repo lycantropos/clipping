@@ -7,7 +7,9 @@ from tests.utils import (MultipolygonsPair,
                          MultipolygonsTriplet,
                          are_compounds_similar,
                          equivalence,
+                         is_maybe_shaped,
                          is_multipolygon,
+                         reverse_compound_coordinates,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
                          reverse_multipolygon_coordinates,
@@ -22,7 +24,7 @@ def test_basic(multipolygons_pair: MultipolygonsPair) -> None:
 
     result = subtract_multipolygons(left_multipolygon, right_multipolygon)
 
-    assert is_multipolygon(result)
+    assert is_maybe_shaped(result)
 
 
 @given(strategies.multipolygons_pairs)
@@ -43,16 +45,20 @@ def test_difference_subtrahend(multipolygons_triplet: MultipolygonsTriplet
     (left_multipolygon, mid_multipolygon,
      right_multipolygon) = multipolygons_triplet
 
-    result = subtract_multipolygons(left_multipolygon,
-                                    subtract_multipolygons(mid_multipolygon,
-                                                           right_multipolygon))
-
-    assert are_compounds_similar(
-            result,
-            unite_multipolygons(subtract_multipolygons(left_multipolygon,
-                                                       mid_multipolygon),
-                                intersect_multipolygons(left_multipolygon,
-                                                        right_multipolygon)))
+    left_right_intersection = intersect_multipolygons(left_multipolygon,
+                                                      right_multipolygon)
+    left_mid_difference = subtract_multipolygons(left_multipolygon,
+                                                 mid_multipolygon)
+    mid_right_difference = subtract_multipolygons(mid_multipolygon,
+                                                  right_multipolygon)
+    assert (not is_multipolygon(left_mid_difference)
+            or not is_multipolygon(left_right_intersection)
+            or not is_multipolygon(mid_right_difference)
+            or are_compounds_similar(
+                    subtract_multipolygons(left_multipolygon,
+                                           mid_right_difference),
+                    unite_multipolygons(left_mid_difference,
+                                        left_right_intersection)))
 
 
 @given(strategies.multipolygons_triplets)
@@ -61,13 +67,16 @@ def test_intersection_minuend(multipolygons_triplet: MultipolygonsTriplet
     (left_multipolygon, mid_multipolygon,
      right_multipolygon) = multipolygons_triplet
 
-    result = subtract_multipolygons(intersect_multipolygons(left_multipolygon,
-                                                            mid_multipolygon),
-                                    right_multipolygon)
-
-    assert result == intersect_multipolygons(
-            left_multipolygon, subtract_multipolygons(mid_multipolygon,
-                                                      right_multipolygon))
+    left_mid_intersection = intersect_multipolygons(left_multipolygon,
+                                                    mid_multipolygon)
+    mid_right_difference = subtract_multipolygons(mid_multipolygon,
+                                                  right_multipolygon)
+    assert (not is_multipolygon(left_mid_intersection)
+            or not is_multipolygon(mid_right_difference)
+            or (subtract_multipolygons(left_mid_intersection,
+                                       right_multipolygon)
+                == intersect_multipolygons(left_multipolygon,
+                                           mid_right_difference)))
 
 
 @given(strategies.multipolygons_triplets)
@@ -76,16 +85,20 @@ def test_intersection_subtrahend(multipolygons_triplet: MultipolygonsTriplet
     (left_multipolygon, mid_multipolygon,
      right_multipolygon) = multipolygons_triplet
 
-    result = subtract_multipolygons(
-            left_multipolygon, intersect_multipolygons(mid_multipolygon,
-                                                       right_multipolygon))
-
-    assert are_compounds_similar(
-            result,
-            unite_multipolygons(subtract_multipolygons(left_multipolygon,
-                                                       mid_multipolygon),
-                                subtract_multipolygons(left_multipolygon,
-                                                       right_multipolygon)))
+    left_mid_difference = subtract_multipolygons(left_multipolygon,
+                                                 mid_multipolygon)
+    left_right_difference = subtract_multipolygons(left_multipolygon,
+                                                   right_multipolygon)
+    mid_right_intersection = intersect_multipolygons(mid_multipolygon,
+                                                     right_multipolygon)
+    assert (not is_multipolygon(left_mid_difference)
+            or not is_multipolygon(left_right_difference)
+            or not is_multipolygon(mid_right_intersection)
+            or are_compounds_similar(
+                    subtract_multipolygons(left_multipolygon,
+                                           mid_right_intersection),
+                    unite_multipolygons(left_mid_difference,
+                                        left_right_difference)))
 
 
 @given(strategies.multipolygons_triplets)
@@ -93,16 +106,18 @@ def test_union_subtrahend(multipolygons_triplet: MultipolygonsTriplet) -> None:
     (left_multipolygon, mid_multipolygon,
      right_multipolygon) = multipolygons_triplet
 
-    result = subtract_multipolygons(left_multipolygon,
-                                    unite_multipolygons(mid_multipolygon,
-                                                        right_multipolygon))
-
-    assert are_compounds_similar(
-            result, intersect_multipolygons(
-                    subtract_multipolygons(left_multipolygon,
-                                           mid_multipolygon),
-                    subtract_multipolygons(left_multipolygon,
-                                           right_multipolygon)))
+    left_mid_difference = subtract_multipolygons(left_multipolygon,
+                                                 mid_multipolygon)
+    left_right_difference = subtract_multipolygons(left_multipolygon,
+                                                   right_multipolygon)
+    mid_right_union = unite_multipolygons(mid_multipolygon, right_multipolygon)
+    assert (not is_multipolygon(left_mid_difference)
+            or not is_multipolygon(left_right_difference)
+            or not is_multipolygon(mid_right_union)
+            or are_compounds_similar(
+                    subtract_multipolygons(left_multipolygon, mid_right_union),
+                    intersect_multipolygons(left_mid_difference,
+                                            left_right_difference)))
 
 
 @given(strategies.multipolygons_pairs)
@@ -139,7 +154,6 @@ def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
             left_multipolygon,
             reverse_multipolygon_holes_contours(right_multipolygon))
     assert are_compounds_similar(
-            result,
-            reverse_multipolygon_coordinates(subtract_multipolygons(
+            result, reverse_compound_coordinates(subtract_multipolygons(
                     reverse_multipolygon_coordinates(left_multipolygon),
                     reverse_multipolygon_coordinates(right_multipolygon))))

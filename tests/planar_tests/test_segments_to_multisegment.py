@@ -8,8 +8,9 @@ from clipping.planar import segments_to_multisegment
 from tests.utils import (are_compounds_similar,
                          are_segments_sequences_similar,
                          equivalence,
-                         is_multisegment,
-                         reverse_multisegment_coordinates,
+                         is_maybe_linear,
+                         pack_non_shaped,
+                         reverse_compound_coordinates,
                          reverse_segments_sequence,
                          reverse_segments_sequence_coordinates,
                          reverse_segments_sequence_endpoints)
@@ -20,16 +21,18 @@ from . import strategies
 def test_basic(segments: List[Segment]) -> None:
     result = segments_to_multisegment(segments)
 
-    assert is_multisegment(result)
+    assert is_maybe_linear(result)
 
 
 @given(strategies.segments_lists)
 def test_properties(segments: List[Segment]) -> None:
     result = segments_to_multisegment(segments)
 
-    assert not segments_cross_or_overlap(result.segments)
+    result_points, result_segments = pack_non_shaped(result)
+    assert not result_points
+    assert not segments_cross_or_overlap(result_segments)
     assert equivalence(not segments_cross_or_overlap(segments),
-                       are_segments_sequences_similar(result.segments,
+                       are_segments_sequences_similar(result_segments,
                                                       segments))
 
 
@@ -44,5 +47,5 @@ def test_reversals(segments: List[Segment]) -> None:
     assert result == segments_to_multisegment(
             reverse_segments_sequence_endpoints(segments))
     assert are_compounds_similar(
-            result, reverse_multisegment_coordinates(segments_to_multisegment(
+            result, reverse_compound_coordinates(segments_to_multisegment(
                     reverse_segments_sequence_coordinates(segments))))

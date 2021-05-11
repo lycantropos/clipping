@@ -7,7 +7,7 @@ from orient.planar import (segment_in_multipolygon,
 from clipping.planar import subtract_multipolygon_from_multisegment
 from tests.utils import (MultipolygonWithMultisegment,
                          are_compounds_similar,
-                         is_multisegment,
+                         is_maybe_linear,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
                          reverse_multipolygon_coordinates,
@@ -28,7 +28,7 @@ def test_basic(multipolygon_with_multisegment: MultipolygonWithMultisegment
     result = subtract_multipolygon_from_multisegment(multisegment,
                                                      multipolygon)
 
-    assert is_multisegment(result)
+    assert is_maybe_linear(result)
 
 
 @given(strategies.multipolygons_with_multisegments)
