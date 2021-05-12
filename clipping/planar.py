@@ -981,6 +981,12 @@ def symmetric_subtract_polygons(first: _Polygon,
     ...  == Polygon(Contour([Point(0, 0), Point(8, 0), Point(8, 4),
     ...                      Point(0, 4)]), []))
     True
+    >>> (symmetric_subtract_polygons(
+    ...      Polygon(first_square, [clockwise_first_inner_square]),
+    ...      Polygon(second_square, []))
+    ...  == Polygon(Contour([Point(0, 0), Point(8, 0), Point(8, 4),
+    ...                      Point(0, 4)]), [clockwise_first_inner_square]))
+    True
     >>> (symmetric_subtract_polygons(Polygon(first_square, []),
     ...                              Polygon(third_square, []))
     ...  == Multipolygon([Polygon(first_square, []),
@@ -1063,6 +1069,11 @@ def unite_polygons(first: _Polygon,
     ...                 Polygon(second_square, []))
     ...  == Polygon(Contour([Point(0, 0), Point(8, 0), Point(8, 4),
     ...                      Point(0, 4)]), []))
+    True
+    >>> (unite_polygons(Polygon(first_square, [clockwise_first_inner_square]),
+    ...                 Polygon(second_square, []))
+    ...  == Polygon(Contour([Point(0, 0), Point(8, 0), Point(8, 4),
+    ...                      Point(0, 4)]), [clockwise_first_inner_square]))
     True
     >>> (unite_polygons(Polygon(first_square, []),
     ...                 Polygon(third_square, []))
