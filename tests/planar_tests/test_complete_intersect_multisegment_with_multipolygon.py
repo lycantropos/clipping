@@ -52,21 +52,18 @@ def test_properties(multipolygon_with_multisegment
                for point in result_points)
     assert all(any(point_in_segment(point, segment) is Relation.COMPONENT
                    for point in result_points)
-               or any(segments_relation(segment.start, segment.end,
-                                        result_segment.start,
-                                        result_segment.end) is Relation.TOUCH
+               or any(segments_relation(segment, result_segment)
+                      is Relation.TOUCH
                       for result_segment in result_segments)
                for segment in multisegment.segments
                if (segment_in_multipolygon(segment, multipolygon)
                    is Relation.TOUCH
-                   and all(segments_relation(segment.start, segment.end,
-                                             edge_start, edge_end)
+                   and all(segments_relation(segment, edge)
                            in (Relation.CROSS, Relation.DISJOINT,
                                Relation.TOUCH)
                            for contour
                            in to_multipolygon_contours(multipolygon)
-                           for edge_start, edge_end
-                           in contour_to_edges(contour))))
+                           for edge in contour_to_edges(contour))))
     assert all(segment_in_multisegment(segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
                for segment in result_segments)
