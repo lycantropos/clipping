@@ -703,7 +703,8 @@ def complete_intersect_polygon_with_multipolygon(
         multipolygon: _Multipolygon,
         *,
         context: _Optional[_Context] = None
-) -> _Union[_Empty, _Mix, _Multipoint, _Multipolygon, _Multisegment, _Polygon]:
+) -> _Union[_Empty, _Mix, _Multipoint, _Multipolygon, _Multisegment, _Polygon,
+            _Segment]:
     """
     Returns intersection of polygon with multipolygon considering cases
     with polygons touching each other in points/segments.
@@ -846,7 +847,8 @@ def intersect_polygon_with_multipolygon(polygon: _Polygon,
                                         multipolygon: _Multipolygon,
                                         *,
                                         context: _Optional[_Context] = None
-                                        ) -> _Multipolygon:
+                                        ) -> _Union[_Empty, _Multipolygon,
+                                                    _Polygon]:
     """
     Returns intersection of multipolygons.
 
@@ -1484,7 +1486,8 @@ def complete_intersect_multipolygons(
         second: _Multipolygon,
         *,
         context: _Optional[_Context] = None
-) -> _Union[_Empty, _Mix, _Multipoint, _Multipolygon, _Multisegment, _Polygon]:
+) -> _Union[_Empty, _Mix, _Multipoint, _Multipolygon, _Multisegment, _Polygon,
+            _Segment]:
     """
     Returns intersection of multipolygons considering cases
     with polygons touching each other in points/segments.
