@@ -55,7 +55,7 @@ def segments_to_multisegment(segments: _Sequence[_Segment],
     ``intersections_count`` --- number of intersections between segments.
 
     :param segments: target segments.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: multisegment from segments.
 
     >>> from ground.base import get_context
@@ -100,7 +100,7 @@ def complete_intersect_multisegments(first: _Multisegment,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: intersection of operands.
 
     >>> from ground.base import get_context
@@ -152,7 +152,7 @@ def intersect_multisegments(first: _Multisegment,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: intersection of operands.
 
     >>> from ground.base import get_context
@@ -200,7 +200,7 @@ def subtract_multisegments(minuend: _Multisegment,
 
     :param minuend: multisegment to subtract from.
     :param subtrahend: multisegment to subtract.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: difference between minuend and subtrahend.
 
     >>> from ground.base import get_context
@@ -249,7 +249,7 @@ def symmetric_subtract_multisegments(first: _Multisegment,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: symmetric difference of operands.
 
     >>> from ground.base import get_context
@@ -299,7 +299,7 @@ def unite_multisegments(first: _Multisegment,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: union of operands.
 
     >>> from ground.base import get_context
@@ -355,7 +355,7 @@ def intersect_multisegment_with_multipolygon(
 
     :param multisegment: multisegment to intersect with.
     :param multipolygon: multipolygon to intersect with.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: intersection of multisegment with multipolygon.
 
     >>> from ground.base import get_context
@@ -413,7 +413,7 @@ def complete_intersect_multisegment_with_multipolygon(
 
     :param multisegment: multisegment to intersect with.
     :param multipolygon: multipolygon to intersect with.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: intersection of multisegment with multipolygon.
 
     >>> from ground.base import get_context
@@ -474,7 +474,7 @@ def subtract_multipolygon_from_multisegment(
 
     :param minuend: multisegment to subtract from.
     :param subtrahend: multipolygon to subtract.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: difference of minuend with subtrahend.
 
     >>> from ground.base import get_context
@@ -532,7 +532,7 @@ def complete_intersect_multiregions(first: _Multiregion,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: intersection of operands.
 
     >>> from ground.base import get_context
@@ -638,7 +638,7 @@ def intersect_multiregions(first: _Multiregion,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: intersection of operands.
 
     >>> from ground.base import get_context
@@ -726,7 +726,7 @@ def complete_intersect_polygons(first: _Polygon,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: intersection of operands.
 
     >>> from ground.base import get_context
@@ -812,7 +812,7 @@ def intersect_polygons(first: _Polygon,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: intersection of operands.
 
     >>> from ground.base import get_context
@@ -877,7 +877,7 @@ def subtract_polygons(minuend: _Polygon,
 
     :param minuend: polygon to subtract from.
     :param subtrahend: polygon to subtract.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: difference between minuend and subtrahend.
 
     >>> from ground.base import get_context
@@ -948,7 +948,7 @@ def symmetric_subtract_polygons(first: _Polygon,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: symmetric difference of operands.
 
     >>> from ground.base import get_context
@@ -1032,7 +1032,7 @@ def unite_polygons(first: _Polygon,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: union of operands.
 
     >>> from ground.base import get_context
@@ -1123,7 +1123,7 @@ def complete_intersect_polygon_with_multipolygon(
 
     :param polygon: first operand.
     :param multipolygon: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: intersection of operands.
 
     >>> from ground.base import get_context
@@ -1266,7 +1266,7 @@ def intersect_polygon_with_multipolygon(polygon: _Polygon,
 
     :param polygon: first operand.
     :param multipolygon: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: intersection of operands.
 
     >>> from ground.base import get_context
@@ -1387,7 +1387,7 @@ def subtract_multipolygon_from_polygon(minuend: _Polygon,
 
     :param minuend: polygon to subtract from.
     :param subtrahend: multipolygon to subtract.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: difference between minuend and subtrahend.
 
     >>> from ground.base import get_context
@@ -1519,7 +1519,7 @@ def subtract_polygon_from_multipolygon(minuend: _Multipolygon,
 
     :param minuend: multipolygon to subtract from.
     :param subtrahend: polygon to subtract.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: difference between minuend and subtrahend.
 
     >>> from ground.base import get_context
@@ -1636,7 +1636,7 @@ def symmetric_subtract_multipolygon_from_polygon(
 
     :param polygon: first operand.
     :param multipolygon: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: symmetric difference of operands.
 
     >>> from ground.base import get_context
@@ -1788,7 +1788,7 @@ def unite_polygon_with_multipolygon(polygon: _Polygon,
 
     :param polygon: first operand.
     :param multipolygon: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: union of operands.
 
     >>> from ground.base import get_context
@@ -1908,7 +1908,7 @@ def complete_intersect_multipolygons(
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: intersection of operands.
 
     >>> from ground.base import get_context
@@ -2106,7 +2106,7 @@ def intersect_multipolygons(first: _Multipolygon,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: intersection of operands.
 
     >>> from ground.base import get_context
@@ -2243,7 +2243,7 @@ def subtract_multipolygons(minuend: _Multipolygon,
 
     :param minuend: multipolygon to subtract from.
     :param subtrahend: multipolygon to subtract.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: difference between minuend and subtrahend.
 
     >>> from ground.base import get_context
@@ -2387,7 +2387,7 @@ def symmetric_subtract_multipolygons(first: _Multipolygon,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: symmetric difference of operands.
 
     >>> from ground.base import get_context
@@ -2541,7 +2541,7 @@ def unite_multipolygons(first: _Multipolygon,
 
     :param first: first operand.
     :param second: second operand.
-    :param context: geometric context
+    :param context: geometric context.
     :returns: union of operands.
 
     >>> from ground.base import get_context
