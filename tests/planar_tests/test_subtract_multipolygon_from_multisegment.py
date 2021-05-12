@@ -8,6 +8,7 @@ from clipping.planar import subtract_multipolygon_from_multisegment
 from tests.utils import (MultipolygonWithMultisegment,
                          are_compounds_similar,
                          is_maybe_linear,
+                         reverse_compound_coordinates,
                          reverse_multipolygon,
                          reverse_multipolygon_borders,
                          reverse_multipolygon_coordinates,
@@ -80,7 +81,7 @@ def test_reversals(multipolygon_with_multisegment: MultipolygonWithMultisegment
                     reverse_multisegment_endpoints(multisegment),
                     multipolygon))
     assert are_compounds_similar(
-            result, reverse_multisegment_coordinates(
+            result, reverse_compound_coordinates(
                     subtract_multipolygon_from_multisegment(
                             reverse_multisegment_coordinates(multisegment),
                             reverse_multipolygon_coordinates(multipolygon))))
