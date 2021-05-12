@@ -39,6 +39,47 @@ from .hints import (Multiregion as _Multiregion,
                     Region as _Region)
 
 
+def intersect_segments(first: _Segment,
+                       second: _Segment,
+                       *,
+                       context: _Optional[_Context] = None
+                       ) -> _Union[_Empty, _Multipoint, _Segment]:
+    """
+    Returns intersection of segments.
+
+    Time complexity:
+        ``O(1)``
+    Memory complexity:
+        ``O(1)``
+
+    :param first: first operand.
+    :param second: second operand.
+    :param context: geometric context.
+    :returns: intersection of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Multipoint = context.multipoint_cls
+    >>> Point = context.point_cls
+    >>> Segment = context.segment_cls
+    >>> (intersect_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                     Segment(Point(6, 0), Point(10, 0)))
+    ...  is EMPTY)
+    True
+    >>> (intersect_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                     Segment(Point(4, 0), Point(8, 0)))
+    ...  == Multipoint([Point(4, 0)]))
+    True
+    >>> (intersect_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                     Segment(Point(2, 0), Point(6, 0)))
+    ...  == Segment(Point(2, 0), Point(4, 0)))
+    True
+    """
+    return _linear.intersect_segments(
+            first, second, _get_context() if context is None else context)
+
+
 def segments_to_multisegment(segments: _Sequence[_Segment],
                              *,
                              context: _Optional[_Context] = None

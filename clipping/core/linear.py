@@ -7,7 +7,8 @@ from typing import (Iterable,
                     Sequence,
                     Union as Union_)
 
-from ground.base import Context
+from ground.base import (Context,
+                         Relation)
 from ground.hints import (Empty,
                           Mix,
                           Multipoint,
@@ -314,3 +315,18 @@ class Union(Operation):
                        for endpoints, _ in groupby(self.sweep(),
                                                    key=to_endpoints)),
                 context))
+
+
+def intersect_segments(first: Segment,
+                       second: Segment,
+                       context: Context) -> Union_[Empty, Multipoint, Segment]:
+    relation = context.segments_relation(first, second)
+    if relation is Relation.DISJOINT:
+        return context.empty
+    elif relation is Relation.TOUCH or relation is Relation.CROSS:
+        return context.multipoint_cls([context.segments_intersection(first,
+                                                                     second)])
+    else:
+        _, overlap_start, overlap_end, _ = sorted([first.start, first.end,
+                                                   second.start, second.end])
+        return context.segment_cls(overlap_start, overlap_end)
