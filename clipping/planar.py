@@ -334,7 +334,8 @@ def intersect_multisegment_with_multipolygon(
         multisegment: _Multisegment,
         multipolygon: _Multipolygon,
         *,
-        context: _Optional[_Context] = None) -> _Multisegment:
+        context: _Optional[_Context] = None
+) -> _Union[_Empty, _Segment, _Multisegment]:
     """
     Returns intersection of multisegment with multipolygon.
 
@@ -448,11 +449,12 @@ def complete_intersect_multisegment_with_multipolygon(
             _get_context() if context is None else context).compute()
 
 
-def subtract_multipolygon_from_multisegment(minuend: _Multisegment,
-                                            subtrahend: _Multipolygon,
-                                            *,
-                                            context: _Optional[_Context] = None
-                                            ) -> _Multisegment:
+def subtract_multipolygon_from_multisegment(
+        minuend: _Multisegment,
+        subtrahend: _Multipolygon,
+        *,
+        context: _Optional[_Context] = None
+) -> _Union[_Empty, _Segment, _Multisegment]:
     """
     Returns difference of multisegment with multipolygon.
 
