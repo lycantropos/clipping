@@ -11,7 +11,8 @@ from typing import (Iterable,
 from ground.base import Context
 from ground.hints import (Empty,
                           Linear,
-                          Maybe, Mix,
+                          Maybe,
+                          Mix,
                           Multipoint,
                           Point,
                           Shaped)
