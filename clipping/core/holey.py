@@ -26,7 +26,7 @@ from .event import (LeftHoleyEvent as LeftEvent,
                     events_to_connectivity)
 from .events_queue import HoleyEventsQueue as EventsQueue
 from .hints import SegmentEndpoints
-from .operands import ShapedOperand
+from .operands import HoleyOperand
 from .sweep_line import BinarySweepLine as SweepLine
 from .unpacking import (unpack_mix,
                         unpack_points,
@@ -48,8 +48,8 @@ class Operation(ABC):
     __slots__ = 'context', 'first', 'second', '_events_queue'
 
     def __init__(self,
-                 first: ShapedOperand,
-                 second: ShapedOperand,
+                 first: HoleyOperand,
+                 second: HoleyOperand,
                  context: Context) -> None:
         """
         Initializes operation.

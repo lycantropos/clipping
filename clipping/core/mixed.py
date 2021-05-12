@@ -20,7 +20,7 @@ from . import bounding
 from .event import (LeftMixedEvent as LeftEvent,
                     RightMixedEvent as RightEvent)
 from .events_queue import MixedEventsQueue as EventsQueue
-from .operands import ShapedOperand
+from .operands import HoleyOperand
 from .sweep_line import BinarySweepLine as SweepLine
 from .unpacking import (unpack_linear_mix,
                         unpack_points,
@@ -42,7 +42,7 @@ class Operation(ABC):
 
     def __init__(self,
                  multisegment: Multisegment,
-                 shaped: ShapedOperand,
+                 shaped: HoleyOperand,
                  context: Context) -> None:
         """
         Initializes operation.
