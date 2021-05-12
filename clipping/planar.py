@@ -786,6 +786,71 @@ def complete_intersect_polygons(first: _Polygon,
             _get_context() if context is None else context).compute()
 
 
+def intersect_polygons(first: _Polygon,
+                       second: _Polygon,
+                       *,
+                       context: _Optional[_Context] = None
+                       ) -> _Union[_Empty, _Multipolygon, _Polygon]:
+    """
+    Returns intersection of polygons.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = edges_count + intersections_count``,
+    ``edges_count = first_edges_count + second_edges_count``,
+    ``first_edges_count = len(first.border.vertices)\
+ + sum(len(hole.vertices) for hole in first.holes)``,
+    ``second_edges_count = len(second.border.vertices)\
+ + sum(len(hole.vertices) for hole in second.holes)``,
+    ``intersections_count`` --- number of intersections between polygons edges.
+
+    :param first: first operand.
+    :param second: second operand.
+    :param context: geometric context
+    :returns: intersection of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> first_square = Contour([Point(0, 0), Point(4, 0), Point(4, 4),
+    ...                         Point(0, 4)])
+    >>> second_square = Contour([Point(4, 0), Point(8, 0), Point(8, 4),
+    ...                          Point(4, 4)])
+    >>> first_inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
+    ...                               Point(1, 3)])
+    >>> clockwise_first_inner_square = Contour([Point(1, 1), Point(1, 3),
+    ...                                         Point(3, 3), Point(3, 1)])
+    >>> (intersect_polygons(Polygon(first_inner_square, []),
+    ...                     Polygon(second_square, []))
+    ...  is intersect_polygons(Polygon(first_square, []),
+    ...                        Polygon(second_square, []))
+    ...  is intersect_polygons(Polygon(first_inner_square, []),
+    ...                        Polygon(first_square,
+    ...                                [clockwise_first_inner_square]))
+    ...  is EMPTY)
+    True
+    >>> (intersect_polygons(Polygon(first_square, []),
+    ...                     Polygon(first_inner_square, []))
+    ...  == Polygon(first_inner_square, []))
+    True
+    >>> (intersect_polygons(Polygon(first_square,
+    ...                             [clockwise_first_inner_square]),
+    ...                     Polygon(first_square,
+    ...                             [clockwise_first_inner_square]))
+    ...  == Polygon(first_square, [clockwise_first_inner_square]))
+    True
+    """
+    return _holey.Intersection(
+            _holey.PolygonOperand(first), _holey.PolygonOperand(second),
+            _get_context() if context is None else context).compute()
+
+
 def complete_intersect_polygon_with_multipolygon(
         polygon: _Polygon,
         multipolygon: _Multipolygon,
