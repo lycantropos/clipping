@@ -987,6 +987,89 @@ def intersect_multiregions(first: _Multiregion,
             _get_context() if context is None else context).compute()
 
 
+def complete_intersect_region_with_multiregion(
+        region: _Region,
+        multiregion: _Multiregion,
+        *,
+        context: _Optional[_Context] = None
+) -> _Union[_Empty, _Mix, _Multipoint, _Multipolygon, _Multisegment, _Polygon,
+            _Segment]:
+    """
+    Returns intersection of region with multiregion
+    considering cases with regions touching each other in points/segments.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = edges_count + intersections_count``,
+    ``edges_count = len(region.vertices) + multiregion_edges_count``,
+    ``multiregion_edges_count = sum(len(region.vertices)\
+ for region in multiregion)``,
+    ``intersections_count`` --- number of intersections between regions edges.
+
+    :param region: first operand.
+    :param multiregion: second operand.
+    :param context: geometric context.
+    :returns: intersection of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Mix = context.mix_cls
+    >>> Multipoint = context.multipoint_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> first_square = Contour([Point(0, 0), Point(4, 0), Point(4, 4),
+    ...                         Point(0, 4)])
+    >>> second_square = Contour([Point(4, 0), Point(8, 0), Point(8, 4),
+    ...                          Point(4, 4)])
+    >>> third_square = Contour([Point(4, 4), Point(8, 4), Point(8, 8),
+    ...                         Point(4, 8)])
+    >>> first_inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
+    ...                               Point(1, 3)])
+    >>> second_inner_square = Contour([Point(5, 1), Point(7, 1), Point(7, 3),
+    ...                                Point(5, 3)])
+    >>> (complete_intersect_region_with_multiregion(
+    ...      second_inner_square, [first_square, third_square])
+    ...  is EMPTY)
+    True
+    >>> (complete_intersect_region_with_multiregion(
+    ...      first_square, [second_inner_square, third_square])
+    ...  == Multipoint([Point(4, 4)]))
+    True
+    >>> (complete_intersect_region_with_multiregion(
+    ...      second_square, [first_square, third_square])
+    ...  == Multisegment([Segment(Point(4, 0), Point(4, 4)),
+    ...                   Segment(Point(4, 4), Point(8, 4))]))
+    True
+    >>> (complete_intersect_region_with_multiregion(
+    ...      first_square, [first_inner_square, second_inner_square])
+    ...  == Polygon(first_inner_square, []))
+    True
+    >>> (complete_intersect_region_with_multiregion(
+    ...      first_square, [first_inner_square, third_square])
+    ...  == Mix(Multipoint([Point(4, 4)]), EMPTY,
+    ...         Polygon(first_inner_square, [])))
+    True
+    >>> (complete_intersect_region_with_multiregion(
+    ...      first_square, [first_inner_square, second_square])
+    ...  == Mix(EMPTY, Segment(Point(4, 0), Point(4, 4)),
+    ...         Polygon(first_inner_square, [])))
+    True
+    """
+    return _holeless.CompleteIntersection(
+            _operands.RegionOperand(region),
+            _operands.MultiregionOperand(multiregion),
+            _get_context() if context is None else context).compute()
+            _operands.RegionOperand(region),
+
+
 def complete_intersect_polygons(first: _Polygon,
                                 second: _Polygon,
                                 *,
