@@ -90,56 +90,93 @@ True
 ...  == symmetric_subtract_multisegments(square_edges, trident)
 ...  == Multisegment([main_diagonal, top_edge, right_edge]))
 True
->>> Contour, Multipolygon, Polygon = (context.contour_cls,
-...                                   context.multipolygon_cls,
-...                                   context.polygon_cls)
->>> left_triangle = Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
-...                                                Point(0, 1)]), [])])
->>> right_triangle = Multipolygon([Polygon(Contour([Point(0, 1), Point(1, 0),
-...                                                 Point(1, 1)]), [])])
->>> square = Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
-...                                         Point(1, 1), Point(0, 1)]), [])])
+>>> Contour = context.contour_cls
+>>> Multipolygon = context.multipolygon_cls
+>>> Polygon = context.polygon_cls
+>>> first_square = Contour([Point(0, 0), Point(1, 0), Point(1, 1),
+...                         Point(0, 1)])
+>>> second_square = Contour([Point(1, 0), Point(2, 0), Point(2, 1),
+...                          Point(1, 1)])
+>>> third_square = Contour([Point(1, 1), Point(2, 1), Point(2, 2),
+...                         Point(1, 2)])
+>>> fourth_square = Contour([Point(0, 1), Point(1, 1), Point(1, 2),
+...                          Point(0, 2)])
 >>> from clipping.planar import intersect_multipolygons
->>> all(intersect_multipolygons(square, triangle)
-...     == intersect_multipolygons(triangle, square) == triangle
-...     for triangle in (left_triangle, right_triangle))
+>>> (intersect_multipolygons(Multipolygon([Polygon(first_square, []),
+...                                        Polygon(third_square, [])]),
+...                          Multipolygon([Polygon(second_square, []),
+...                                        Polygon(fourth_square, [])]))
+...  is intersect_multipolygons(Multipolygon([Polygon(first_square, []),
+...                                           Polygon(third_square, [])]),
+...                             Multipolygon([Polygon(second_square, []),
+...                                           Polygon(fourth_square, [])]))
+...  is EMPTY)
 True
->>> intersect_multipolygons(left_triangle, right_triangle) == Multipolygon([])
+>>> (intersect_multipolygons(Multipolygon([Polygon(first_square, []),
+...                                        Polygon(third_square, [])]),
+...                          Multipolygon([Polygon(first_square, []),
+...                                        Polygon(third_square, [])]))
+...  == Multipolygon([Polygon(first_square, []), Polygon(third_square, [])]))
 True
 >>> from clipping.planar import complete_intersect_multipolygons
->>> all(complete_intersect_multipolygons(square, triangle)
-...     == (Multipoint([]), Multisegment([]),
-...         intersect_multipolygons(square, triangle))
-...     for triangle in (left_triangle, right_triangle))
+>>> (complete_intersect_multipolygons(
+...      Multipolygon([Polygon(first_square, []), Polygon(third_square, [])]),
+...      Multipolygon([Polygon(second_square, []),
+...                    Polygon(fourth_square, [])]))
+...  == complete_intersect_multipolygons(
+...          Multipolygon([Polygon(first_square, []),
+...                        Polygon(third_square, [])]),
+...          Multipolygon([Polygon(second_square, []),
+...                        Polygon(fourth_square, [])]))
+...  == Multisegment([Segment(Point(0, 1), Point(1, 1)),
+...                   Segment(Point(1, 0), Point(1, 1)),
+...                   Segment(Point(1, 1), Point(2, 1)),
+...                   Segment(Point(1, 1), Point(1, 2))]))
 True
->>> (complete_intersect_multipolygons(left_triangle, right_triangle)
-...  == (Multipoint([]), Multisegment([Segment(Point(0, 1), Point(1, 0))]),
-...      Multipolygon([])))
+>>> (complete_intersect_multipolygons(
+...      Multipolygon([Polygon(first_square, []), Polygon(third_square, [])]),
+...      Multipolygon([Polygon(first_square, []), Polygon(third_square, [])]))
+...  == Multipolygon([Polygon(first_square, []), Polygon(third_square, [])]))
 True
 >>> from clipping.planar import unite_multipolygons
->>> all(unite_multipolygons(square, triangle)
-...     == unite_multipolygons(triangle, square)
-...     == square
-...     for triangle in (left_triangle, right_triangle))
+>>> (unite_multipolygons(Multipolygon([Polygon(first_square, []),
+...                                    Polygon(third_square, [])]),
+...                      Multipolygon([Polygon(second_square, []),
+...                                    Polygon(fourth_square, [])]))
+...  == Polygon(Contour([Point(0, 0), Point(2, 0), Point(2, 2), Point(0, 2)]),
+...             []))
 True
->>> (unite_multipolygons(left_triangle, right_triangle)
-...  == unite_multipolygons(right_triangle, left_triangle)
-...  == square)
+>>> (unite_multipolygons(Multipolygon([Polygon(first_square, []),
+...                                    Polygon(third_square, [])]),
+...                      Multipolygon([Polygon(first_square, []),
+...                                    Polygon(third_square, [])]))
+...  == Multipolygon([Polygon(first_square, []), Polygon(third_square, [])]))
 True
 >>> from clipping.planar import subtract_multipolygons
->>> all(subtract_multipolygons(triangle, square) == Multipolygon([])
-...     for triangle in (left_triangle, right_triangle))
+>>> (subtract_multipolygons(Multipolygon([Polygon(first_square, []),
+...                                       Polygon(third_square, [])]),
+...                         Multipolygon([Polygon(first_square, []),
+...                                       Polygon(third_square, [])]))
+...  is EMPTY)
 True
->>> subtract_multipolygons(square, left_triangle) == right_triangle
-True
->>> subtract_multipolygons(square, right_triangle) == left_triangle
+>>> (subtract_multipolygons(Multipolygon([Polygon(first_square, []),
+...                                       Polygon(third_square, [])]),
+...                         Multipolygon([Polygon(second_square, []),
+...                                       Polygon(fourth_square, [])]))
+...  == Multipolygon([Polygon(first_square, []), Polygon(third_square, [])]))
 True
 >>> from clipping.planar import symmetric_subtract_multipolygons
->>> symmetric_subtract_multipolygons(left_triangle, right_triangle) == square
+>>> (symmetric_subtract_multipolygons(
+...      Multipolygon([Polygon(first_square, []), Polygon(third_square, [])]),
+...      Multipolygon([Polygon(first_square, []), Polygon(third_square, [])]))
+...  is EMPTY)
 True
->>> symmetric_subtract_multipolygons(square, left_triangle) == right_triangle
-True
->>> symmetric_subtract_multipolygons(square, right_triangle) == left_triangle
+>>> (symmetric_subtract_multipolygons(
+...      Multipolygon([Polygon(first_square, []), Polygon(third_square, [])]),
+...      Multipolygon([Polygon(second_square, []),
+...                    Polygon(fourth_square, [])]))
+...  == Polygon(Contour([Point(0, 0), Point(2, 0), Point(2, 2), Point(0, 2)]),
+...             []))
 True
 
 ```
