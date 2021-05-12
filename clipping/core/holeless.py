@@ -13,9 +13,7 @@ from ground.hints import (Empty,
                           Linear,
                           Maybe, Mix,
                           Multipoint,
-                          Multipolygon,
                           Point,
-                          Polygon,
                           Shaped)
 from reprit.base import generate_repr
 
@@ -226,7 +224,7 @@ class Intersection(Operation):
         first_box, second_box = (context.contours_box(self.first),
                                  context.contours_box(self.second))
         if bounding.disjoint_with(first_box, second_box):
-            return []
+            return context.empty
         self.first = bounding.to_coupled_regions(second_box, self.first,
                                                  context)
         if not self.first:
