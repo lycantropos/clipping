@@ -748,8 +748,8 @@ def complete_intersect_multiregions(first: _Multiregion,
                                                 _Multipolygon, _Multisegment,
                                                 _Polygon, _Segment]:
     """
-    Returns intersection of multiregions considering cases
-    with regions touching each other in points/segments.
+    Returns intersection of multiregions
+    considering cases with regions touching each other in points/segments.
 
     Time complexity:
         ``O(segments_count * log segments_count)``
