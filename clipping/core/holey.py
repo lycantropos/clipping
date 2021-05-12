@@ -44,43 +44,12 @@ from .utils import (all_equal,
 Event = Union_[LeftEvent, RightEvent]
 
 
-class Operand(ABC):
-    __slots__ = 'polygons',
-
-    @property
-    @abstractmethod
-    def value(self) -> Union_[Multipolygon, Polygon]:
-        """Returns value of the operand."""
-
-
-class MultipolygonOperand(Operand):
-    __slots__ = '_value',
-
-    def __init__(self, value: Multipolygon) -> None:
-        self._value, self.polygons = value, value.polygons
-
-    @property
-    def value(self) -> Multipolygon:
-        return self._value
-
-
-class PolygonOperand(Operand):
-    __slots__ = '_value',
-
-    def __init__(self, value: Polygon) -> None:
-        self._value, self.polygons = value, [value]
-
-    @property
-    def value(self) -> Polygon:
-        return self._value
-
-
 class Operation(ABC):
     __slots__ = 'context', 'first', 'second', '_events_queue'
 
     def __init__(self,
-                 first: Operand,
-                 second: Operand,
+                 first: ShapedOperand,
+                 second: ShapedOperand,
                  context: Context) -> None:
         """
         Initializes operation.

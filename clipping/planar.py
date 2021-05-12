@@ -33,7 +33,8 @@ from ground.hints import (Empty as _Empty,
 from .core import (holeless as _holeless,
                    holey as _holey,
                    linear as _linear,
-                   mixed as _mixed)
+                   mixed as _mixed,
+                   operands as _operands)
 from .hints import Multiregion as _Multiregion
 
 
@@ -381,7 +382,7 @@ def intersect_multisegment_with_multipolygon(
     True
     """
     return _mixed.Intersection(
-            multisegment, multipolygon,
+            multisegment, _operands.MultipolygonOperand(multipolygon),
             _get_context() if context is None else context).compute()
 
 
@@ -443,7 +444,7 @@ def complete_intersect_multisegment_with_multipolygon(
     True
     """
     return _mixed.CompleteIntersection(
-            multisegment, multipolygon,
+            multisegment, _operands.MultipolygonOperand(multipolygon),
             _get_context() if context is None else context).compute()
 
 
@@ -500,7 +501,7 @@ def subtract_multipolygon_from_multisegment(minuend: _Multisegment,
     True
     """
     return _mixed.Difference(
-            minuend, subtrahend,
+            minuend, _operands.MultipolygonOperand(subtrahend),
             _get_context() if context is None else context).compute()
 
 
@@ -782,7 +783,7 @@ def complete_intersect_polygons(first: _Polygon,
     True
     """
     return _holey.CompleteIntersection(
-            _holey.PolygonOperand(first), _holey.PolygonOperand(second),
+            _operands.PolygonOperand(first), _operands.PolygonOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -847,7 +848,7 @@ def intersect_polygons(first: _Polygon,
     True
     """
     return _holey.Intersection(
-            _holey.PolygonOperand(first), _holey.PolygonOperand(second),
+            _operands.PolygonOperand(first), _operands.PolygonOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -917,7 +918,8 @@ def subtract_polygons(minuend: _Polygon,
     True
     """
     return _holey.Difference(
-            _holey.PolygonOperand(minuend), _holey.PolygonOperand(subtrahend),
+            _operands.PolygonOperand(minuend),
+            _operands.PolygonOperand(subtrahend),
             _get_context() if context is None else context).compute()
 
 
@@ -1001,7 +1003,7 @@ def symmetric_subtract_polygons(first: _Polygon,
     True
     """
     return _holey.SymmetricDifference(
-            _holey.PolygonOperand(first), _holey.PolygonOperand(second),
+            _operands.PolygonOperand(first), _operands.PolygonOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -1088,7 +1090,7 @@ def unite_polygons(first: _Polygon,
     True
     """
     return _holey.Union(
-            _holey.PolygonOperand(first), _holey.PolygonOperand(second),
+            _operands.PolygonOperand(first), _operands.PolygonOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -1232,8 +1234,8 @@ def complete_intersect_polygon_with_multipolygon(
     True
     """
     return _holey.CompleteIntersection(
-            _holey.PolygonOperand(polygon),
-            _holey.MultipolygonOperand(multipolygon),
+            _operands.PolygonOperand(polygon),
+            _operands.MultipolygonOperand(multipolygon),
             _get_context() if context is None else context).compute()
 
 
@@ -1353,8 +1355,8 @@ def intersect_polygon_with_multipolygon(polygon: _Polygon,
     True
     """
     return _holey.Intersection(
-            _holey.PolygonOperand(polygon),
-            _holey.MultipolygonOperand(multipolygon),
+            _operands.PolygonOperand(polygon),
+            _operands.MultipolygonOperand(multipolygon),
             _get_context() if context is None else context).compute()
 
 
@@ -1485,8 +1487,8 @@ def subtract_multipolygon_from_polygon(minuend: _Polygon,
     True
     """
     return _holey.Difference(
-            _holey.PolygonOperand(minuend),
-            _holey.MultipolygonOperand(subtrahend),
+            _operands.PolygonOperand(minuend),
+            _operands.MultipolygonOperand(subtrahend),
             _get_context() if context is None else context).compute()
 
 
@@ -1602,8 +1604,8 @@ def subtract_polygon_from_multipolygon(minuend: _Multipolygon,
     True
     """
     return _holey.Difference(
-            _holey.MultipolygonOperand(minuend),
-            _holey.PolygonOperand(subtrahend),
+            _operands.MultipolygonOperand(minuend),
+            _operands.PolygonOperand(subtrahend),
             _get_context() if context is None else context).compute()
 
 
@@ -1755,8 +1757,8 @@ def symmetric_subtract_multipolygon_from_polygon(
     True
     """
     return _holey.SymmetricDifference(
-            _holey.PolygonOperand(polygon),
-            _holey.MultipolygonOperand(multipolygon),
+            _operands.PolygonOperand(polygon),
+            _operands.MultipolygonOperand(multipolygon),
             _get_context() if context is None else context).compute()
 
 
@@ -1870,8 +1872,8 @@ def unite_polygon_with_multipolygon(polygon: _Polygon,
     True
     """
     return _holey.Union(
-            _holey.PolygonOperand(polygon),
-            _holey.MultipolygonOperand(multipolygon),
+            _operands.PolygonOperand(polygon),
+            _operands.MultipolygonOperand(multipolygon),
             _get_context() if context is None else context).compute()
 
 
@@ -2071,8 +2073,8 @@ def complete_intersect_multipolygons(
     True
     """
     return _holey.CompleteIntersection(
-            _holey.MultipolygonOperand(first),
-            _holey.MultipolygonOperand(second),
+            _operands.MultipolygonOperand(first),
+            _operands.MultipolygonOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -2208,8 +2210,8 @@ def intersect_multipolygons(first: _Multipolygon,
     True
     """
     return _holey.Intersection(
-            _holey.MultipolygonOperand(first),
-            _holey.MultipolygonOperand(second),
+            _operands.MultipolygonOperand(first),
+            _operands.MultipolygonOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -2351,8 +2353,8 @@ def subtract_multipolygons(minuend: _Multipolygon,
     True
     """
     return _holey.Difference(
-            _holey.MultipolygonOperand(minuend),
-            _holey.MultipolygonOperand(subtrahend),
+            _operands.MultipolygonOperand(minuend),
+            _operands.MultipolygonOperand(subtrahend),
             _get_context() if context is None else context).compute()
 
 
@@ -2506,8 +2508,8 @@ def symmetric_subtract_multipolygons(first: _Multipolygon,
     True
     """
     return _holey.SymmetricDifference(
-            _holey.MultipolygonOperand(first),
-            _holey.MultipolygonOperand(second),
+            _operands.MultipolygonOperand(first),
+            _operands.MultipolygonOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -2647,6 +2649,6 @@ def unite_multipolygons(first: _Multipolygon,
     True
     """
     return _holey.Union(
-            _holey.MultipolygonOperand(first),
-            _holey.MultipolygonOperand(second),
+            _operands.MultipolygonOperand(first),
+            _operands.MultipolygonOperand(second),
             _get_context() if context is None else context).compute()
