@@ -11,6 +11,7 @@ from typing import (Iterable,
 from ground.base import Context
 from ground.hints import (Contour,
                           Empty,
+                          Mix,
                           Multipoint,
                           Multipolygon,
                           Multisegment,
@@ -24,8 +25,8 @@ from .event import (LeftHoleyEvent as LeftEvent,
                     RightShapedEvent as RightEvent,
                     events_to_connectivity)
 from .events_queue import HoleyEventsQueue as EventsQueue
-from .hints import (Mix,
-                    SegmentEndpoints)
+from .hints import SegmentEndpoints
+from .operands import ShapedOperand
 from .sweep_line import BinarySweepLine as SweepLine
 from .unpacking import (unpack_mix,
                         unpack_points,

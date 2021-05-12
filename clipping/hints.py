@@ -1,11 +1,5 @@
-from .core.hints import (HolelessMix,
-                         LinearMix,
-                         Mix,
-                         Multiregion,
+from .core.hints import (Multiregion,
                          Region)
 
-HolelessMix = HolelessMix
-LinearMix = LinearMix
-Mix = Mix
 Multiregion = Multiregion
 Region = Region
