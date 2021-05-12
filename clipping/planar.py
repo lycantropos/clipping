@@ -330,6 +330,176 @@ def unite_multisegments(first: _Multisegment,
             _get_context() if context is None else context).compute()
 
 
+def complete_intersect_multisegment_with_polygon(
+        multisegment: _Multisegment,
+        polygon: _Polygon,
+        *,
+        context: _Optional[_Context] = None
+) -> _Union[_Empty, _Mix, _Multipoint, _Multisegment, _Segment]:
+    """
+    Returns intersection of multisegment with polygon
+    considering cases with geometries touching each other in points.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = start_segments_count + intersections_count``,
+    ``start_segments_count = len(multisegment.segments)\
+ + polygon_edges_count``,
+    ``polygon_edges_count = len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)``,
+    ``intersections_count`` --- number of intersections between multisegment
+    and polygon edges.
+
+    :param multisegment: multisegment to intersect with.
+    :param polygon: polygon to intersect with.
+    :param context: geometric context.
+    :returns: intersection of multisegment with polygon.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Mix = context.mix_cls
+    >>> Contour = context.contour_cls
+    >>> Multipoint = context.multipoint_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> (complete_intersect_multisegment_with_polygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Polygon(Contour([Point(0, 0), Point(1, 0), Point(0, 1)]), []))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
+    >>> (complete_intersect_multisegment_with_polygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(1, 1), Point(2, 2))]),
+    ...      Polygon(Contour([Point(0, 0), Point(1, 0), Point(1, 1),
+    ...                       Point(0, 1)]), []))
+    ...  == Mix(Multipoint([Point(1, 1)]), Segment(Point(0, 0), Point(1, 0)),
+    ...         EMPTY))
+    True
+    """
+    return _mixed.CompleteIntersection(
+            multisegment, _operands.PolygonOperand(polygon),
+            _get_context() if context is None else context).compute()
+
+
+def intersect_multisegment_with_polygon(
+        multisegment: _Multisegment,
+        polygon: _Polygon,
+        *,
+        context: _Optional[_Context] = None
+) -> _Union[_Empty, _Multisegment, _Segment]:
+    """
+    Returns intersection of multisegment with polygon.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = start_segments_count + intersections_count``,
+    ``start_segments_count = len(multisegment.segments)\
+ + polygon_edges_count``,
+    ``polygon_edges_count = len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)``,
+    ``intersections_count`` --- number of intersections between multisegment
+    and polygon edges.
+
+    :param multisegment: multisegment to intersect with.
+    :param polygon: polygon to intersect with.
+    :param context: geometric context.
+    :returns: intersection of multisegment with polygon.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> Contour = context.contour_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> (intersect_multisegment_with_polygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Polygon(Contour([Point(0, 0), Point(1, 0), Point(0, 1)]), []))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(0, 1), Point(1, 0))]))
+    True
+    >>> (intersect_multisegment_with_polygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(1, 1), Point(2, 2))]),
+    ...      Polygon(Contour([Point(0, 0), Point(1, 0), Point(1, 1),
+    ...                       Point(0, 1)]), []))
+    ...  == Segment(Point(0, 0), Point(1, 0)))
+    True
+    """
+    return _mixed.Intersection(
+            multisegment, _operands.PolygonOperand(polygon),
+            _get_context() if context is None else context).compute()
+
+
+def subtract_polygon_from_multisegment(
+        minuend: _Multisegment,
+        subtrahend: _Polygon,
+        *,
+        context: _Optional[_Context] = None
+) -> _Union[_Empty, _Multisegment, _Segment]:
+    """
+    Returns difference of multisegment with polygon.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = start_segments_count + intersections_count``,
+    ``start_segments_count = len(minuend.segments)\
+ + polygon_edges_count``,
+    ``subtrahend_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in subtrahend.polygons)``,
+    ``intersections_count`` --- number of intersections between multisegment
+    and polygon edges.
+
+    :param minuend: multisegment to subtract from.
+    :param subtrahend: polygon to subtract.
+    :param context: geometric context.
+    :returns: difference of minuend with subtrahend.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Multipoint = context.multipoint_cls
+    >>> Polygon = context.polygon_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> (subtract_polygon_from_multisegment(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Polygon(Contour([Point(0, 0), Point(1, 0), Point(0, 1)]), []))
+    ...  is EMPTY)
+    True
+    >>> (subtract_polygon_from_multisegment(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(1, 1), Point(2, 2))]),
+    ...      Polygon(Contour([Point(0, 0), Point(1, 0), Point(1, 1),
+    ...                       Point(0, 1)]), []))
+    ...  == Segment(Point(1, 1), Point(2, 2)))
+    True
+    """
+    return _mixed.Difference(
+            minuend, _operands.PolygonOperand(subtrahend),
+            _get_context() if context is None else context).compute()
+
+
 def intersect_multisegment_with_multipolygon(
         multisegment: _Multisegment,
         multipolygon: _Multipolygon,
