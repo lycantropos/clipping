@@ -390,9 +390,8 @@ def _events_to_contour_vertices(cursor: LeftEvent,
                                 connectivity: Sequence[int],
                                 processed: List[bool]) -> List[Point]:
     contour_start = cursor.start
-    result = [contour_start]
-    contour_events = [cursor]
-    complement_position = cursor.right.position
+    result, contour_events = [contour_start], [cursor]
+    opposite_position = cursor.right.position
     vertices_positions = {contour_start: 0}
     while cursor.end != contour_start:
         vertex = cursor.end
@@ -404,13 +403,13 @@ def _events_to_contour_vertices(cursor: LeftEvent,
         else:
             vertices_positions[vertex] = len(result)
         result.append(vertex)
-        position = _to_next_position(complement_position, processed,
+        position = _to_next_position(opposite_position, processed,
                                      connectivity)
         if position is None:
             break
         cursor = events[position]
         contour_events.append(cursor)
-        complement_position = cursor.opposite.position
+        opposite_position = cursor.opposite.position
     for event in contour_events:
         processed[event.position] = processed[event.opposite.position] = True
         if event.is_left:
