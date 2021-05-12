@@ -740,6 +740,57 @@ def complete_intersect_regions(first: _Region,
             _get_context() if context is None else context).compute()
 
 
+def intersect_regions(first: _Region,
+                      second: _Region,
+                      *,
+                      context: _Optional[_Context] = None
+                      ) -> _Union[_Empty, _Multipolygon, _Polygon]:
+    """
+    Returns intersection of regions.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = edges_count + intersections_count``,
+    ``edges_count = len(first.vertices) + len(second.vertices)``,
+    ``intersections_count`` --- number of intersections between regions edges.
+
+    :param first: first operand.
+    :param second: second operand.
+    :param context: geometric context.
+    :returns: intersection of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> first_square = Contour([Point(0, 0), Point(4, 0), Point(4, 4),
+    ...                         Point(0, 4)])
+    >>> second_square = Contour([Point(4, 0), Point(8, 0), Point(8, 4),
+    ...                          Point(4, 4)])
+    >>> third_square = Contour([Point(4, 4), Point(8, 4), Point(8, 8),
+    ...                         Point(4, 8)])
+    >>> first_inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
+    ...                               Point(1, 3)])
+    >>> (intersect_regions(first_inner_square, second_square)
+    ...  is intersect_regions(first_square, third_square)
+    ...  is intersect_regions(first_square, second_square)
+    ...  is EMPTY)
+    True
+    >>> (intersect_regions(first_square, first_square)
+    ...  == Polygon(first_square, []))
+    True
+    """
+    return _holeless.Intersection(
+            _operands.RegionOperand(first), _operands.RegionOperand(second),
+            _get_context() if context is None else context).compute()
+
+
 def complete_intersect_multiregions(first: _Multiregion,
                                     second: _Multiregion,
                                     *,
