@@ -15,7 +15,7 @@ from ground.hints import (Contour,
                           Scalar,
                           Segment)
 
-from .hints import (Multiregion,
+from .hints import (Region,
                     SegmentEndpoints)
 
 
@@ -73,9 +73,9 @@ def to_first_border_vertex(polygon: Polygon) -> Point:
     return polygon.border.vertices[0]
 
 
-def to_multiregion_x_max(multiregion: Multiregion) -> Scalar:
+def to_regions_x_max(regions: Sequence[Region]) -> Scalar:
     return max(vertex.x
-               for border in multiregion
+               for border in regions
                for vertex in border.vertices)
 
 

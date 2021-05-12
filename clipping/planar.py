@@ -782,7 +782,8 @@ def complete_intersect_multiregions(first: _Multiregion,
     True
     """
     return _holeless.CompleteIntersection(
-            first, second,
+            _operands.MultiregionOperand(first),
+            _operands.MultiregionOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -867,7 +868,8 @@ def intersect_multiregions(first: _Multiregion,
     True
     """
     return _holeless.Intersection(
-            first, second,
+            _operands.MultiregionOperand(first),
+            _operands.MultiregionOperand(second),
             _get_context() if context is None else context).compute()
 
 

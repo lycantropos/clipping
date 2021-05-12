@@ -6,7 +6,7 @@ from typing import (Iterable,
                     List,
                     Optional,
                     Sequence,
-                    Union as Union_)
+                    Union)
 
 from ground.base import Context
 from ground.hints import (Empty,
@@ -23,8 +23,9 @@ from .event import (LeftHolelessEvent as LeftEvent,
                     RightShapedEvent as RightEvent,
                     events_to_connectivity)
 from .events_queue import HolelessEventsQueue as EventsQueue
-from .hints import (Multiregion,
+from .hints import (Region,
                     SegmentEndpoints)
+from .operands import HolelessOperand
 from .sweep_line import BinarySweepLine as SweepLine
 from .unpacking import (unpack_mix,
                         unpack_points,
@@ -35,17 +36,17 @@ from .utils import (all_equal,
                     endpoints_to_segments,
                     pairwise,
                     to_endpoints,
-                    to_multiregion_x_max)
+                    to_regions_x_max)
 
-Event = Union_[LeftEvent, RightEvent]
+Event = Union[LeftEvent, RightEvent]
 
 
 class Operation(ABC):
     __slots__ = 'context', 'first', 'second', '_events_queue'
 
     def __init__(self,
-                 first: Multiregion,
-                 second: Multiregion,
+                 first: HolelessOperand,
+                 second: HolelessOperand,
                  context: Context) -> None:
         """
         Initializes operation.
@@ -60,7 +61,7 @@ class Operation(ABC):
     __repr__ = generate_repr(__init__)
 
     @abstractmethod
-    def compute(self) -> Union_[Empty, Linear, Mix, Multipoint, Shaped]:
+    def compute(self) -> Union[Empty, Linear, Mix, Multipoint, Shaped]:
         """
         Computes result of the operation.
         """
@@ -74,7 +75,7 @@ class Operation(ABC):
                                             else below_event.interior_to_left)
         event.in_result = self.in_result(event)
 
-    def events_to_multiregion(self, events: Iterable[Event]) -> Multiregion:
+    def events_to_regions(self, events: Iterable[Event]) -> Sequence[Region]:
         events = sorted([event for event in events if event.primary.in_result],
                         key=self._events_queue.key)
         for index, event in enumerate(events):
@@ -90,28 +91,28 @@ class Operation(ABC):
             vertices = [contour_start]
             contour_events = [event]
             cursor = event
-            complement_position = event.opposite.position
-            processed[index] = processed[complement_position] = True
+            opposite_position = event.opposite.position
+            processed[index] = processed[opposite_position] = True
             while cursor.end != contour_start:
                 vertices.append(cursor.end)
-                position = _to_next_position(complement_position, processed,
+                position = _to_next_position(opposite_position, processed,
                                              connectivity)
                 if position is None:
                     break
                 cursor = events[position]
                 contour_events.append(cursor)
-                complement_position = cursor.opposite.position
-                processed[position] = processed[complement_position] = True
+                opposite_position = cursor.opposite.position
+                processed[position] = processed[opposite_position] = True
             result.append(contour_cls(vertices))
         return result
 
     def fill_queue(self) -> None:
         events_queue = self._events_queue
-        for region in self.first:
+        for region in self.first.regions:
             events_queue.register(
                     contour_to_oriented_edges_endpoints(region, self.context),
                     True)
-        for region in self.second:
+        for region in self.second.regions:
             events_queue.register(
                     contour_to_oriented_edges_endpoints(region, self.context),
                     False)
@@ -156,19 +157,19 @@ class Operation(ABC):
 class CompleteIntersection(Operation):
     __slots__ = ()
 
-    def compute(self) -> Union_[Empty, Linear, Mix, Multipoint, Shaped]:
+    def compute(self) -> Union[Empty, Linear, Mix, Multipoint, Shaped]:
         context = self.context
-        first_box, second_box = (context.contours_box(self.first),
-                                 context.contours_box(self.second))
+        first_box, second_box = (context.contours_box(self.first.regions),
+                                 context.contours_box(self.second.regions))
         if bounding.disjoint_with(first_box, second_box):
             return context.empty
-        self.first = bounding.to_intersecting_regions(second_box, self.first,
-                                                      context)
-        if not self.first:
+        self.first.regions = bounding.to_intersecting_regions(
+                second_box, self.first.regions, context)
+        if not self.first.regions:
             return context.empty
-        self.second = bounding.to_intersecting_regions(first_box, self.second,
-                                                       context)
-        if not self.second:
+        self.second.regions = bounding.to_intersecting_regions(
+                first_box, self.second.regions, context)
+        if not self.second.regions:
             return context.empty
         events = sorted(self.sweep(),
                         key=self._events_queue.key)
@@ -193,7 +194,7 @@ class CompleteIntersection(Operation):
                                             for event in same_start_events):
                     points.append(start)
         segments = endpoints_to_segments(endpoints, context)
-        regions = self.events_to_multiregion(events)
+        regions = self.events_to_regions(events)
         return unpack_mix(unpack_points(points, context),
                           unpack_segments(segments, context),
                           unpack_regions(regions, context),
@@ -207,8 +208,8 @@ class CompleteIntersection(Operation):
         self.fill_queue()
         result = []
         sweep_line = SweepLine(self.context)
-        min_max_x = min(to_multiregion_x_max(self.first),
-                        to_multiregion_x_max(self.second))
+        min_max_x = min(to_regions_x_max(self.first.regions),
+                        to_regions_x_max(self.second.regions))
         while self._events_queue:
             event = self._events_queue.pop()
             if min_max_x < event.start.x:
@@ -222,27 +223,26 @@ class Intersection(Operation):
 
     def compute(self) -> Maybe[Shaped]:
         context = self.context
-        first_box, second_box = (context.contours_box(self.first),
-                                 context.contours_box(self.second))
+        first_box, second_box = (context.contours_box(self.first.regions),
+                                 context.contours_box(self.second.regions))
         if bounding.disjoint_with(first_box, second_box):
             return context.empty
-        self.first = bounding.to_coupled_regions(second_box, self.first,
-                                                 context)
-        if not self.first:
+        self.first.regions = bounding.to_coupled_regions(
+                second_box, self.first.regions, context)
+        if not self.first.regions:
             return context.empty
-        self.second = bounding.to_coupled_regions(first_box, self.second,
-                                                  context)
-        return (unpack_regions(self.events_to_multiregion(self.sweep()),
-                               context)
-                if self.second
+        self.second.regions = bounding.to_coupled_regions(
+                first_box, self.second.regions, context)
+        return (unpack_regions(self.events_to_regions(self.sweep()), context)
+                if self.second.regions
                 else context.empty)
 
     def sweep(self) -> Iterable[Event]:
         self.fill_queue()
         result = []
         events_queue, sweep_line = self._events_queue, SweepLine(self.context)
-        min_max_x = min(to_multiregion_x_max(self.first),
-                        to_multiregion_x_max(self.second))
+        min_max_x = min(to_regions_x_max(self.first.regions),
+                        to_regions_x_max(self.second.regions))
         while events_queue:
             event = events_queue.pop()
             if min_max_x < event.start.x:
