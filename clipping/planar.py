@@ -394,8 +394,8 @@ def complete_intersect_multisegment_with_multipolygon(
         context: _Optional[_Context] = None
 ) -> _Union[_Empty, _Mix, _Multipoint, _Multisegment, _Segment]:
     """
-    Returns intersection of multisegment with multipolygon considering cases
-    with geometries touching each other in points/segments.
+    Returns intersection of multisegment with multipolygon
+    considering cases with geometries touching each other in points.
 
     Time complexity:
         ``O(segments_count * log segments_count)``
