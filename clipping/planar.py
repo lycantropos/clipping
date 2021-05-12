@@ -999,6 +999,88 @@ def symmetric_subtract_polygons(first: _Polygon,
             _get_context() if context is None else context).compute()
 
 
+def unite_polygons(first: _Polygon,
+                   second: _Polygon,
+                   *,
+                   context: _Optional[_Context] = None
+                   ) -> _Union[_Multipolygon, _Polygon]:
+    """
+    Returns union of polygons.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = edges_count + intersections_count``,
+    ``edges_count = first_edges_count + second_edges_count``,
+    ``first_edges_count = len(first.border.vertices)\
+ + sum(len(hole.vertices) for hole in first.holes)``,
+    ``second_edges_count = len(second.border.vertices)\
+ + sum(len(hole.vertices) for hole in second.holes)``,
+    ``intersections_count`` --- number of intersections between polygons edges.
+
+    :param first: first operand.
+    :param second: second operand.
+    :param context: geometric context
+    :returns: union of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> first_square = Contour([Point(0, 0), Point(4, 0), Point(4, 4),
+    ...                         Point(0, 4)])
+    >>> second_square = Contour([Point(4, 0), Point(8, 0), Point(8, 4),
+    ...                          Point(4, 4)])
+    >>> third_square = Contour([Point(4, 4), Point(8, 4), Point(8, 8),
+    ...                         Point(4, 8)])
+    >>> fourth_square = Contour([Point(0, 4), Point(4, 4), Point(4, 8),
+    ...                          Point(0, 8)])
+    >>> first_inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
+    ...                               Point(1, 3)])
+    >>> second_inner_square = Contour([Point(5, 1), Point(7, 1), Point(7, 3),
+    ...                                Point(5, 3)])
+    >>> third_inner_square = Contour([Point(5, 5), Point(7, 5), Point(7, 7),
+    ...                               Point(5, 7)])
+    >>> clockwise_first_inner_square = Contour([Point(1, 1), Point(1, 3),
+    ...                                         Point(3, 3), Point(3, 1)])
+    >>> clockwise_second_inner_square = Contour([Point(5, 1), Point(7, 1),
+    ...                                          Point(7, 3), Point(5, 3)])
+    >>> clockwise_third_inner_square = Contour([Point(5, 5), Point(5, 7),
+    ...                                         Point(7, 7), Point(7, 5)])
+    >>> (unite_polygons(Polygon(first_square, []),
+    ...                 Polygon(first_inner_square, []))
+    ...  == unite_polygons(Polygon(first_square,
+    ...                            [clockwise_first_inner_square]),
+    ...                    Polygon(first_inner_square, []))
+    ...  == Polygon(first_square, []))
+    True
+    >>> (unite_polygons(Polygon(first_square, []),
+    ...                 Polygon(second_square, []))
+    ...  == Polygon(Contour([Point(0, 0), Point(8, 0), Point(8, 4),
+    ...                      Point(0, 4)]), []))
+    True
+    >>> (unite_polygons(Polygon(first_square, []),
+    ...                 Polygon(third_square, []))
+    ...  == Multipolygon([Polygon(first_square, []),
+    ...                   Polygon(third_square, [])]))
+    True
+    >>> (unite_polygons(Polygon(first_square, [clockwise_first_inner_square]),
+    ...                 Polygon(third_square, []))
+    ...  == Multipolygon([Polygon(first_square,
+    ...                           [clockwise_first_inner_square]),
+    ...                   Polygon(third_square, [])]))
+    True
+    """
+    return _holey.Union(
+            _holey.PolygonOperand(first), _holey.PolygonOperand(second),
+            _get_context() if context is None else context).compute()
+
+
 def complete_intersect_polygon_with_multipolygon(
         polygon: _Polygon,
         multipolygon: _Multipolygon,
