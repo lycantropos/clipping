@@ -69,8 +69,7 @@ True
 >>> from clipping.planar import complete_intersect_multisegments
 >>> (complete_intersect_multisegments(trident, square_edges)
 ...  == complete_intersect_multisegments(square_edges, trident)
-...  == Mix(Multipoint([Point(1, 1)]),
-...         intersect_multisegments(trident, square_edges),
+...  == Mix(Multipoint([Point(1, 1)]), Multisegment([left_edge, bottom_edge]),
 ...         EMPTY))
 True
 >>> from clipping.planar import unite_multisegments
@@ -106,10 +105,6 @@ True
 ...                                        Polygon(third_square, [])]),
 ...                          Multipolygon([Polygon(second_square, []),
 ...                                        Polygon(fourth_square, [])]))
-...  is intersect_multipolygons(Multipolygon([Polygon(first_square, []),
-...                                           Polygon(third_square, [])]),
-...                             Multipolygon([Polygon(second_square, []),
-...                                           Polygon(fourth_square, [])]))
 ...  is EMPTY)
 True
 >>> (intersect_multipolygons(Multipolygon([Polygon(first_square, []),
@@ -123,11 +118,6 @@ True
 ...      Multipolygon([Polygon(first_square, []), Polygon(third_square, [])]),
 ...      Multipolygon([Polygon(second_square, []),
 ...                    Polygon(fourth_square, [])]))
-...  == complete_intersect_multipolygons(
-...          Multipolygon([Polygon(first_square, []),
-...                        Polygon(third_square, [])]),
-...          Multipolygon([Polygon(second_square, []),
-...                        Polygon(fourth_square, [])]))
 ...  == Multisegment([Segment(Point(0, 1), Point(1, 1)),
 ...                   Segment(Point(1, 0), Point(1, 1)),
 ...                   Segment(Point(1, 1), Point(2, 1)),
