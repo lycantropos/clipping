@@ -20,10 +20,9 @@ from . import strategies
 
 @given(strategies.multisegments_pairs)
 def test_basic(multisegments_pair: MultisegmentsPair) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
-    result = symmetric_subtract_multisegments(left_multisegment,
-                                              right_multisegment)
+    result = symmetric_subtract_multisegments(first, second)
 
     assert is_maybe_linear(result)
 
@@ -37,95 +36,77 @@ def test_self_inverse(multisegment: Multisegment) -> None:
 
 @given(strategies.multisegments_pairs)
 def test_commutativity(multisegments_pair: MultisegmentsPair) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
-    result = symmetric_subtract_multisegments(left_multisegment,
-                                              right_multisegment)
+    result = symmetric_subtract_multisegments(first, second)
 
-    assert result == symmetric_subtract_multisegments(right_multisegment,
-                                                      left_multisegment)
+    assert result == symmetric_subtract_multisegments(second, first)
 
 
 @given(strategies.multisegments_triplets)
 def test_associativity(multisegments_triplet: MultisegmentsTriplet) -> None:
-    (left_multisegment, mid_multisegment,
-     right_multisegment) = multisegments_triplet
+    first, second, third = multisegments_triplet
 
-    left_mid_symmetric_difference = symmetric_subtract_multisegments(
-            left_multisegment, mid_multisegment)
-    mid_right_symmetric_difference = symmetric_subtract_multisegments(
-            mid_multisegment, right_multisegment)
-    assert (not is_multisegment(left_mid_symmetric_difference)
-            or not is_multisegment(mid_right_symmetric_difference)
+    first_second_symmetric_difference = symmetric_subtract_multisegments(
+            first, second)
+    second_third_symmetric_difference = symmetric_subtract_multisegments(
+            second, third)
+    assert (not is_multisegment(first_second_symmetric_difference)
+            or not is_multisegment(second_third_symmetric_difference)
             or are_multisegments_equivalent(
                     symmetric_subtract_multisegments(
-                            left_mid_symmetric_difference,
-                            right_multisegment),
+                            first_second_symmetric_difference, third),
                     symmetric_subtract_multisegments(
-                            left_multisegment,
-                            mid_right_symmetric_difference)))
+                            first, second_third_symmetric_difference)))
 
 
 @given(strategies.multisegments_triplets)
 def test_repeated(multisegments_triplet: MultisegmentsTriplet) -> None:
-    (left_multisegment, mid_multisegment,
-     right_multisegment) = multisegments_triplet
+    first, second, third = multisegments_triplet
 
-    left_mid_symmetric_difference = symmetric_subtract_multisegments(
-            left_multisegment, mid_multisegment)
-    mid_right_symmetric_difference = symmetric_subtract_multisegments(
-            mid_multisegment, right_multisegment)
-    assert (not is_multisegment(left_mid_symmetric_difference)
-            or not is_multisegment(mid_right_symmetric_difference)
+    first_second_symmetric_difference = symmetric_subtract_multisegments(
+            first, second)
+    second_third_symmetric_difference = symmetric_subtract_multisegments(
+            second, third)
+    assert (not is_multisegment(first_second_symmetric_difference)
+            or not is_multisegment(second_third_symmetric_difference)
             or are_multisegments_equivalent(
                     symmetric_subtract_multisegments(
-                            left_mid_symmetric_difference,
-                            mid_right_symmetric_difference),
-                    symmetric_subtract_multisegments(left_multisegment,
-                                                     right_multisegment)))
+                            first_second_symmetric_difference,
+                            second_third_symmetric_difference),
+                    symmetric_subtract_multisegments(first, third)))
 
 
 @given(strategies.multisegments_pairs)
 def test_equivalents(multisegments_pair: MultisegmentsPair) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
-    result = symmetric_subtract_multisegments(left_multisegment,
-                                              right_multisegment)
+    result = symmetric_subtract_multisegments(first, second)
 
-    left_right_difference = subtract_multisegments(left_multisegment,
-                                                   right_multisegment)
-    right_left_difference = subtract_multisegments(right_multisegment,
-                                                   left_multisegment)
-    right_left_intersection = intersect_multisegments(right_multisegment,
-                                                      left_multisegment)
-    assert (not is_multisegment(right_left_intersection)
+    first_second_difference = subtract_multisegments(first, second)
+    second_first_difference = subtract_multisegments(second, first)
+    second_first_intersection = intersect_multisegments(second, first)
+    assert (not is_multisegment(second_first_intersection)
             or result == subtract_multisegments(
-                    unite_multisegments(left_multisegment, right_multisegment),
-                    right_left_intersection))
-    assert (not is_multisegment(left_right_difference)
-            or not is_multisegment(right_left_difference)
-            or result == unite_multisegments(left_right_difference,
-                                             right_left_difference))
+                    unite_multisegments(first, second),
+                    second_first_intersection))
+    assert (not is_multisegment(first_second_difference)
+            or not is_multisegment(second_first_difference)
+            or result == unite_multisegments(first_second_difference,
+                                             second_first_difference))
 
 
 @given(strategies.multisegments_pairs)
 def test_reversals(multisegments_pair: MultisegmentsPair) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
-    result = symmetric_subtract_multisegments(left_multisegment,
-                                              right_multisegment)
+    result = symmetric_subtract_multisegments(first, second)
 
     assert are_compounds_similar(
             result, symmetric_subtract_multisegments(
-                    reverse_multisegment(left_multisegment),
-                    right_multisegment))
-    assert are_compounds_similar(
-            result,
-            symmetric_subtract_multisegments(left_multisegment,
-                                             reverse_multisegment(
-                                                     right_multisegment)))
+                    first, reverse_multisegment(second)))
     assert are_compounds_similar(
             result,
             reverse_compound_coordinates(symmetric_subtract_multisegments(
-                    reverse_multisegment_coordinates(left_multisegment),
-                    reverse_multisegment_coordinates(right_multisegment))))
+                    reverse_multisegment_coordinates(first),
+                    reverse_multisegment_coordinates(second))))

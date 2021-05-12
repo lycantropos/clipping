@@ -26,53 +26,49 @@ from . import strategies
 
 @given(strategies.multisegments_pairs)
 def test_basic(multisegments_pair: MultisegmentsPair) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
-    result = complete_intersect_multisegments(left_multisegment,
-                                              right_multisegment)
+    result = complete_intersect_multisegments(first, second)
 
     assert is_non_shaped(result)
 
 
 @given(strategies.multisegments_pairs)
 def test_properties(multisegments_pair: MultisegmentsPair) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
-    result = complete_intersect_multisegments(left_multisegment,
-                                              right_multisegment)
+    result = complete_intersect_multisegments(first, second)
 
     result_points, result_segments = pack_non_shaped(result)
-    assert all(point_in_multisegment(point, left_multisegment)
-               is point_in_multisegment(point, right_multisegment)
-               is Relation.COMPONENT
+    assert all(point_in_multisegment(point, first)
+               is point_in_multisegment(point, second) is Relation.COMPONENT
                for point in result_points)
-    assert (multisegment_in_multisegment(left_multisegment, right_multisegment)
-            is not Relation.TOUCH
+    assert (multisegment_in_multisegment(first, second) is not Relation.TOUCH
             or bool(result_points))
     assert all(all(point in result_points
                    or any(point == segment.start or point == segment.end
                           for segment in result_segments)
-                   for right_segment in right_multisegment.segments
-                   for point in segments_intersections(left_segment,
-                                                       right_segment))
-               for left_segment in left_multisegment.segments
-               if (segment_in_multisegment(left_segment, right_multisegment)
+                   for second_segment in second.segments
+                   for point in segments_intersections(first_segment,
+                                                       second_segment))
+               for first_segment in first.segments
+               if (segment_in_multisegment(first_segment, second)
                    in (Relation.TOUCH, Relation.CROSS)))
-    assert all(segment_in_multisegment(segment, left_multisegment)
+    assert all(segment_in_multisegment(segment, first)
                in (Relation.EQUAL, Relation.COMPONENT)
                for segment in result_segments)
-    assert all(segment_in_multisegment(segment, right_multisegment)
+    assert all(segment_in_multisegment(segment, second)
                in (Relation.EQUAL, Relation.COMPONENT)
                for segment in result_segments)
-    assert all(to_sorted_segment(left_segment) in result_segments
-               or any(segment_in_segment(segment, left_segment)
+    assert all(to_sorted_segment(first_segment) in result_segments
+               or any(segment_in_segment(segment, first_segment)
                       is Relation.COMPONENT
                       for segment in result_segments)
-               for left_segment in left_multisegment.segments
-               if any(segments_relation(left_segment, right_segment)
+               for first_segment in first.segments
+               if any(segments_relation(first_segment, second_segment)
                       not in (Relation.CROSS, Relation.DISJOINT,
                               Relation.TOUCH)
-                      for right_segment in right_multisegment.segments))
+                      for second_segment in second.segments))
 
 
 @given(strategies.multisegments)
@@ -84,51 +80,44 @@ def test_idempotence(multisegment: Multisegment) -> None:
 
 @given(strategies.multisegments_pairs)
 def test_absorption_identity(multisegments_pair: MultisegmentsPair) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
     assert are_multisegments_equivalent(
-            complete_intersect_multisegments(
-                    left_multisegment,
-                    unite_multisegments(left_multisegment,
-                                        right_multisegment)),
-            left_multisegment)
+            complete_intersect_multisegments(first,
+                                             unite_multisegments(first,
+                                                                 second)),
+            first)
 
 
 @given(strategies.multisegments_pairs)
 def test_commutativity(multisegments_pair: MultisegmentsPair) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
-    result = complete_intersect_multisegments(left_multisegment,
-                                              right_multisegment)
+    result = complete_intersect_multisegments(first, second)
 
-    assert result == complete_intersect_multisegments(right_multisegment,
-                                                      left_multisegment)
+    assert result == complete_intersect_multisegments(second, first)
 
 
 @given(strategies.multisegments_pairs)
 def test_connection_with_intersect(multisegments_pair: MultisegmentsPair
                                    ) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
-    result = complete_intersect_multisegments(left_multisegment,
-                                              right_multisegment)
+    result = complete_intersect_multisegments(first, second)
 
-    assert (compound_to_linear(result)
-            == intersect_multisegments(left_multisegment, right_multisegment))
+    assert compound_to_linear(result) == intersect_multisegments(first, second)
 
 
 @given(strategies.multisegments_pairs)
 def test_reversals(multisegments_pair: MultisegmentsPair) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
-    result = complete_intersect_multisegments(left_multisegment,
-                                              right_multisegment)
+    result = complete_intersect_multisegments(first,
+                                              second)
     assert result == complete_intersect_multisegments(
-            reverse_multisegment(left_multisegment), right_multisegment)
-    assert result == complete_intersect_multisegments(
-            left_multisegment, reverse_multisegment(right_multisegment))
+            first, reverse_multisegment(second))
     assert are_compounds_similar(
             result,
             reverse_compound_coordinates(complete_intersect_multisegments(
-                    reverse_multisegment_coordinates(left_multisegment),
-                    reverse_multisegment_coordinates(right_multisegment))))
+                    reverse_multisegment_coordinates(first),
+                    reverse_multisegment_coordinates(second))))

@@ -18,120 +18,97 @@ from . import strategies
 
 @given(strategies.multisegments_pairs)
 def test_basic(multisegments_pair: MultisegmentsPair) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
-    result = subtract_multisegments(left_multisegment, right_multisegment)
+    result = subtract_multisegments(first, second)
 
     assert is_maybe_linear(result)
 
 
 @given(strategies.multisegments_pairs)
 def test_commutative_case(multisegments_pair: MultisegmentsPair) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
-    result = subtract_multisegments(left_multisegment, right_multisegment)
+    result = subtract_multisegments(first, second)
 
-    assert equivalence(result == subtract_multisegments(right_multisegment,
-                                                        left_multisegment),
-                       are_multisegments_equivalent(left_multisegment,
-                                                    right_multisegment))
+    assert equivalence(result == subtract_multisegments(second, first),
+                       are_multisegments_equivalent(first, second))
 
 
 @given(strategies.multisegments_triplets)
 def test_difference_subtrahend(multisegments_triplet: MultisegmentsTriplet
                                ) -> None:
-    (left_multisegment, mid_multisegment,
-     right_multisegment) = multisegments_triplet
+    first, second, third = multisegments_triplet
 
-    left_mid_difference = subtract_multisegments(left_multisegment,
-                                                 mid_multisegment)
-    left_right_difference = intersect_multisegments(left_multisegment,
-                                                    right_multisegment)
-    mid_right_difference = subtract_multisegments(mid_multisegment,
-                                                  right_multisegment)
-    assert (not is_multisegment(left_mid_difference)
-            or not is_multisegment(left_right_difference)
-            or not is_multisegment(mid_right_difference)
+    first_second_difference = subtract_multisegments(first, second)
+    first_third_difference = intersect_multisegments(first, third)
+    second_third_difference = subtract_multisegments(second, third)
+    assert (not is_multisegment(first_second_difference)
+            or not is_multisegment(first_third_difference)
+            or not is_multisegment(second_third_difference)
             or are_multisegments_equivalent(
-                    subtract_multisegments(left_multisegment,
-                                           mid_right_difference),
-                    unite_multisegments(left_mid_difference,
-                                        left_right_difference)))
+                    subtract_multisegments(first, second_third_difference),
+                    unite_multisegments(first_second_difference,
+                                        first_third_difference)))
 
 
 @given(strategies.multisegments_triplets)
 def test_intersection_minuend(multisegments_triplet: MultisegmentsTriplet
                               ) -> None:
-    (left_multisegment, mid_multisegment,
-     right_multisegment) = multisegments_triplet
+    first, second, third = multisegments_triplet
 
-    left_mid_intersection = intersect_multisegments(left_multisegment,
-                                                    mid_multisegment)
-    mid_right_difference = subtract_multisegments(mid_multisegment,
-                                                  right_multisegment)
-    assert (not is_multisegment(left_mid_intersection)
-            or not is_multisegment(mid_right_difference)
-            or (subtract_multisegments(left_mid_intersection,
-                                       right_multisegment)
-                == intersect_multisegments(left_multisegment,
-                                           mid_right_difference)))
+    first_second_intersection = intersect_multisegments(first, second)
+    second_third_difference = subtract_multisegments(second, third)
+    assert (not is_multisegment(first_second_intersection)
+            or not is_multisegment(second_third_difference)
+            or (subtract_multisegments(first_second_intersection, third)
+                == intersect_multisegments(first, second_third_difference)))
 
 
 @given(strategies.multisegments_triplets)
 def test_intersection_subtrahend(multisegments_triplet: MultisegmentsTriplet
                                  ) -> None:
-    (left_multisegment, mid_multisegment,
-     right_multisegment) = multisegments_triplet
+    first, second, third = multisegments_triplet
 
-    left_mid_difference = subtract_multisegments(left_multisegment,
-                                                 mid_multisegment)
-    left_right_difference = subtract_multisegments(left_multisegment,
-                                                   right_multisegment)
-    mid_right_intersection = intersect_multisegments(mid_multisegment,
-                                                     right_multisegment)
-    assert (not is_multisegment(left_mid_difference)
-            or not is_multisegment(left_right_difference)
-            or not is_multisegment(mid_right_intersection)
+    first_second_difference = subtract_multisegments(first, second)
+    first_third_difference = subtract_multisegments(first, third)
+    second_third_intersection = intersect_multisegments(second, third)
+    assert (not is_multisegment(first_second_difference)
+            or not is_multisegment(first_third_difference)
+            or not is_multisegment(second_third_intersection)
             or are_multisegments_equivalent(
-                    subtract_multisegments(left_multisegment,
-                                           mid_right_intersection),
-                    unite_multisegments(left_mid_difference,
-                                        left_right_difference)))
+                    subtract_multisegments(first, second_third_intersection),
+                    unite_multisegments(first_second_difference,
+                                        first_third_difference)))
 
 
 @given(strategies.multisegments_triplets)
 def test_union_subtrahend(multisegments_triplet: MultisegmentsTriplet) -> None:
-    (left_multisegment, mid_multisegment,
-     right_multisegment) = multisegments_triplet
+    first, second, third = multisegments_triplet
 
-    left_mid_difference = subtract_multisegments(left_multisegment,
-                                                 mid_multisegment)
-    left_right_difference = subtract_multisegments(left_multisegment,
-                                                   right_multisegment)
-    assert (not is_multisegment(left_mid_difference)
-            or not is_multisegment(left_right_difference)
+    first_second_difference = subtract_multisegments(first, second)
+    first_third_difference = subtract_multisegments(first, third)
+    assert (not is_multisegment(first_second_difference)
+            or not is_multisegment(first_third_difference)
             or are_compounds_similar(
-                    subtract_multisegments(
-                            left_multisegment,
-                            unite_multisegments(mid_multisegment,
-                                                right_multisegment)),
-                    intersect_multisegments(left_mid_difference,
-                                            left_right_difference)))
+                    subtract_multisegments(first,
+                                           unite_multisegments(second, third)),
+                    intersect_multisegments(first_second_difference,
+                                            first_third_difference)))
 
 
 @given(strategies.multisegments_pairs)
 def test_reversals(multisegments_pair: MultisegmentsPair) -> None:
-    left_multisegment, right_multisegment = multisegments_pair
+    first, second = multisegments_pair
 
-    result = subtract_multisegments(left_multisegment, right_multisegment)
+    result = subtract_multisegments(first, second)
 
     assert are_compounds_similar(
-            result,
-            subtract_multisegments(reverse_multisegment(left_multisegment),
-                                   right_multisegment))
-    assert result == subtract_multisegments(
-            left_multisegment, reverse_multisegment(right_multisegment))
+            result, subtract_multisegments(reverse_multisegment(first),
+                                           second))
+    assert result == subtract_multisegments(first,
+                                            reverse_multisegment(second))
     assert are_compounds_similar(
             result, reverse_compound_coordinates(subtract_multisegments(
-                    reverse_multisegment_coordinates(left_multisegment),
-                    reverse_multisegment_coordinates(right_multisegment))))
+                    reverse_multisegment_coordinates(first),
+                    reverse_multisegment_coordinates(second))))

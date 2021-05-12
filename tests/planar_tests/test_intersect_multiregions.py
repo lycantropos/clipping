@@ -15,9 +15,9 @@ from . import strategies
 
 @given(strategies.multiregions_pairs)
 def test_basic(multiregions_pair: MultiregionsPair) -> None:
-    left_multiregion, right_multiregion = multiregions_pair
+    first, second = multiregions_pair
 
-    result = intersect_multiregions(left_multiregion, right_multiregion)
+    result = intersect_multiregions(first, second)
 
     assert is_holeless_compound(result)
 
@@ -31,30 +31,23 @@ def test_idempotence(multiregion: Multiregion) -> None:
 
 @given(strategies.multiregions_pairs)
 def test_commutativity(multiregions_pair: MultiregionsPair) -> None:
-    left_multiregion, right_multiregion = multiregions_pair
+    first, second = multiregions_pair
 
-    result = intersect_multiregions(left_multiregion, right_multiregion)
+    result = intersect_multiregions(first, second)
 
-    assert result == intersect_multiregions(right_multiregion,
-                                            left_multiregion)
+    assert result == intersect_multiregions(second, first)
 
 
 @given(strategies.multiregions_pairs)
 def test_reversals(multiregions_pair: MultiregionsPair) -> None:
-    left_multiregion, right_multiregion = multiregions_pair
+    first, second = multiregions_pair
 
-    result = intersect_multiregions(left_multiregion, right_multiregion)
+    result = intersect_multiregions(first, second)
 
+    assert result == intersect_multiregions(first, reverse_multiregion(second))
     assert result == intersect_multiregions(
-            reverse_multiregion(left_multiregion), right_multiregion)
-    assert result == intersect_multiregions(
-            left_multiregion, reverse_multiregion(right_multiregion))
-    assert result == intersect_multiregions(
-            reverse_multiregion_regions(left_multiregion), right_multiregion)
-    assert result == intersect_multiregions(
-            left_multiregion, reverse_multiregion_regions(right_multiregion))
+            first, reverse_multiregion_regions(second))
     assert are_compounds_similar(
-            result,
-            reverse_compound_coordinates(intersect_multiregions(
-                    reverse_multiregion_coordinates(left_multiregion),
-                    reverse_multiregion_coordinates(right_multiregion))))
+            result, reverse_compound_coordinates(intersect_multiregions(
+                    reverse_multiregion_coordinates(first),
+                    reverse_multiregion_coordinates(second))))

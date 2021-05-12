@@ -20,10 +20,9 @@ from . import strategies
 
 @given(strategies.multipolygons_pairs)
 def test_basic(multipolygons_pair: MultipolygonsPair) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
+    first, second = multipolygons_pair
 
-    result = complete_intersect_multipolygons(left_multipolygon,
-                                              right_multipolygon)
+    result = complete_intersect_multipolygons(first, second)
 
     assert is_compound(result)
 
@@ -37,72 +36,52 @@ def test_idempotence(multipolygon: Multipolygon) -> None:
 
 @given(strategies.multipolygons_pairs)
 def test_absorption_identity(multipolygons_pair: MultipolygonsPair) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
+    first, second = multipolygons_pair
 
-    left_right_union = unite_multipolygons(left_multipolygon,
-                                           right_multipolygon)
+    first_second_union = unite_multipolygons(first, second)
 
-    assert (not is_multipolygon(left_right_union)
+    assert (not is_multipolygon(first_second_union)
             or are_compounds_similar(
-                    left_multipolygon,
-                    complete_intersect_multipolygons(left_right_union,
-                                                     left_multipolygon)))
+                    first,
+                    complete_intersect_multipolygons(first_second_union,
+                                                     first)))
 
 
 @given(strategies.multipolygons_pairs)
 def test_commutativity(multipolygons_pair: MultipolygonsPair) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
+    first, second = multipolygons_pair
 
-    result = complete_intersect_multipolygons(left_multipolygon,
-                                              right_multipolygon)
+    result = complete_intersect_multipolygons(first, second)
 
-    assert result == complete_intersect_multipolygons(right_multipolygon,
-                                                      left_multipolygon)
+    assert result == complete_intersect_multipolygons(second, first)
 
 
 @given(strategies.multipolygons_pairs)
 def test_connection_with_intersect(multipolygons_pair: MultipolygonsPair
                                    ) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
+    first, second = multipolygons_pair
 
-    result = complete_intersect_multipolygons(left_multipolygon,
-                                              right_multipolygon)
+    result = complete_intersect_multipolygons(first, second)
 
-    assert compound_to_shaped(result) == intersect_multipolygons(
-            left_multipolygon, right_multipolygon)
+    assert compound_to_shaped(result) == intersect_multipolygons(first, second)
 
 
 @given(strategies.multipolygons_pairs)
 def test_reversals(multipolygons_pair: MultipolygonsPair) -> None:
-    left_multipolygon, right_multipolygon = multipolygons_pair
+    first, second = multipolygons_pair
 
-    result = complete_intersect_multipolygons(left_multipolygon,
-                                              right_multipolygon)
+    result = complete_intersect_multipolygons(first, second)
 
     assert result == complete_intersect_multipolygons(
-            reverse_multipolygon(left_multipolygon), right_multipolygon)
+            first, reverse_multipolygon(second))
     assert result == complete_intersect_multipolygons(
-            left_multipolygon, reverse_multipolygon(right_multipolygon))
+            first, reverse_multipolygon_borders(second))
     assert result == complete_intersect_multipolygons(
-            reverse_multipolygon_borders(left_multipolygon),
-            right_multipolygon)
+            first, reverse_multipolygon_holes(second))
     assert result == complete_intersect_multipolygons(
-            left_multipolygon,
-            reverse_multipolygon_borders(right_multipolygon))
-    assert result == complete_intersect_multipolygons(
-            reverse_multipolygon_holes(left_multipolygon),
-            right_multipolygon)
-    assert result == complete_intersect_multipolygons(
-            left_multipolygon,
-            reverse_multipolygon_holes(right_multipolygon))
-    assert result == complete_intersect_multipolygons(
-            reverse_multipolygon_holes_contours(left_multipolygon),
-            right_multipolygon)
-    assert result == complete_intersect_multipolygons(
-            left_multipolygon,
-            reverse_multipolygon_holes_contours(right_multipolygon))
+            first, reverse_multipolygon_holes_contours(second))
     assert are_compounds_similar(
             result,
             reverse_compound_coordinates(complete_intersect_multipolygons(
-                    reverse_multipolygon_coordinates(left_multipolygon),
-                    reverse_multipolygon_coordinates(right_multipolygon))))
+                    reverse_multipolygon_coordinates(first),
+                    reverse_multipolygon_coordinates(second))))
