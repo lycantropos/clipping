@@ -345,9 +345,10 @@ def subtract_segments(minuend: Segment,
           or relation is Relation.CROSS):
         return minuend
     else:
-        return (_subtract_overlap(minuend, subtrahend, context)
+        return (_subtract_segments_overlap(minuend, subtrahend, context)
                 if relation is Relation.OVERLAP
-                else _subtract_composite(minuend, subtrahend, context))
+                else _subtract_segments_composite(minuend, subtrahend,
+                                                  context))
 
 
 def symmetric_subtract_segments(first: Segment,
@@ -355,21 +356,23 @@ def symmetric_subtract_segments(first: Segment,
                                 context: Context
                                 ) -> Union_[Empty, Multisegment, Segment]:
     relation = context.segments_relation(first, second)
-    if relation is Relation.EQUAL:
-        return context.empty
-    elif relation is Relation.DISJOINT:
+    if relation is Relation.DISJOINT:
         return context.multisegment_cls([first, second])
+    elif relation is Relation.EQUAL:
+        return context.empty
     else:
-        return (_unite_touch(first, second, context)
+        return (_unite_segments_touch(first, second, context)
                 if relation is Relation.TOUCH
-                else (_unite_cross(first, second, context)
-                      if relation is Relation.CROSS
-                      else (_symmetric_subtract_overlap(first, second, context)
-                            if relation is Relation.OVERLAP
-                            else (_subtract_composite(first, second, context)
-                                  if relation is Relation.COMPOSITE
-                                  else _subtract_composite(second, first,
-                                                           context)))))
+                else
+                (_unite_segments_cross(first, second, context)
+                 if relation is Relation.CROSS
+                 else
+                 (_symmetric_subtract_segments_overlap(first, second, context)
+                  if relation is Relation.OVERLAP
+                  else (_subtract_segments_composite(first, second, context)
+                        if relation is Relation.COMPOSITE
+                        else _subtract_segments_composite(second, first,
+                                                          context)))))
 
 
 def unite_segments(first: Segment,
@@ -383,16 +386,17 @@ def unite_segments(first: Segment,
     elif relation is Relation.COMPONENT:
         return second
     else:
-        return (_unite_touch
+        return (_unite_segments_touch
                 if relation is Relation.TOUCH
-                else (_unite_cross
+                else (_unite_segments_cross
                       if relation is Relation.CROSS
-                      else _unite_overlap))(first, second, context)
+                      else _unite_segments_overlap))(first, second, context)
 
 
-def _subtract_composite(minuend: Segment,
-                        subtrahend: Segment,
-                        context: Context) -> Union_[Multisegment, Segment]:
+def _subtract_segments_composite(minuend: Segment,
+                                 subtrahend: Segment,
+                                 context: Context
+                                 ) -> Union_[Multisegment, Segment]:
     left_start, left_end, right_start, right_end = sorted([
         minuend.start, minuend.end, subtrahend.start, subtrahend.end])
     return (context.segment_cls(right_start, right_end)
@@ -411,9 +415,9 @@ def _subtract_composite(minuend: Segment,
                   else context.segment_cls(left_start, right_start)))
 
 
-def _subtract_overlap(minuend: Segment,
-                      subtrahend: Segment,
-                      context: Context) -> Segment:
+def _subtract_segments_overlap(minuend: Segment,
+                               subtrahend: Segment,
+                               context: Context) -> Segment:
     left_start, left_end, right_start, right_end = sorted([
         minuend.start, minuend.end, subtrahend.start, subtrahend.end])
     return (context.segment_cls(left_start, left_end)
@@ -421,9 +425,9 @@ def _subtract_overlap(minuend: Segment,
             else context.segment_cls(right_start, right_end))
 
 
-def _symmetric_subtract_overlap(minuend: Segment,
-                                subtrahend: Segment,
-                                context: Context) -> Multisegment:
+def _symmetric_subtract_segments_overlap(minuend: Segment,
+                                         subtrahend: Segment,
+                                         context: Context) -> Multisegment:
     left_start, left_end, right_start, right_end = sorted([
         minuend.start, minuend.end, subtrahend.start, subtrahend.end])
     return context.multisegment_cls([context.segment_cls(left_start, left_end),
@@ -431,9 +435,9 @@ def _symmetric_subtract_overlap(minuend: Segment,
                                                          right_end)])
 
 
-def _unite_cross(first: Segment,
-                 second: Segment,
-                 context: Context) -> Multisegment:
+def _unite_segments_cross(first: Segment,
+                          second: Segment,
+                          context: Context) -> Multisegment:
     cross_point = context.segments_intersection(first, second)
     segment_cls = context.segment_cls
     return context.multisegment_cls([segment_cls(first.start, cross_point),
@@ -442,17 +446,17 @@ def _unite_cross(first: Segment,
                                      segment_cls(cross_point, second.end)])
 
 
-def _unite_overlap(first: Segment,
-                   second: Segment,
-                   context: Context) -> Segment:
+def _unite_segments_overlap(first: Segment,
+                            second: Segment,
+                            context: Context) -> Segment:
     start, _, _, end = sorted([first.start, first.end, second.start,
                                second.end])
     return context.segment_cls(start, end)
 
 
-def _unite_touch(first: Segment,
-                 second: Segment,
-                 context: Context) -> Union_[Multisegment, Segment]:
+def _unite_segments_touch(first: Segment,
+                          second: Segment,
+                          context: Context) -> Union_[Multisegment, Segment]:
     return (context.multisegment_cls([first, second])
             if ((first.start != second.start
                  or (context.angle_orientation(first.start, first.end,
