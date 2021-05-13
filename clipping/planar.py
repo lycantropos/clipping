@@ -80,6 +80,56 @@ def intersect_segments(first: _Segment,
             first, second, _get_context() if context is None else context)
 
 
+def subtract_segments(minuend: _Segment,
+                      subtrahend: _Segment,
+                      *,
+                      context: _Optional[_Context] = None
+                      ) -> _Union[_Empty, _Multisegment, _Segment]:
+    """
+    Returns difference of segments.
+
+    Time complexity:
+        ``O(1)``
+    Memory complexity:
+        ``O(1)``
+
+    :param minuend: segment to subtract from.
+    :param subtrahend: segment to subtract.
+    :param context: geometric context.
+    :returns: difference of minuend with subtrahend.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Segment = context.segment_cls
+    >>> (subtract_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(0, 0), Point(4, 0)))
+    ...  is subtract_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                       Segment(Point(0, 0), Point(6, 0)))
+    ...  is EMPTY)
+    True
+    >>> (subtract_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(2, 0), Point(6, 0)))
+    ...  == Segment(Point(0, 0), Point(2, 0)))
+    True
+    >>> (subtract_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(6, 0), Point(10, 0)))
+    ...  == subtract_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                       Segment(Point(4, 0), Point(8, 0)))
+    ...  == Segment(Point(0, 0), Point(4, 0)))
+    True
+    >>> (subtract_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(1, 0), Point(3, 0)))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(3, 0), Point(4, 0))]))
+    True
+    """
+    return _linear.subtract_segments(
+            minuend, subtrahend, _get_context() if context is None else context)
+
+
 def segments_to_multisegment(segments: _Sequence[_Segment],
                              *,
                              context: _Optional[_Context] = None

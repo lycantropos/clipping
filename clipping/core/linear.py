@@ -330,3 +330,51 @@ def intersect_segments(first: Segment,
         _, overlap_start, overlap_end, _ = sorted([first.start, first.end,
                                                    second.start, second.end])
         return context.segment_cls(overlap_start, overlap_end)
+
+
+def subtract_segments(minuend: Segment,
+                      subtrahend: Segment,
+                      context: Context
+                      ) -> Union_[Empty, Multisegment, Segment]:
+    relation = context.segments_relation(minuend, subtrahend)
+    if relation is Relation.COMPONENT or relation is Relation.EQUAL:
+        return context.empty
+    elif (relation is Relation.DISJOINT
+          or relation is Relation.TOUCH
+          or relation is Relation.CROSS):
+        return minuend
+    else:
+        return (_subtract_overlap(minuend, subtrahend, context)
+                if relation is Relation.OVERLAP
+                else _subtract_composite(minuend, subtrahend, context))
+
+
+def _subtract_overlap(minuend: Segment,
+                      subtrahend: Segment,
+                      context: Context) -> Segment:
+    left_start, left_end, right_start, right_end = sorted([
+        minuend.start, minuend.end, subtrahend.start, subtrahend.end])
+    return (context.segment_cls(left_start, left_end)
+            if left_start == minuend.start or left_start == minuend.end
+            else context.segment_cls(right_start, right_end))
+
+
+def _subtract_composite(minuend: Segment,
+                        subtrahend: Segment,
+                        context: Context) -> Union_[Multisegment, Segment]:
+    left_start, left_end, right_start, right_end = sorted([
+        minuend.start, minuend.end, subtrahend.start, subtrahend.end])
+    return (context.segment_cls(right_start, right_end)
+            if left_start == subtrahend.start or left_start == subtrahend.end
+            else (((context.segment_cls(left_start, left_end)
+                    if right_start == right_end
+                    else
+                    context.multisegment_cls([context.segment_cls(left_start,
+                                                                  left_end),
+                                              context.segment_cls(right_start,
+                                                                  right_end)]))
+                   if (right_start == subtrahend.start
+                       or right_start == subtrahend.end)
+                   else context.segment_cls(left_start, left_end))
+                  if left_end == subtrahend.start or left_end == subtrahend.end
+                  else context.segment_cls(left_start, right_start)))
