@@ -8,6 +8,7 @@ from typing import (Iterable,
                     Union as Union_)
 
 from ground.base import (Context,
+                         Orientation,
                          Relation)
 from ground.hints import (Empty,
                           Mix,
@@ -349,6 +350,28 @@ def subtract_segments(minuend: Segment,
                 else _subtract_composite(minuend, subtrahend, context))
 
 
+def symmetric_subtract_segments(first: Segment,
+                                second: Segment,
+                                context: Context
+                                ) -> Union_[Empty, Multisegment, Segment]:
+    relation = context.segments_relation(first, second)
+    if relation is Relation.EQUAL:
+        return context.empty
+    elif relation is Relation.DISJOINT:
+        return context.multisegment_cls([first, second])
+    else:
+        return (_unite_touch(first, second, context)
+                if relation is Relation.TOUCH
+                else (_unite_cross(first, second, context)
+                      if relation is Relation.CROSS
+                      else (_symmetric_subtract_overlap(first, second, context)
+                            if relation is Relation.OVERLAP
+                            else (_subtract_composite(first, second, context)
+                                  if relation is Relation.COMPOSITE
+                                  else _subtract_composite(second, first,
+                                                           context)))))
+
+
 def _subtract_overlap(minuend: Segment,
                       subtrahend: Segment,
                       context: Context) -> Segment:
@@ -378,3 +401,50 @@ def _subtract_composite(minuend: Segment,
                    else context.segment_cls(left_start, left_end))
                   if left_end == subtrahend.start or left_end == subtrahend.end
                   else context.segment_cls(left_start, right_start)))
+
+
+def _symmetric_subtract_overlap(minuend: Segment,
+                                subtrahend: Segment,
+                                context: Context) -> Multisegment:
+    left_start, left_end, right_start, right_end = sorted([
+        minuend.start, minuend.end, subtrahend.start, subtrahend.end])
+    return context.multisegment_cls([context.segment_cls(left_start, left_end),
+                                     context.segment_cls(right_start,
+                                                         right_end)])
+
+
+def _unite_cross(first: Segment,
+                 second: Segment,
+                 context: Context) -> Multisegment:
+    cross_point = context.segments_intersection(first, second)
+    segment_cls = context.segment_cls
+    return context.multisegment_cls([segment_cls(first.start, cross_point),
+                                     segment_cls(second.start, cross_point),
+                                     segment_cls(cross_point, first.end),
+                                     segment_cls(cross_point, second.end)])
+
+
+def _unite_touch(first: Segment,
+                 second: Segment,
+                 context: Context) -> Multisegment:
+    return (context.multisegment_cls([first, second])
+            if ((first.start != second.start
+                 or (context.angle_orientation(first.start, first.end,
+                                               second.end)
+                     is not Orientation.COLLINEAR))
+                and (first.start != second.end
+                     or (context.angle_orientation(first.start, first.end,
+                                                   second.start)
+                         is not Orientation.COLLINEAR))
+                and (first.end != second.start
+                     or (context.angle_orientation(first.end, first.start,
+                                                   second.end)
+                         is not Orientation.COLLINEAR))
+                and (first.end != second.end
+                     or (context.angle_orientation(first.end, first.start,
+                                                   second.start)
+                         is not Orientation.COLLINEAR)))
+            else context.segment_cls(min(first.start, first.end,
+                                         second.start, second.end),
+                                     max(first.start, first.end,
+                                         second.start, second.end)))

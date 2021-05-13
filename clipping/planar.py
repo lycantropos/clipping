@@ -127,7 +127,60 @@ def subtract_segments(minuend: _Segment,
     True
     """
     return _linear.subtract_segments(
-            minuend, subtrahend, _get_context() if context is None else context)
+            minuend, subtrahend,
+            _get_context() if context is None else context)
+
+
+def symmetric_subtract_segments(first: _Segment,
+                                second: _Segment,
+                                *,
+                                context: _Optional[_Context] = None
+                                ) -> _Union[_Empty, _Multisegment, _Segment]:
+    """
+    Returns symmetric difference of segments.
+
+    Time complexity:
+        ``O(1)``
+    Memory complexity:
+        ``O(1)``
+
+    :param first: first operand.
+    :param second: second operand.
+    :param context: geometric context.
+    :returns: symmetric difference of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Segment = context.segment_cls
+    >>> (symmetric_subtract_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                              Segment(Point(0, 0), Point(4, 0)))
+    ...  is EMPTY)
+    True
+    >>> (symmetric_subtract_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                              Segment(Point(4, 0), Point(8, 0)))
+    ...  == Segment(Point(0, 0), Point(8, 0)))
+    True
+    >>> (symmetric_subtract_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                              Segment(Point(1, 0), Point(3, 0)))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(3, 0), Point(4, 0))]))
+    True
+    >>> (symmetric_subtract_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                              Segment(Point(2, 0), Point(6, 0)))
+    ...  == Multisegment([Segment(Point(0, 0), Point(2, 0)),
+    ...                   Segment(Point(4, 0), Point(6, 0))]))
+    True
+    >>> (symmetric_subtract_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                              Segment(Point(6, 0), Point(10, 0)))
+    ...  == Multisegment([Segment(Point(0, 0), Point(4, 0)),
+    ...                   Segment(Point(6, 0), Point(10, 0))]))
+    True
+    """
+    return _linear.symmetric_subtract_segments(
+            first, second, _get_context() if context is None else context)
 
 
 def segments_to_multisegment(segments: _Sequence[_Segment],
