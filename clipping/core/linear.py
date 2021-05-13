@@ -328,9 +328,12 @@ def intersect_segments(first: Segment,
         return context.multipoint_cls([context.segments_intersection(first,
                                                                      second)])
     else:
-        _, overlap_start, overlap_end, _ = sorted([first.start, first.end,
-                                                   second.start, second.end])
-        return context.segment_cls(overlap_start, overlap_end)
+        return (first
+                if relation is Relation.EQUAL or relation is Relation.COMPONENT
+                else
+                (second
+                 if relation is Relation.COMPOSITE
+                 else _intersect_segments_overlap(first, second, context)))
 
 
 def subtract_segments(minuend: Segment,
@@ -478,3 +481,11 @@ def _unite_segments_touch(first: Segment,
                                          second.start, second.end),
                                      max(first.start, first.end,
                                          second.start, second.end)))
+
+
+def _intersect_segments_overlap(first: Segment,
+                                second: Segment,
+                                context: Context) -> Segment:
+    _, start, end, _ = sorted([first.start, first.end, second.start,
+                               second.end])
+    return context.segment_cls(start, end)
