@@ -183,6 +183,54 @@ def symmetric_subtract_segments(first: _Segment,
             first, second, _get_context() if context is None else context)
 
 
+def unite_segments(first: _Segment,
+                   second: _Segment,
+                   *,
+                   context: _Optional[_Context] = None
+                   ) -> _Union[_Multisegment, _Segment]:
+    """
+    Returns union of segments.
+
+    Time complexity:
+        ``O(1)``
+    Memory complexity:
+        ``O(1)``
+
+    :param first: first operand.
+    :param second: second operand.
+    :param context: geometric context.
+    :returns: union of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Segment = context.segment_cls
+    >>> (unite_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                 Segment(Point(0, 0), Point(4, 0)))
+    ...  == unite_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(1, 0), Point(3, 0)))
+    ...  == Segment(Point(0, 0), Point(4, 0)))
+    True
+    >>> (unite_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                 Segment(Point(4, 0), Point(8, 0)))
+    ...  == Segment(Point(0, 0), Point(8, 0)))
+    True
+    >>> (unite_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                 Segment(Point(2, 0), Point(6, 0)))
+    ...  == Segment(Point(0, 0), Point(6, 0)))
+    True
+    >>> (unite_segments(Segment(Point(0, 0), Point(4, 0)),
+    ...                 Segment(Point(6, 0), Point(10, 0)))
+    ...  == Multisegment([Segment(Point(0, 0), Point(4, 0)),
+    ...                   Segment(Point(6, 0), Point(10, 0))]))
+    True
+    """
+    return _linear.unite_segments(
+            first, second, _get_context() if context is None else context)
+
+
 def segments_to_multisegment(segments: _Sequence[_Segment],
                              *,
                              context: _Optional[_Context] = None
