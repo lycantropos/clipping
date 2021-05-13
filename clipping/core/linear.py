@@ -31,8 +31,10 @@ from .unpacking import (unpack_linear_mix,
                         unpack_segments)
 from .utils import (all_equal,
                     endpoints_to_segments,
+                    flatten,
                     segments_to_endpoints,
                     to_endpoints,
+                    to_ordered_set,
                     to_segments_x_max)
 
 Event = Union_[LeftEvent, RightEvent]
@@ -394,6 +396,34 @@ def unite_segments(first: Segment,
                 else (_unite_segments_cross
                       if relation is Relation.CROSS
                       else _unite_segments_overlap))(first, second, context)
+
+
+def intersect_segment_with_multisegment(
+        segment: Segment,
+        multisegment: Multisegment,
+        context: Context
+) -> Union_[Empty, Mix, Multipoint, Multisegment, Segment]:
+    points, segments = [], []
+    to_intersection_point = context.segments_intersection
+    for sub_segment in multisegment.segments:
+        relation = context.segments_relation(segment, sub_segment)
+        if relation is Relation.TOUCH or relation is Relation.CROSS:
+            points.append(to_intersection_point(segment, sub_segment))
+        elif relation is not Relation.DISJOINT:
+            segments.append(segment
+                            if (relation is Relation.EQUAL
+                                or relation is Relation.COMPONENT)
+                            else (sub_segment
+                                  if relation is Relation.COMPOSITE
+                                  else _intersect_segments_overlap(segment,
+                                                                   sub_segment,
+                                                                   context)))
+    points = list(to_ordered_set(points)
+                  - set(flatten(to_endpoints(segment)
+                                for segment in segments)))
+    return unpack_linear_mix(unpack_points(points, context),
+                             unpack_segments(segments, context),
+                             context)
 
 
 def _subtract_segments_composite(minuend: Segment,

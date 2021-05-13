@@ -1,6 +1,8 @@
+import sys
 from itertools import (chain,
                        groupby)
-from typing import (Any,
+from typing import (AbstractSet,
+                    Any,
                     Iterable,
                     List,
                     Sequence,
@@ -119,3 +121,13 @@ def endpoints_to_segments(endpoints: Iterable[SegmentEndpoints],
 
 def to_endpoints(segment: Segment) -> SegmentEndpoints:
     return segment.start, segment.end
+
+
+if sys.version_info < (3, 6):
+    from collections import OrderedDict
+else:
+    OrderedDict = dict
+
+
+def to_ordered_set(values: Iterable[_T]) -> AbstractSet[_T]:
+    return OrderedDict.fromkeys(values).keys()
