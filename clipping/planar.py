@@ -298,6 +298,81 @@ def intersect_segment_with_multisegment(
             _get_context() if context is None else context)
 
 
+def subtract_multisegment_from_segment(
+        minuend: _Segment,
+        subtrahend: _Multisegment,
+        *,
+        context: _Optional[_Context] = None
+) -> _Union[_Empty, _Multisegment, _Segment]:
+    """
+    Returns difference of segment with multisegment.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = segments_count + intersections_count``,
+    ``segments_count = len(subtrahend.segments) + 1``,
+    ``intersections_count`` --- number of intersections between segments.
+
+    :param minuend: segment to subtract from.
+    :param subtrahend: multisegment to subtract.
+    :param context: geometric context.
+    :returns: difference of minuend with subtrahend.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Segment = context.segment_cls
+    >>> (subtract_multisegment_from_segment(
+    ...      Segment(Point(0, 0), Point(4, 0)),
+    ...      Multisegment([Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(0, 1), Point(0, 3))]))
+    ...  is subtract_multisegment_from_segment(
+    ...          Segment(Point(0, 0), Point(4, 0)),
+    ...          Multisegment([Segment(Point(0, 0), Point(6, 0)),
+    ...                        Segment(Point(0, 1), Point(0, 3))]))
+    ...  is EMPTY)
+    True
+    >>> (subtract_multisegment_from_segment(
+    ...      Segment(Point(0, 0), Point(4, 0)),
+    ...      Multisegment([Segment(Point(2, 0), Point(4, 0)),
+    ...                    Segment(Point(0, 1), Point(0, 3))]))
+    ...  == Segment(Point(0, 0), Point(2, 0)))
+    True
+    >>> (subtract_multisegment_from_segment(
+    ...      Segment(Point(0, 0), Point(4, 0)),
+    ...      Multisegment([Segment(Point(3, 0), Point(4, 0)),
+    ...                    Segment(Point(0, 0), Point(1, 0))]))
+    ...  == Segment(Point(1, 0), Point(3, 0)))
+    True
+    >>> (subtract_multisegment_from_segment(
+    ...      Segment(Point(0, 0), Point(4, 0)),
+    ...      Multisegment([Segment(Point(6, 0), Point(10, 0)),
+    ...                    Segment(Point(0, 1), Point(0, 3))]))
+    ...  == subtract_multisegment_from_segment(
+    ...          Segment(Point(0, 0), Point(4, 0)),
+    ...          Multisegment([Segment(Point(4, 0), Point(8, 0)),
+    ...                        Segment(Point(0, 1), Point(0, 3))]))
+    ...  == Segment(Point(0, 0), Point(4, 0)))
+    True
+    >>> (subtract_multisegment_from_segment(
+    ...      Segment(Point(0, 0), Point(4, 0)),
+    ...      Multisegment([Segment(Point(1, 0), Point(3, 0)),
+    ...                    Segment(Point(0, 1), Point(0, 3))]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(3, 0), Point(4, 0))]))
+    True
+    """
+    return (_linear.Difference(_operands.SegmentOperand(minuend),
+                               _operands.MultisegmentOperand(subtrahend),
+                               _get_context() if context is None else context)
+            .compute())
+
+
 def segments_to_multisegment(segments: _Sequence[_Segment],
                              *,
                              context: _Optional[_Context] = None
