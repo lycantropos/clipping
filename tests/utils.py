@@ -16,7 +16,8 @@ from hypothesis.strategies import SearchStrategy
 from orient.planar import multisegment_in_multisegment
 
 from clipping.core.utils import to_endpoints
-from clipping.hints import Multiregion
+from clipping.hints import (Multiregion,
+                            Region)
 
 Strategy = SearchStrategy
 Domain = TypeVar('Domain')
@@ -39,8 +40,10 @@ MultisegmentsPair = Tuple[Multisegment, Multisegment]
 MultisegmentsTriplet = Tuple[Multisegment, Multisegment, Multisegment]
 MultipolygonWithMultisegment = Tuple[Multipolygon, Multisegment]
 MultiregionsPair = Tuple[Multiregion, Multiregion]
-MultipolygonsPair = Tuple[Multipolygon, Multipolygon]
-MultipolygonsTriplet = Tuple[Multipolygon, Multipolygon, Multipolygon]
+PolygonWithMultisegment = Tuple[Polygon, Multisegment]
+RegionsPair = Tuple[Region, Region]
+PolygonsPair = Tuple[Polygon, Polygon]
+PolygonsTriplet = Tuple[Polygon, Polygon, Polygon]
 segments_intersection = _context.segments_intersection
 segments_relation = _context.segments_relation
 
@@ -108,11 +111,8 @@ def are_multisegments_equivalent(left: Multisegment,
             or multisegment_in_multisegment(left, right) is Relation.EQUAL)
 
 
-def is_multipolygon_similar_to_multiregion(multipolygon: Multipolygon,
-                                           multiregion: Multiregion) -> bool:
-    return (normalize_multipolygon(multipolygon)
-            == Multipolygon([Polygon(border, [])
-                             for border in normalize_regions(multiregion)]))
+def is_polygon_similar_to_region(polygon: Polygon, region: Region) -> bool:
+    return are_compounds_similar(polygon, Polygon(region, []))
 
 
 def are_segments_sequences_similar(left: Sequence[Segment],
@@ -218,10 +218,9 @@ def is_empty(object_: Any) -> bool:
 
 is_mix = Mix.__instancecheck__
 is_multipoint = Multipoint.__instancecheck__
-is_multipolygon = Multipolygon.__instancecheck__
 is_multisegment = Multisegment.__instancecheck__
-is_region = is_contour
 is_polygon = Polygon.__instancecheck__
+is_region = is_contour
 
 
 def compound_to_linear(object_: Any) -> Any:
@@ -275,16 +274,6 @@ def _(multipoint: Multipoint) -> Multipoint:
                        for point in multipoint.points])
 
 
-def reverse_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
-    return Multipolygon(multipolygon.polygons[::-1])
-
-
-def reverse_multipolygon_borders(multipolygon: Multipolygon) -> Multipolygon:
-    return Multipolygon([Polygon(reverse_region(polygon.border),
-                                 polygon.holes)
-                         for polygon in multipolygon.polygons])
-
-
 @reverse_compound_coordinates.register(Multipolygon)
 def reverse_multipolygon_coordinates(multipolygon: Multipolygon
                                      ) -> Multipolygon:
@@ -292,18 +281,17 @@ def reverse_multipolygon_coordinates(multipolygon: Multipolygon
                          for polygon in multipolygon.polygons])
 
 
-def reverse_multipolygon_holes(multipolygon: Multipolygon) -> Multipolygon:
-    return Multipolygon([Polygon(polygon.border,
-                                 reverse_multiregion(polygon.holes))
-                         for polygon in multipolygon.polygons])
+def reverse_polygon_border(polygon: Polygon) -> Polygon:
+    return Polygon(reverse_region(polygon.border), polygon.holes)
 
 
-def reverse_multipolygon_holes_contours(multipolygon: Multipolygon
-                                        ) -> Multipolygon:
-    return Multipolygon([Polygon(polygon.border,
-                                 [reverse_region(hole)
-                                  for hole in polygon.holes])
-                         for polygon in multipolygon.polygons])
+def reverse_polygon_holes(polygon: Polygon) -> Polygon:
+    return Polygon(polygon.border, reverse_multiregion(polygon.holes))
+
+
+def reverse_polygon_holes_contours(polygon: Polygon) -> Polygon:
+    return Polygon(polygon.border,
+                   [reverse_region(hole) for hole in polygon.holes])
 
 
 reverse_multiregion = reverse_sequence
@@ -311,13 +299,6 @@ reverse_multiregion = reverse_sequence
 
 def reverse_regions_coordinates(multiregion: Multiregion) -> Multiregion:
     return [reverse_region_coordinates(region) for region in multiregion]
-
-
-reverse_multiregion_coordinates = reverse_regions_coordinates
-
-
-def reverse_multiregion_regions(multiregion: Multiregion) -> Multiregion:
-    return [reverse_region(region) for region in multiregion]
 
 
 def reverse_multisegment(multisegment: Multisegment) -> Multisegment:
@@ -377,11 +358,6 @@ def to_sorted_segment(segment: Segment) -> Segment:
     return segment if segment.start < segment.end else reverse_segment(segment)
 
 
-def multipolygon_to_multiregion(multipolygon: Multipolygon) -> Multiregion:
-    assert not any(polygon.holes for polygon in multipolygon.polygons)
-    return [polygon.border for polygon in multipolygon.polygons]
-
-
 def pack_non_shaped(object_: Union[Empty, Mix, Multipoint, Multisegment,
                                    Segment]
                     ) -> Tuple[Sequence[Point], Sequence[Segment]]:
@@ -401,10 +377,6 @@ def pack_non_shaped(object_: Union[Empty, Mix, Multipoint, Multisegment,
         raise TypeError('Unsupported object type: {!r}.'.format(type(object_)))
 
 
-def multiregion_to_multipolygon(multiregion: Multiregion) -> Multipolygon:
-    return Multipolygon([Polygon(region, []) for region in multiregion])
-
-
 def segments_intersections(first: Segment, second: Segment
                            ) -> Tuple[Point, ...]:
     first_start, first_end = first.start, first.end
@@ -420,10 +392,9 @@ def segments_intersections(first: Segment, second: Segment
         return first_point, second_point
 
 
-def to_multipolygon_contours(multipolygon: Multipolygon) -> Iterable[Contour]:
-    for polygon in multipolygon.polygons:
-        yield polygon.border
-        yield from polygon.holes
+def to_polygon_contours(polygon: Polygon) -> Iterable[Contour]:
+    yield polygon.border
+    yield from polygon.holes
 
 
 def _to_counterclockwise_vertices(vertices: Sequence[Point]
