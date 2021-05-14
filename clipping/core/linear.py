@@ -424,6 +424,53 @@ def intersect_segment_with_multisegment(
                              context)
 
 
+def subtract_segment_from_multisegment(multisegment: Multisegment,
+                                       segment: Segment,
+                                       context: Context
+                                       ) -> Union_[Empty, Multisegment,
+                                                   Segment]:
+    segments = _subtract_segment_from_multisegment(multisegment, segment,
+                                                   context)
+    return unpack_segments(segments, context)
+
+
+def _subtract_segment_from_multisegment(multisegment: Multisegment,
+                                        segment: Segment,
+                                        context: Context
+                                        ) -> List[Segment]:
+    result = []
+    for index, sub_segment in enumerate(multisegment.segments):
+        relation = context.segments_relation(segment, sub_segment)
+        if relation is Relation.EQUAL:
+            result.extend(multisegment.segments[index + 1:])
+            break
+        elif relation is Relation.COMPONENT:
+            left_start, left_end, right_start, right_end = sorted([
+                sub_segment.start, sub_segment.end, segment.start,
+                segment.end])
+            result.extend(
+                    [context.segment_cls(right_start, right_end)]
+                    if left_start == segment.start or left_start == segment.end
+                    else
+                    ((([context.segment_cls(left_start, left_end)]
+                       if right_start == right_end
+                       else [context.segment_cls(left_start, left_end),
+                             context.segment_cls(right_start, right_end)])
+                      if (right_start == segment.start
+                          or right_start == segment.end)
+                      else [context.segment_cls(left_start, left_end)])
+                     if left_end == segment.start or left_end == segment.end
+                     else [context.segment_cls(left_start, right_start)]))
+            result.extend(multisegment.segments[index + 1:])
+            break
+        elif relation is Relation.OVERLAP:
+            result.append(_subtract_segments_overlap(sub_segment, segment,
+                                                     context))
+        elif relation is not Relation.COMPOSITE:
+            result.append(sub_segment)
+    return result
+
+
 def _subtract_segments_composite(minuend: Segment,
                                  subtrahend: Segment,
                                  context: Context
