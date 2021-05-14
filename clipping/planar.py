@@ -1063,9 +1063,8 @@ def subtract_polygon_from_multisegment(
     where ``segments_count = start_segments_count + intersections_count``,
     ``start_segments_count = len(minuend.segments)\
  + subtrahend_edges_count``,
-    ``subtrahend_edges_count = sum(len(polygon.border.vertices)\
- + sum(len(hole.vertices) for hole in polygon.holes)\
- for polygon in subtrahend.polygons)``,
+    ``subtrahend_edges_count = len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)``,
     ``intersections_count`` --- number of intersections between multisegment
     and polygon edges.
 
