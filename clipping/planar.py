@@ -1172,6 +1172,75 @@ def symmetric_subtract_polygon_from_multisegment(
             _get_context() if context is None else context).compute()
 
 
+def unite_multisegment_with_polygon(
+        multisegment: _Multisegment,
+        polygon: _Polygon,
+        *,
+        context: _Optional[_Context] = None) -> _Union[_Mix, _Polygon]:
+    """
+    Returns union of multisegment with polygon.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = start_segments_count + intersections_count``,
+    ``start_segments_count = len(multisegment.segments)\
+ + polygon_edges_count``,
+    ``polygon_edges_count = len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)``,
+    ``intersections_count`` --- number of intersections between multisegment
+    and polygon edges.
+
+    :param multisegment: first operand.
+    :param polygon: second operand.
+    :param context: geometric context.
+    :returns: union of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Mix = context.mix_cls
+    >>> Polygon = context.polygon_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> (unite_multisegment_with_polygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(0, 1), Point(1, 0))]),
+    ...      Polygon(Contour([Point(0, 0), Point(1, 0), Point(0, 1)]), []))
+    ...  == Polygon(Contour([Point(0, 0), Point(1, 0), Point(0, 1)]), []))
+    True
+    >>> (unite_multisegment_with_polygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(1, 1), Point(2, 2))]),
+    ...      Polygon(Contour([Point(0, 0), Point(1, 0), Point(1, 1),
+    ...                       Point(0, 1)]), []))
+    ...  == Mix(EMPTY, Segment(Point(1, 1), Point(2, 2)),
+    ...         Polygon(Contour([Point(0, 0), Point(1, 0), Point(1, 1),
+    ...                          Point(0, 1)]), [])))
+    True
+    >>> (unite_multisegment_with_polygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                    Segment(Point(1, 0), Point(2, 0)),
+    ...                    Segment(Point(1, 1), Point(2, 2))]),
+    ...      Polygon(Contour([Point(0, 0), Point(1, 0), Point(1, 1),
+    ...                       Point(0, 1)]), []))
+    ...  == Mix(EMPTY, Multisegment([Segment(Point(1, 0), Point(2, 0)),
+    ...                              Segment(Point(1, 1), Point(2, 2))]),
+    ...         Polygon(Contour([Point(0, 0), Point(1, 0), Point(1, 1),
+    ...                          Point(0, 1)]), [])))
+    True
+    """
+    return _mixed.Union(
+            _operands.MultisegmentOperand(multisegment),
+            _operands.PolygonOperand(polygon),
+            _get_context() if context is None else context).compute()
+
+
 def complete_intersect_multisegment_with_multipolygon(
         multisegment: _Multisegment,
         multipolygon: _Multipolygon,
