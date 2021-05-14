@@ -434,6 +434,16 @@ def subtract_segment_from_multisegment(multisegment: Multisegment,
     return unpack_segments(segments, context)
 
 
+def unite_segment_with_multisegment(segment: Segment,
+                                    multisegment: Multisegment,
+                                    context: Context
+                                    ) -> Union_[Multisegment, Segment]:
+    segments = _subtract_segment_from_multisegment(multisegment, segment,
+                                                   context)
+    segments.append(segment)
+    return unpack_segments(segments, context)
+
+
 def _subtract_segment_from_multisegment(multisegment: Multisegment,
                                         segment: Segment,
                                         context: Context

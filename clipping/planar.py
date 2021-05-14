@@ -509,6 +509,69 @@ def symmetric_subtract_multisegment_from_segment(
             _get_context() if context is None else context).compute()
 
 
+def unite_segment_with_multisegment(first: _Segment,
+                                    second: _Multisegment,
+                                    *,
+                                    context: _Optional[_Context] = None
+                                    ) -> _Union[_Multisegment, _Segment]:
+    """
+    Returns symmetric difference of segment and multisegment.
+
+    Time complexity:
+        ``O(len(second.segments))``
+    Memory complexity:
+        ``O(len(second.segments))``
+
+    :param first: first operand.
+    :param second: second operand.
+    :param context: geometric context.
+    :returns: symmetric difference of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Segment = context.segment_cls
+    >>> (unite_segment_with_multisegment(
+    ...      Segment(Point(0, 0), Point(4, 0)),
+    ...      Multisegment([Segment(Point(0, 0), Point(2, 0)),
+    ...                    Segment(Point(2, 0), Point(4, 0))]))
+    ...  == unite_segment_with_multisegment(
+    ...          Segment(Point(0, 0), Point(4, 0)),
+    ...          Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                        Segment(Point(3, 0), Point(4, 0))]))
+    ...  == Segment(Point(0, 0), Point(4, 0)))
+    True
+    >>> (unite_segment_with_multisegment(
+    ...      Segment(Point(0, 0), Point(4, 0)),
+    ...      Multisegment([Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(0, 1), Point(0, 3))]))
+    ...  == Multisegment([Segment(Point(0, 1), Point(0, 3)),
+    ...                   Segment(Point(0, 0), Point(4, 0))]))
+    True
+    >>> (unite_segment_with_multisegment(
+    ...      Segment(Point(0, 0), Point(4, 0)),
+    ...      Multisegment([Segment(Point(4, 0), Point(8, 0)),
+    ...                    Segment(Point(0, 1), Point(0, 3))]))
+    ...  == Multisegment([Segment(Point(4, 0), Point(8, 0)),
+    ...                   Segment(Point(0, 1), Point(0, 3)),
+    ...                   Segment(Point(0, 0), Point(4, 0))]))
+    True
+    >>> (unite_segment_with_multisegment(
+    ...      Segment(Point(1, 0), Point(3, 0)),
+    ...      Multisegment([Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(0, 1), Point(0, 3))]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
+    ...                   Segment(Point(3, 0), Point(4, 0)),
+    ...                   Segment(Point(0, 1), Point(0, 3)),
+    ...                   Segment(Point(1, 0), Point(3, 0))]))
+    True
+    """
+    return _linear.unite_segment_with_multisegment(
+            first, second, _get_context() if context is None else context)
+
+
 def segments_to_multisegment(segments: _Sequence[_Segment],
                              *,
                              context: _Optional[_Context] = None
