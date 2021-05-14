@@ -424,6 +424,16 @@ def complete_intersect_segment_with_multisegment(
                              context)
 
 
+def intersect_segment_with_multisegment(segment: Segment,
+                                        multisegment: Multisegment,
+                                        context: Context
+                                        ) -> Union_[Empty, Multisegment,
+                                                    Segment]:
+    segments = _intersect_segment_with_multisegment(segment, multisegment,
+                                                    context)
+    return unpack_segments(segments, context)
+
+
 def subtract_segment_from_multisegment(multisegment: Multisegment,
                                        segment: Segment,
                                        context: Context
@@ -442,6 +452,26 @@ def unite_segment_with_multisegment(segment: Segment,
                                                    context)
     segments.append(segment)
     return unpack_segments(segments, context)
+
+
+def _intersect_segment_with_multisegment(segment: Segment,
+                                         multisegment: Multisegment,
+                                         context: Context) -> List[Segment]:
+    result = []
+    for sub_segment in multisegment.segments:
+        relation = context.segments_relation(segment, sub_segment)
+        if (relation is not Relation.DISJOINT
+                and relation is not Relation.TOUCH
+                and relation is not Relation.CROSS):
+            result.append(segment
+                          if (relation is Relation.EQUAL
+                              or relation is Relation.COMPONENT)
+                          else (sub_segment
+                                if relation is Relation.COMPOSITE
+                                else _intersect_segments_overlap(segment,
+                                                                 sub_segment,
+                                                                 context)))
+    return result
 
 
 def _subtract_segment_from_multisegment(multisegment: Multisegment,
