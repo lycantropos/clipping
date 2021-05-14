@@ -5,14 +5,16 @@ from operator import attrgetter
 from typing import (Iterable,
                     List,
                     Optional,
-                    Union)
+                    Union as Union_)
 
 from ground.base import Context
 from ground.hints import (Empty,
                           Mix,
                           Multipoint,
+                          Multipolygon,
                           Multisegment,
                           Point,
+                          Polygon,
                           Segment)
 from reprit.base import generate_repr
 
@@ -34,7 +36,7 @@ from .utils import (all_equal,
                     to_polygons_x_max,
                     to_segments_x_max)
 
-Event = Union[LeftEvent, RightEvent]
+Event = Union_[LeftEvent, RightEvent]
 
 
 class Operation(ABC):
@@ -57,7 +59,7 @@ class Operation(ABC):
     __repr__ = generate_repr(__init__)
 
     @abstractmethod
-    def compute(self) -> Union[Empty, Mix, Multipoint, Multisegment]:
+    def compute(self) -> Union_[Empty, Mix, Multipoint, Multisegment]:
         """
         Computes result of the operation.
         """
@@ -116,7 +118,7 @@ class Operation(ABC):
 class Difference(Operation):
     __slots__ = ()
 
-    def compute(self) -> Union[Empty, Multisegment, Segment]:
+    def compute(self) -> Union_[Empty, Multisegment, Segment]:
         context = self.context
         segments_box = context.segments_box(self.linear.segments)
         if bounding.disjoint_with(segments_box,
@@ -154,7 +156,7 @@ class Difference(Operation):
 class CompleteIntersection(Operation):
     __slots__ = ()
 
-    def compute(self) -> Union[Empty, Mix, Multipoint, Multisegment, Segment]:
+    def compute(self) -> Union_[Empty, Mix, Multipoint, Multisegment, Segment]:
         context = self.context
         linear_box, shaped_box = (context.segments_box(self.linear.segments),
                                   context.polygons_box(self.shaped.polygons))
@@ -209,7 +211,7 @@ class CompleteIntersection(Operation):
 class Intersection(Operation):
     __slots__ = ()
 
-    def compute(self) -> Union[Empty, Segment, Multisegment]:
+    def compute(self) -> Union_[Empty, Segment, Multisegment]:
         context = self.context
         linear_box, shaped_box = (context.segments_box(self.linear.segments),
                                   context.polygons_box(self.shaped.polygons))
@@ -246,3 +248,50 @@ class Intersection(Operation):
             if event.is_left:
                 result.append(event)
         return result
+
+
+class Union(Operation):
+    __slots__ = ()
+
+    def compute(self) -> Union_[
+        Empty, Mix, Multipolygon, Multisegment, Polygon,
+        Segment]:
+        context = self.context
+        linear_box, shaped_box = (context.segments_box(self.linear.segments),
+                                  context.polygons_box(self.shaped.polygons))
+        if bounding.disjoint_with(linear_box, shaped_box):
+            return context.mix_cls(context.empty, self.linear.value,
+                                   self.shaped.value)
+        self.linear.segments = bounding.to_intersecting_segments(
+                shaped_box, self.linear.segments, context)
+        if not self.linear.segments:
+            return context.empty
+        self.shaped.polygons = bounding.to_intersecting_polygons(
+                linear_box, self.shaped.polygons, context)
+        if not self.shaped.polygons:
+            return context.empty
+        segments = endpoints_to_segments([to_endpoints(event)
+                                          for event in self.sweep()
+                                          if event.in_result], context)
+        linear = unpack_segments(segments, context)
+        return (self.shaped.value
+                if linear is context.empty
+                else context.mix_cls(context.empty, linear, self.shaped.value))
+
+    def in_result(self, event: LeftEvent) -> bool:
+        return event.from_first and event.outside
+
+    def sweep(self) -> Iterable[LeftEvent]:
+        self.fill_queue()
+        result = []
+        events_queue = self._events_queue
+        sweep_line = SweepLine(self.context)
+        while events_queue:
+            event = events_queue.pop()
+            self.process_event(event, sweep_line)
+            if event.is_left:
+                result.append(event)
+        return result
+
+
+SymmetricDifference = Union
