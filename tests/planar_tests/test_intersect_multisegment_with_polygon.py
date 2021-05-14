@@ -1,7 +1,7 @@
 from ground.base import Relation
 from hypothesis import given
-from orient.planar import (segment_in_polygon,
-                           segment_in_multisegment,
+from orient.planar import (segment_in_multisegment,
+                           segment_in_polygon,
                            segment_in_segment)
 
 from clipping.planar import intersect_multisegment_with_polygon
@@ -10,13 +10,13 @@ from tests.utils import (PolygonWithMultisegment,
                          is_maybe_linear,
                          pack_non_shaped,
                          reverse_compound_coordinates,
+                         reverse_multisegment,
+                         reverse_multisegment_coordinates,
+                         reverse_multisegment_endpoints,
                          reverse_polygon_border,
                          reverse_polygon_coordinates,
                          reverse_polygon_holes,
                          reverse_polygon_holes_contours,
-                         reverse_multisegment,
-                         reverse_multisegment_coordinates,
-                         reverse_multisegment_endpoints,
                          to_sorted_segment)
 from . import strategies
 
@@ -27,7 +27,7 @@ def test_basic(polygon_with_multisegment: PolygonWithMultisegment
     polygon, multisegment = polygon_with_multisegment
 
     result = intersect_multisegment_with_polygon(multisegment,
-                                                      polygon)
+                                                 polygon)
 
     assert is_maybe_linear(result)
 
