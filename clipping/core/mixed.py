@@ -20,7 +20,8 @@ from . import bounding
 from .event import (LeftMixedEvent as LeftEvent,
                     RightMixedEvent as RightEvent)
 from .events_queue import MixedEventsQueue as EventsQueue
-from .operands import HoleyOperand
+from .operands import (HoleyOperand,
+                       LinearOperand)
 from .sweep_line import BinarySweepLine as SweepLine
 from .unpacking import (unpack_linear_mix,
                         unpack_points,
@@ -37,23 +38,20 @@ Event = Union[LeftEvent, RightEvent]
 
 
 class Operation(ABC):
-    __slots__ = ('context', 'multisegment', 'shaped', '_events_queue',
-                 '_segments')
+    __slots__ = 'context', 'linear', 'shaped', '_events_queue'
 
     def __init__(self,
-                 multisegment: Multisegment,
+                 linear: LinearOperand,
                  shaped: HoleyOperand,
                  context: Context) -> None:
         """
         Initializes operation.
 
-        :param multisegment: first operand.
+        :param linear: first operand.
         :param shaped: second operand.
         :param context: operation context.
         """
-        self.context, self.multisegment, self.shaped = (context, multisegment,
-                                                        shaped)
-        self._segments = multisegment.segments
+        self.context, self.linear, self.shaped = context, linear, shaped
         self._events_queue = EventsQueue(context)
 
     __repr__ = generate_repr(__init__)
@@ -76,7 +74,8 @@ class Operation(ABC):
 
     def fill_queue(self) -> None:
         events_queue = self._events_queue
-        events_queue.register(segments_to_endpoints(self._segments), True)
+        events_queue.register(segments_to_endpoints(self.linear.segments),
+                              True)
         for polygon in self.shaped.polygons:
             events_queue.register(
                     polygon_to_oriented_edges_endpoints(polygon, self.context),
@@ -119,14 +118,14 @@ class Difference(Operation):
 
     def compute(self) -> Union[Empty, Multisegment, Segment]:
         context = self.context
-        segments_box = context.segments_box(self._segments)
+        segments_box = context.segments_box(self.linear.segments)
         if bounding.disjoint_with(segments_box,
                                   context.polygons_box(self.shaped.polygons)):
-            return self.multisegment
+            return self.linear.value
         self.shaped.polygons = bounding.to_coupled_polygons(
                 segments_box, self.shaped.polygons, context)
         if not self.shaped.polygons:
-            return self.multisegment
+            return self.linear.value
         return unpack_segments(endpoints_to_segments([to_endpoints(event)
                                                       for event in self.sweep()
                                                       if event.in_result],
@@ -141,7 +140,7 @@ class Difference(Operation):
         result = []
         events_queue = self._events_queue
         sweep_line = SweepLine(self.context)
-        first_x_max = to_segments_x_max(self._segments)
+        first_x_max = to_segments_x_max(self.linear.segments)
         while events_queue:
             event = events_queue.pop()
             if first_x_max < event.start.x:
@@ -157,13 +156,13 @@ class CompleteIntersection(Operation):
 
     def compute(self) -> Union[Empty, Mix, Multipoint, Multisegment, Segment]:
         context = self.context
-        multisegment_box = context.segments_box(self._segments)
+        multisegment_box = context.segments_box(self.linear.segments)
         shaped_box = context.polygons_box(self.shaped.polygons)
         if bounding.disjoint_with(multisegment_box, shaped_box):
             return context.empty
-        self._segments = bounding.to_intersecting_segments(
-                shaped_box, self._segments, context)
-        if not self._segments:
+        self.linear.segments = bounding.to_intersecting_segments(
+                shaped_box, self.linear.segments, context)
+        if not self.linear.segments:
             return context.empty
         self.shaped.polygons = bounding.to_intersecting_polygons(
                 multisegment_box, self.shaped.polygons, context)
@@ -196,7 +195,7 @@ class CompleteIntersection(Operation):
         result = []
         events_queue = self._events_queue
         sweep_line = SweepLine(self.context)
-        min_max_x = min(to_segments_x_max(self._segments),
+        min_max_x = min(to_segments_x_max(self.linear.segments),
                         to_polygons_x_max(self.shaped.polygons))
         while events_queue:
             event = events_queue.pop()
@@ -212,16 +211,16 @@ class Intersection(Operation):
 
     def compute(self) -> Union[Empty, Segment, Multisegment]:
         context = self.context
-        multisegment_box = context.segments_box(self._segments)
+        multisegment_box = context.segments_box(self.linear.segments)
         shaped_box = context.polygons_box(self.shaped.polygons)
         if bounding.disjoint_with(multisegment_box, shaped_box):
             return context.empty
-        self._segments = bounding.to_intersecting_segments(
-                shaped_box, self._segments, context)
-        if not self._segments:
+        self.linear.segments = bounding.to_intersecting_segments(
+                shaped_box, self.linear.segments, context)
+        if not self.linear.segments:
             return context.empty
         self.shaped.polygons = bounding.to_intersecting_polygons(
-            multisegment_box, self.shaped.polygons, context)
+                multisegment_box, self.shaped.polygons, context)
         if not self.shaped.polygons:
             return context.empty
         segments = endpoints_to_segments([to_endpoints(event)
@@ -237,7 +236,7 @@ class Intersection(Operation):
         result = []
         events_queue = self._events_queue
         sweep_line = SweepLine(self.context)
-        min_max_x = min(to_segments_x_max(self._segments),
+        min_max_x = min(to_segments_x_max(self.linear.segments),
                         to_polygons_x_max(self.shaped.polygons))
         while events_queue:
             event = events_queue.pop()
