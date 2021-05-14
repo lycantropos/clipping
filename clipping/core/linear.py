@@ -396,7 +396,7 @@ def unite_segments(first: Segment,
                       else _unite_segments_overlap))(first, second, context)
 
 
-def intersect_segment_with_multisegment(
+def complete_intersect_segment_with_multisegment(
         segment: Segment,
         multisegment: Multisegment,
         context: Context

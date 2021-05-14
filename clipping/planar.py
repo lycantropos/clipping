@@ -231,7 +231,7 @@ def unite_segments(first: _Segment,
             first, second, _get_context() if context is None else context)
 
 
-def intersect_segment_with_multisegment(
+def complete_intersect_segment_with_multisegment(
         segment: _Segment,
         multisegment: _Multisegment,
         *,
@@ -258,32 +258,32 @@ def intersect_segment_with_multisegment(
     >>> Multisegment = context.multisegment_cls
     >>> Point = context.point_cls
     >>> Segment = context.segment_cls
-    >>> (intersect_segment_with_multisegment(
+    >>> (complete_intersect_segment_with_multisegment(
     ...      Segment(Point(0, 0), Point(4, 0)),
     ...      Multisegment([Segment(Point(6, 0), Point(10, 0)),
     ...                    Segment(Point(6, 0), Point(6, 4))]))
     ...  is EMPTY)
     True
-    >>> (intersect_segment_with_multisegment(
+    >>> (complete_intersect_segment_with_multisegment(
     ...      Segment(Point(0, 0), Point(4, 0)),
     ...      Multisegment([Segment(Point(4, 0), Point(8, 0)),
     ...                    Segment(Point(4, 0), Point(4, 4))]))
     ...  == Multipoint([Point(4, 0)]))
     True
-    >>> (intersect_segment_with_multisegment(
+    >>> (complete_intersect_segment_with_multisegment(
     ...      Segment(Point(0, 0), Point(4, 0)),
     ...      Multisegment([Segment(Point(0, 0), Point(4, 0)),
     ...                    Segment(Point(0, 0), Point(0, 4))]))
     ...  == Segment(Point(0, 0), Point(4, 0)))
     True
-    >>> (intersect_segment_with_multisegment(
+    >>> (complete_intersect_segment_with_multisegment(
     ...      Segment(Point(0, 0), Point(4, 0)),
     ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                    Segment(Point(3, 0), Point(4, 0))]))
     ...  == Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                   Segment(Point(3, 0), Point(4, 0))]))
     True
-    >>> (intersect_segment_with_multisegment(
+    >>> (complete_intersect_segment_with_multisegment(
     ...      Segment(Point(0, 0), Point(4, 0)),
     ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
     ...                    Segment(Point(2, 0), Point(2, 1)),
@@ -293,7 +293,7 @@ def intersect_segment_with_multisegment(
     ...                       Segment(Point(3, 0), Point(4, 0))]), EMPTY))
     True
     """
-    return _linear.intersect_segment_with_multisegment(
+    return _linear.complete_intersect_segment_with_multisegment(
             segment, multisegment,
             _get_context() if context is None else context)
 
