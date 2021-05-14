@@ -156,16 +156,16 @@ class CompleteIntersection(Operation):
 
     def compute(self) -> Union[Empty, Mix, Multipoint, Multisegment, Segment]:
         context = self.context
-        multisegment_box = context.segments_box(self.linear.segments)
-        shaped_box = context.polygons_box(self.shaped.polygons)
-        if bounding.disjoint_with(multisegment_box, shaped_box):
+        linear_box, shaped_box = (context.segments_box(self.linear.segments),
+                                  context.polygons_box(self.shaped.polygons))
+        if bounding.disjoint_with(linear_box, shaped_box):
             return context.empty
         self.linear.segments = bounding.to_intersecting_segments(
                 shaped_box, self.linear.segments, context)
         if not self.linear.segments:
             return context.empty
         self.shaped.polygons = bounding.to_intersecting_polygons(
-                multisegment_box, self.shaped.polygons, context)
+                linear_box, self.shaped.polygons, context)
         if not self.shaped.polygons:
             return context.empty
         events = sorted(self.sweep(),
@@ -211,16 +211,16 @@ class Intersection(Operation):
 
     def compute(self) -> Union[Empty, Segment, Multisegment]:
         context = self.context
-        multisegment_box = context.segments_box(self.linear.segments)
-        shaped_box = context.polygons_box(self.shaped.polygons)
-        if bounding.disjoint_with(multisegment_box, shaped_box):
+        linear_box, shaped_box = (context.segments_box(self.linear.segments),
+                                  context.polygons_box(self.shaped.polygons))
+        if bounding.disjoint_with(linear_box, shaped_box):
             return context.empty
         self.linear.segments = bounding.to_intersecting_segments(
                 shaped_box, self.linear.segments, context)
         if not self.linear.segments:
             return context.empty
         self.shaped.polygons = bounding.to_intersecting_polygons(
-                multisegment_box, self.shaped.polygons, context)
+                linear_box, self.shaped.polygons, context)
         if not self.shaped.polygons:
             return context.empty
         segments = endpoints_to_segments([to_endpoints(event)
