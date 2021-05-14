@@ -3,11 +3,44 @@ from abc import (ABC,
 from typing import Union
 
 from ground.hints import (Multipolygon,
-                          Polygon)
+                          Multisegment,
+                          Polygon,
+                          Segment)
 from reprit.base import generate_repr
 
 from .hints import (Multiregion,
                     Region)
+
+
+class LinearOperand(ABC):
+    __slots__ = 'segments',
+
+    @property
+    @abstractmethod
+    def value(self) -> Union[Multisegment, Segment]:
+        """Returns value of the operand."""
+
+
+class MultisegmentOperand(LinearOperand):
+    __slots__ = '_value'
+
+    def __init__(self, value: Multisegment) -> None:
+        self.segments, self._value = value.segments, value
+
+    @property
+    def value(self) -> Multisegment:
+        return self._value
+
+
+class SegmentOperand(LinearOperand):
+    __slots__ = '_value'
+
+    def __init__(self, value: Segment) -> None:
+        self.segments, self._value = [value], value
+
+    @property
+    def value(self) -> Segment:
+        return self._value
 
 
 class HolelessOperand(ABC):

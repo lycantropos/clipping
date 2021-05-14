@@ -389,7 +389,8 @@ def complete_intersect_multisegments(first: _Multisegment,
     True
     """
     return _linear.CompleteIntersection(
-            first, second,
+            _operands.MultisegmentOperand(first),
+            _operands.MultisegmentOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -437,7 +438,8 @@ def intersect_multisegments(first: _Multisegment,
     True
     """
     return _linear.Intersection(
-            first, second,
+            _operands.MultisegmentOperand(first),
+            _operands.MultisegmentOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -484,9 +486,10 @@ def subtract_multisegments(minuend: _Multisegment,
     ...  == Segment(Point(0, 1), Point(1, 1)))
     True
     """
-    return _linear.Difference(
-            minuend, subtrahend,
-            _get_context() if context is None else context).compute()
+    return (_linear.Difference(_operands.MultisegmentOperand(minuend),
+                               _operands.MultisegmentOperand(subtrahend),
+                               _get_context() if context is None else context)
+            .compute())
 
 
 def symmetric_subtract_multisegments(first: _Multisegment,
@@ -537,7 +540,8 @@ def symmetric_subtract_multisegments(first: _Multisegment,
     True
     """
     return _linear.SymmetricDifference(
-            first, second,
+            _operands.MultisegmentOperand(first),
+            _operands.MultisegmentOperand(second),
             _get_context() if context is None else context).compute()
 
 
@@ -586,7 +590,8 @@ def unite_multisegments(first: _Multisegment,
     True
     """
     return _linear.Union(
-            first, second,
+            _operands.MultisegmentOperand(first),
+            _operands.MultisegmentOperand(second),
             _get_context() if context is None else context).compute()
 
 
