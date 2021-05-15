@@ -708,6 +708,76 @@ def complete_intersect_segment_with_polygon(
             _get_context() if context is None else context).compute()
 
 
+def intersect_segment_with_polygon(segment: _Segment,
+                                   polygon: _Polygon,
+                                   *,
+                                   context: _Optional[_Context] = None
+                                   ) -> _Union[_Empty, _Multisegment,
+                                               _Segment]:
+    """
+    Returns intersection of segment with polygon.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = start_segments_count + intersections_count``,
+    ``start_segments_count = polygon_edges_count + 1``,
+    ``polygon_edges_count = len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)``,
+    ``intersections_count`` --- number of intersections between segment
+    and polygon edges.
+
+    :param segment: segment to intersect with.
+    :param polygon: polygon to intersect with.
+    :param context: geometric context.
+    :returns: intersection of segment with polygon.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Mix = context.mix_cls
+    >>> Multipoint = context.multipoint_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> square = Contour([Point(0, 0), Point(4, 0), Point(4, 4),
+    ...                   Point(0, 4)])
+    >>> inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
+    ...                         Point(1, 3)])
+    >>> clockwise_inner_square = Contour([Point(1, 1), Point(1, 3),
+    ...                                   Point(3, 3), Point(3, 1)])
+    >>> (intersect_segment_with_polygon(Segment(Point(0, 0), Point(1, 0)),
+    ...                                 Polygon(inner_square, []))
+    ...  is intersect_segment_with_polygon(Segment(Point(0, 0), Point(1, 1)),
+    ...                                    Polygon(inner_square, []))
+    ...  is EMPTY)
+    True
+    >>> (intersect_segment_with_polygon(Segment(Point(0, 0), Point(1, 1)),
+    ...                                 Polygon(square, []))
+    ...  == Segment(Point(0, 0), Point(1, 1)))
+    True
+    >>> (intersect_segment_with_polygon(Segment(Point(1, 1), Point(4, 4)),
+    ...                                 Polygon(square,
+    ...                                         [clockwise_inner_square]))
+    ...  == Segment(Point(3, 3), Point(4, 4)))
+    True
+    >>> (intersect_segment_with_polygon(Segment(Point(0, 0), Point(4, 4)),
+    ...                                 Polygon(square,
+    ...                                         [clockwise_inner_square]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 1)),
+    ...                   Segment(Point(3, 3), Point(4, 4))]))
+    True
+    """
+    return (_mixed.Intersection(_operands.SegmentOperand(segment),
+                                _operands.PolygonOperand(polygon),
+                                _get_context() if context is None else context)
+            .compute())
+
+
 def segments_to_multisegment(segments: _Sequence[_Segment],
                              *,
                              context: _Optional[_Context] = None
