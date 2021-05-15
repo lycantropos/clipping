@@ -1521,6 +1521,88 @@ def symmetric_subtract_multipolygon_from_multisegment(
             _get_context() if context is None else context).compute()
 
 
+def unite_multisegment_with_multipolygon(
+        multisegment: _Multisegment,
+        multipolygon: _Multipolygon,
+        *,
+        context: _Optional[_Context] = None) -> _Union[_Mix, _Multipolygon]:
+    """
+    Returns union of multisegment with multipolygon.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = start_segments_count + intersections_count``,
+    ``start_segments_count = len(multisegment.segments)\
+ + multipolygon_edges_count``,
+    ``multipolygon_edges_count = len(multipolygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in multipolygon.holes)``,
+    ``intersections_count`` --- number of intersections between multisegment
+    and multipolygon edges.
+
+    :param multisegment: first operand.
+    :param multipolygon: second operand.
+    :param context: geometric context.
+    :returns: union of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Mix = context.mix_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> first_square = Contour([Point(0, 0), Point(4, 0), Point(4, 4),
+    ...                         Point(0, 4)])
+    >>> second_square = Contour([Point(4, 0), Point(8, 0), Point(8, 4),
+    ...                          Point(4, 4)])
+    >>> third_square = Contour([Point(4, 4), Point(8, 4), Point(8, 8),
+    ...                         Point(4, 8)])
+    >>> first_inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
+    ...                               Point(1, 3)])
+    >>> clockwise_first_inner_square = Contour([Point(1, 1), Point(1, 3),
+    ...                                         Point(3, 3), Point(3, 1)])
+    >>> (unite_multisegment_with_multipolygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(0, 0), Point(4, 4))]),
+    ...      Multipolygon([Polygon(first_square, []),
+    ...                    Polygon(third_square, [])]))
+    ...  == Multipolygon([Polygon(first_square, []),
+    ...                   Polygon(third_square, [])]))
+    True
+    >>> (unite_multisegment_with_multipolygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(0, 0), Point(4, 4))]),
+    ...      Multipolygon([Polygon(first_square, [clockwise_first_inner_square]),
+    ...                    Polygon(third_square, [])]))
+    ...  == Mix(EMPTY, Segment(Point(1, 1), Point(3, 3)),
+    ...         Multipolygon([Polygon(first_square,
+    ...                               [clockwise_first_inner_square]),
+    ...                       Polygon(third_square, [])])))
+    True
+    >>> (unite_multisegment_with_multipolygon(
+    ...      Multisegment([Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(0, 0), Point(4, 4))]),
+    ...      Multipolygon([Polygon(first_inner_square, []),
+    ...                    Polygon(second_square, [])]))
+    ...  == Mix(EMPTY, Multisegment([Segment(Point(0, 0), Point(4, 0)),
+    ...                              Segment(Point(0, 0), Point(1, 1)),
+    ...                              Segment(Point(3, 3), Point(4, 4))]),
+    ...         Multipolygon([Polygon(first_inner_square, []),
+    ...                       Polygon(second_square, [])])))
+    True
+    """
+    return _mixed.Union(
+            _operands.MultisegmentOperand(multisegment),
+            _operands.MultipolygonOperand(multipolygon),
+            _get_context() if context is None else context).compute()
+
+
 def complete_intersect_regions(first: _Region,
                                second: _Region,
                                *,
