@@ -738,8 +738,6 @@ def intersect_segment_with_polygon(segment: _Segment,
     >>> context = get_context()
     >>> EMPTY = context.empty
     >>> Contour = context.contour_cls
-    >>> Mix = context.mix_cls
-    >>> Multipoint = context.multipoint_cls
     >>> Multisegment = context.multisegment_cls
     >>> Point = context.point_cls
     >>> Polygon = context.polygon_cls
@@ -808,8 +806,6 @@ def subtract_polygon_from_segment(minuend: _Segment,
     >>> context = get_context()
     >>> EMPTY = context.empty
     >>> Contour = context.contour_cls
-    >>> Mix = context.mix_cls
-    >>> Multipoint = context.multipoint_cls
     >>> Multisegment = context.multisegment_cls
     >>> Point = context.point_cls
     >>> Polygon = context.polygon_cls
