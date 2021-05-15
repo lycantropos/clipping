@@ -1394,25 +1394,43 @@ def subtract_multipolygon_from_multisegment(
     >>> context = get_context()
     >>> EMPTY = context.empty
     >>> Contour = context.contour_cls
-    >>> Multipoint = context.multipoint_cls
     >>> Multipolygon = context.multipolygon_cls
     >>> Multisegment = context.multisegment_cls
     >>> Point = context.point_cls
     >>> Polygon = context.polygon_cls
     >>> Segment = context.segment_cls
+    >>> first_square = Contour([Point(0, 0), Point(4, 0), Point(4, 4),
+    ...                         Point(0, 4)])
+    >>> second_square = Contour([Point(4, 0), Point(8, 0), Point(8, 4),
+    ...                          Point(4, 4)])
+    >>> third_square = Contour([Point(4, 4), Point(8, 4), Point(8, 8),
+    ...                         Point(4, 8)])
+    >>> first_inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
+    ...                               Point(1, 3)])
+    >>> clockwise_first_inner_square = Contour([Point(1, 1), Point(1, 3),
+    ...                                         Point(3, 3), Point(3, 1)])
     >>> (subtract_multipolygon_from_multisegment(
-    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                    Segment(Point(0, 1), Point(1, 0))]),
-    ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
-    ...                                     Point(0, 1)]), [])]))
+    ...      Multisegment([Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(0, 0), Point(4, 4))]),
+    ...      Multipolygon([Polygon(first_square, []),
+    ...                    Polygon(third_square, [])]))
     ...  is EMPTY)
     True
     >>> (subtract_multipolygon_from_multisegment(
-    ...      Multisegment([Segment(Point(0, 0), Point(1, 0)),
-    ...                    Segment(Point(1, 1), Point(2, 2))]),
-    ...      Multipolygon([Polygon(Contour([Point(0, 0), Point(1, 0),
-    ...                                     Point(1, 1), Point(0, 1)]), [])]))
-    ...  == Segment(Point(1, 1), Point(2, 2)))
+    ...      Multisegment([Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(0, 0), Point(4, 4))]),
+    ...      Multipolygon([Polygon(first_square, [clockwise_first_inner_square]),
+    ...                    Polygon(third_square, [])]))
+    ...  == Segment(Point(1, 1), Point(3, 3)))
+    True
+    >>> (subtract_multipolygon_from_multisegment(
+    ...      Multisegment([Segment(Point(0, 0), Point(4, 0)),
+    ...                    Segment(Point(0, 0), Point(4, 4))]),
+    ...      Multipolygon([Polygon(first_inner_square, []),
+    ...                    Polygon(second_square, [])]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 1)),
+    ...                   Segment(Point(0, 0), Point(4, 0)),
+    ...                   Segment(Point(3, 3), Point(4, 4))]))
     True
     """
     return (_mixed.Difference(_operands.MultisegmentOperand(minuend),
