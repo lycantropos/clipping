@@ -989,8 +989,9 @@ def complete_intersect_segment_with_multipolygon(
 
     where ``segments_count = start_segments_count + intersections_count``,
     ``start_segments_count = multipolygon_edges_count + 1``,
-    ``multipolygon_edges_count = len(multipolygon.border.vertices)\
- + sum(len(hole.vertices) for hole in multipolygon.holes)``,
+    ``multipolygon_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in multipolygon.polygons)``,
     ``intersections_count`` --- number of intersections between segment
     and multipolygon edges.
 
@@ -1078,8 +1079,9 @@ def intersect_segment_with_multipolygon(segment: _Segment,
 
     where ``segments_count = start_segments_count + intersections_count``,
     ``start_segments_count = multipolygon_edges_count + 1``,
-    ``multipolygon_edges_count = len(multipolygon.border.vertices)\
- + sum(len(hole.vertices) for hole in multipolygon.holes)``,
+    ``multipolygon_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in multipolygon.polygons)``,
     ``intersections_count`` --- number of intersections between segment
     and multipolygon edges.
 
@@ -1143,6 +1145,79 @@ def intersect_segment_with_multipolygon(segment: _Segment,
     return (_mixed.Intersection(_operands.SegmentOperand(segment),
                                 _operands.MultipolygonOperand(multipolygon),
                                 _get_context() if context is None else context)
+            .compute())
+
+
+def subtract_multipolygon_from_segment(minuend: _Segment,
+                                       subtrahend: _Multipolygon,
+                                       *,
+                                       context: _Optional[_Context] = None
+                                       ) -> _Union[_Empty, _Multisegment,
+                                                   _Segment]:
+    """
+    Returns difference of segment with multipolygon.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = start_segments_count + intersections_count``,
+    ``start_segments_count = subtrahend_edges_count + 1``,
+    ``subtrahend_edges_count = sum(len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)\
+ for polygon in subtrahend.polygons)``,
+    ``intersections_count`` --- number of intersections between segment
+    and multipolygon edges.
+
+    :param minuend: segment to subtract from.
+    :param subtrahend: multipolygon to subtract.
+    :param context: geometric context.
+    :returns: difference of minuend with subtrahend.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> first_square = Contour([Point(0, 0), Point(4, 0), Point(4, 4),
+    ...                         Point(0, 4)])
+    >>> second_square = Contour([Point(4, 0), Point(8, 0), Point(8, 4),
+    ...                          Point(4, 4)])
+    >>> third_square = Contour([Point(4, 4), Point(8, 4), Point(8, 8),
+    ...                         Point(4, 8)])
+    >>> first_inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
+    ...                               Point(1, 3)])
+    >>> clockwise_first_inner_square = Contour([Point(1, 1), Point(1, 3),
+    ...                                         Point(3, 3), Point(3, 1)])
+    >>> (subtract_multipolygon_from_segment(
+    ...      Segment(Point(0, 0), Point(4, 0)),
+    ...      Multipolygon([Polygon(first_square, []),
+    ...                    Polygon(third_square, [])]))
+    ...  is EMPTY)
+    True
+    >>> (subtract_multipolygon_from_segment(
+    ...      Segment(Point(0, 0), Point(4, 4)),
+    ...      Multipolygon([Polygon(first_square,
+    ...                            [clockwise_first_inner_square]),
+    ...                    Polygon(third_square, [])]))
+    ...  == Segment(Point(1, 1), Point(3, 3)))
+    True
+    >>> (subtract_multipolygon_from_segment(
+    ...      Segment(Point(0, 0), Point(4, 4)),
+    ...      Multipolygon([Polygon(first_inner_square, []),
+    ...                    Polygon(second_square, [])]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 1)),
+    ...                   Segment(Point(3, 3), Point(4, 4))]))
+    True
+    """
+    return (_mixed.Difference(_operands.SegmentOperand(minuend),
+                              _operands.MultipolygonOperand(subtrahend),
+                              _get_context() if context is None else context)
             .compute())
 
 
