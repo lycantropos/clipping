@@ -656,10 +656,10 @@ def complete_intersect_segment_with_polygon(
     ``intersections_count`` --- number of intersections between segment
     and polygon edges.
 
-    :param segment: segment to intersect with.
-    :param polygon: polygon to intersect with.
+    :param segment: first operand.
+    :param polygon: second operand.
     :param context: geometric context.
-    :returns: intersection of segment with polygon.
+    :returns: intersection of operands.
 
     >>> from ground.base import get_context
     >>> context = get_context()
