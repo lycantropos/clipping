@@ -901,7 +901,7 @@ def symmetric_subtract_polygon_from_segment(segment: _Segment,
     ...      Polygon(square, [clockwise_inner_square]))
     ...  == Mix(EMPTY, Multisegment([Segment(Point(1, 1), Point(3, 3)),
     ...                              Segment(Point(4, 4), Point(8, 8))]),
-    ...         Polygon(square, [clockwise_inner_square])])))
+    ...         Polygon(square, [clockwise_inner_square])))
     True
     """
     return _mixed.SymmetricDifference(
