@@ -972,6 +972,96 @@ def unite_segment_with_polygon(segment: _Segment,
             .compute())
 
 
+def complete_intersect_segment_with_multipolygon(
+        segment: _Segment,
+        multipolygon: _Multipolygon,
+        *,
+        context: _Optional[_Context] = None
+) -> _Union[_Empty, _Mix, _Multipoint, _Multisegment, _Segment]:
+    """
+    Returns intersection of segment with multipolygon
+    considering cases with geometries touching each other in points.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = start_segments_count + intersections_count``,
+    ``start_segments_count = multipolygon_edges_count + 1``,
+    ``multipolygon_edges_count = len(multipolygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in multipolygon.holes)``,
+    ``intersections_count`` --- number of intersections between segment
+    and multipolygon edges.
+
+    :param segment: first operand.
+    :param multipolygon: second operand.
+    :param context: geometric context.
+    :returns: intersection of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Mix = context.mix_cls
+    >>> Contour = context.contour_cls
+    >>> Multipoint = context.multipoint_cls
+    >>> Multipolygon = context.multipolygon_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> first_square = Contour([Point(0, 0), Point(4, 0), Point(4, 4),
+    ...                         Point(0, 4)])
+    >>> second_square = Contour([Point(4, 0), Point(8, 0), Point(8, 4),
+    ...                          Point(4, 4)])
+    >>> third_square = Contour([Point(4, 4), Point(8, 4), Point(8, 8),
+    ...                         Point(4, 8)])
+    >>> first_inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
+    ...                               Point(1, 3)])
+    >>> clockwise_first_inner_square = Contour([Point(1, 1), Point(1, 3),
+    ...                                         Point(3, 3), Point(3, 1)])
+    >>> (complete_intersect_segment_with_multipolygon(
+    ...      Segment(Point(0, 0), Point(2, 0)),
+    ...      Multipolygon([Polygon(first_inner_square, []),
+    ...                    Polygon(second_square, [])]))
+    ...  is EMPTY)
+    True
+    >>> (complete_intersect_segment_with_multipolygon(
+    ...      Segment(Point(0, 0), Point(4, 0)),
+    ...      Multipolygon([Polygon(first_inner_square, []),
+    ...                    Polygon(second_square, [])]))
+    ...  == Multipoint([Point(4, 0)]))
+    True
+    >>> (complete_intersect_segment_with_multipolygon(
+    ...      Segment(Point(0, 0), Point(2, 2)),
+    ...      Multipolygon([Polygon(first_inner_square, []),
+    ...                    Polygon(second_square, [])]))
+    ...  == Segment(Point(1, 1), Point(2, 2)))
+    True
+    >>> (complete_intersect_segment_with_multipolygon(
+    ...      Segment(Point(0, 0), Point(4, 4)),
+    ...      Multipolygon([Polygon(first_square,
+    ...                            [clockwise_first_inner_square]),
+    ...                    Polygon(third_square, [])]))
+    ...  == Multisegment([Segment(Point(0, 0), Point(1, 1)),
+    ...                   Segment(Point(3, 3), Point(4, 4))]))
+    True
+    >>> (complete_intersect_segment_with_multipolygon(
+    ...      Segment(Point(1, 1), Point(8, 8)),
+    ...      Multipolygon([Polygon(first_square,
+    ...                            [clockwise_first_inner_square]),
+    ...                    Polygon(third_square, [])]))
+    ...  == Mix(Multipoint([Point(1, 1)]),
+    ...         Multisegment([Segment(Point(3, 3), Point(4, 4)),
+    ...                       Segment(Point(4, 4), Point(8, 8))]), EMPTY))
+    True
+    """
+    return _mixed.CompleteIntersection(
+            _operands.SegmentOperand(segment),
+            _operands.MultipolygonOperand(multipolygon),
+            _get_context() if context is None else context).compute()
+
+
 def segments_to_multisegment(segments: _Sequence[_Segment],
                              *,
                              context: _Optional[_Context] = None
