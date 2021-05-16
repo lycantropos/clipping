@@ -1929,7 +1929,8 @@ def intersect_multisegment_with_multipolygon(
     >>> (intersect_multisegment_with_multipolygon(
     ...      Multisegment([Segment(Point(0, 0), Point(4, 0)),
     ...                    Segment(Point(0, 0), Point(4, 4))]),
-    ...      Multipolygon([Polygon(first_square, [clockwise_first_inner_square]),
+    ...      Multipolygon([Polygon(first_square,
+    ...                            [clockwise_first_inner_square]),
     ...                    Polygon(third_square, [])]))
     ...  == Multisegment([Segment(Point(0, 0), Point(4, 0)),
     ...                   Segment(Point(0, 0), Point(1, 1)),
