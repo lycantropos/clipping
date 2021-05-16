@@ -910,6 +910,68 @@ def symmetric_subtract_polygon_from_segment(segment: _Segment,
             _get_context() if context is None else context).compute()
 
 
+def unite_segment_with_polygon(segment: _Segment,
+                               polygon: _Polygon,
+                               *,
+                               context: _Optional[_Context] = None
+                               ) -> _Union[_Mix, _Polygon]:
+    """
+    Returns union of segment with polygon.
+
+    Time complexity:
+        ``O(segments_count * log segments_count)``
+    Memory complexity:
+        ``O(segments_count)``
+
+    where ``segments_count = start_segments_count + intersections_count``,
+    ``start_segments_count = polygon_edges_count + 1``,
+    ``polygon_edges_count = len(polygon.border.vertices)\
+ + sum(len(hole.vertices) for hole in polygon.holes)``,
+    ``intersections_count`` --- number of intersections between segment
+    and polygon edges.
+
+    :param segment: first operand.
+    :param polygon: second operand.
+    :param context: geometric context.
+    :returns: union of operands.
+
+    >>> from ground.base import get_context
+    >>> context = get_context()
+    >>> EMPTY = context.empty
+    >>> Contour = context.contour_cls
+    >>> Mix = context.mix_cls
+    >>> Multisegment = context.multisegment_cls
+    >>> Point = context.point_cls
+    >>> Polygon = context.polygon_cls
+    >>> Segment = context.segment_cls
+    >>> square = Contour([Point(0, 0), Point(4, 0), Point(4, 4),
+    ...                   Point(0, 4)])
+    >>> inner_square = Contour([Point(1, 1), Point(3, 1), Point(3, 3),
+    ...                         Point(1, 3)])
+    >>> clockwise_inner_square = Contour([Point(1, 1), Point(1, 3),
+    ...                                   Point(3, 3), Point(3, 1)])
+    >>> (unite_segment_with_polygon(Segment(Point(0, 0), Point(1, 1)),
+    ...                             Polygon(square, []))
+    ...  == Polygon(square, []))
+    True
+    >>> (unite_segment_with_polygon(Segment(Point(0, 0), Point(1, 1)),
+    ...                             Polygon(inner_square, []))
+    ...  == Mix(EMPTY, Segment(Point(0, 0), Point(1, 1)),
+    ...         Polygon(inner_square, [])))
+    True
+    >>> (unite_segment_with_polygon(Segment(Point(1, 1), Point(8, 8)),
+    ...                             Polygon(square, [clockwise_inner_square]))
+    ...  == Mix(EMPTY, Multisegment([Segment(Point(1, 1), Point(3, 3)),
+    ...                              Segment(Point(4, 4), Point(8, 8))]),
+    ...         Polygon(square, [clockwise_inner_square])])))
+    True
+    """
+    return (_mixed.Union(_operands.SegmentOperand(segment),
+                         _operands.PolygonOperand(polygon),
+                         _get_context() if context is None else context)
+            .compute())
+
+
 def segments_to_multisegment(segments: _Sequence[_Segment],
                              *,
                              context: _Optional[_Context] = None
