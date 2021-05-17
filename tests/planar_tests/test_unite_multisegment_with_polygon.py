@@ -51,12 +51,15 @@ def test_reversals(polygon_with_multisegment: PolygonWithMultisegment) -> None:
 
     result = unite_multisegment_with_polygon(multisegment, polygon)
 
-    assert result == unite_multisegment_with_polygon(
-            multisegment, reverse_polygon_border(polygon))
-    assert result == unite_multisegment_with_polygon(
-            multisegment, reverse_polygon_holes(polygon))
-    assert result == unite_multisegment_with_polygon(
-            multisegment, reverse_polygon_holes_contours(polygon))
+    assert are_compounds_similar(
+            result, unite_multisegment_with_polygon(
+                    multisegment, reverse_polygon_border(polygon)))
+    assert are_compounds_similar(
+            result, unite_multisegment_with_polygon(
+                    multisegment, reverse_polygon_holes(polygon)))
+    assert are_compounds_similar(
+            result, unite_multisegment_with_polygon(
+                    multisegment, reverse_polygon_holes_contours(polygon)))
     assert are_compounds_similar(
             result, unite_multisegment_with_polygon(
                     reverse_multisegment(multisegment), polygon))
