@@ -49,12 +49,15 @@ def test_reversals(polygon_with_segment: PolygonWithSegment) -> None:
 
     result = unite_segment_with_polygon(segment, polygon)
 
-    assert result == unite_segment_with_polygon(
-            segment, reverse_polygon_border(polygon))
-    assert result == unite_segment_with_polygon(segment,
-                                                reverse_polygon_holes(polygon))
-    assert result == unite_segment_with_polygon(
-            segment, reverse_polygon_holes_contours(polygon))
+    assert are_compounds_similar(
+            result, unite_segment_with_polygon(
+                    segment, reverse_polygon_border(polygon)))
+    assert are_compounds_similar(
+            result, unite_segment_with_polygon(segment,
+                                               reverse_polygon_holes(polygon)))
+    assert are_compounds_similar(
+            result, unite_segment_with_polygon(
+                    segment, reverse_polygon_holes_contours(polygon)))
     assert are_compounds_similar(
             result, unite_segment_with_polygon(reverse_segment(segment),
                                                polygon))
