@@ -253,9 +253,8 @@ class Intersection(Operation):
 class Union(Operation):
     __slots__ = ()
 
-    def compute(self) -> Union_[
-        Empty, Mix, Multipolygon, Multisegment, Polygon,
-        Segment]:
+    def compute(self) -> Union_[Empty, Mix, Multipolygon, Multisegment,
+                                Polygon, Segment]:
         context = self.context
         linear_box, shaped_box = (context.segments_box(self.linear.segments),
                                   context.polygons_box(self.shaped.polygons))
@@ -265,11 +264,13 @@ class Union(Operation):
         self.linear.segments = bounding.to_intersecting_segments(
                 shaped_box, self.linear.segments, context)
         if not self.linear.segments:
-            return context.empty
+            return context.mix_cls(context.empty, self.linear.value,
+                                   self.shaped.value)
         self.shaped.polygons = bounding.to_intersecting_polygons(
                 linear_box, self.shaped.polygons, context)
         if not self.shaped.polygons:
-            return context.empty
+            return context.mix_cls(context.empty, self.linear.value,
+                                   self.shaped.value)
         segments = endpoints_to_segments([to_endpoints(event)
                                           for event in self.sweep()
                                           if event.in_result], context)
