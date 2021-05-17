@@ -1,8 +1,11 @@
+from ground.base import Relation
 from hypothesis import given
+from orient.planar import multisegment_in_polygon
 
 from clipping.planar import unite_multisegment_with_polygon
 from tests.utils import (PolygonWithMultisegment,
                          are_compounds_similar,
+                         is_empty,
                          is_mix,
                          is_polygon,
                          reverse_compound_coordinates,
@@ -23,6 +26,23 @@ def test_basic(polygon_with_multisegment: PolygonWithMultisegment) -> None:
     result = unite_multisegment_with_polygon(multisegment, polygon)
 
     assert is_mix(result) or is_polygon(result)
+
+
+@given(strategies.polygons_with_multisegments)
+def test_properties(polygon_with_multisegment: PolygonWithMultisegment
+                    ) -> None:
+    polygon, multisegment = polygon_with_multisegment
+
+    result = unite_multisegment_with_polygon(multisegment, polygon)
+
+    relation = multisegment_in_polygon(multisegment, polygon)
+    assert (not is_mix(result)
+            or (relation in (Relation.DISJOINT, Relation.TOUCH, Relation.CROSS)
+                and (is_empty(result.discrete) and not is_empty(result.linear)
+                     and are_compounds_similar(result.shaped, polygon))))
+    assert (not is_polygon(result)
+            or relation in (Relation.COMPONENT, Relation.ENCLOSED,
+                            Relation.WITHIN))
 
 
 @given(strategies.polygons_with_multisegments)
