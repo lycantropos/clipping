@@ -18,6 +18,7 @@ from tests.utils import (Multisegment,
 segments_strategies = coordinates_strategies.map(planar.segments)
 segments = coordinates_strategies.flatmap(planar.segments)
 segments_pairs = segments_strategies.flatmap(to_pairs)
+segments_triplets = segments_strategies.flatmap(to_triplets)
 
 
 def points_to_nets(points: Strategy[Point]) -> Strategy[List[Segment]]:

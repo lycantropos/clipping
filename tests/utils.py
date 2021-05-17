@@ -45,6 +45,7 @@ RegionsPair = Tuple[Region, Region]
 PolygonsPair = Tuple[Polygon, Polygon]
 PolygonsTriplet = Tuple[Polygon, Polygon, Polygon]
 SegmentsPair = Tuple[Segment, Segment]
+SegmentsTriplet = Tuple[Segment, Segment, Segment]
 segments_intersection = _context.segments_intersection
 segments_relation = _context.segments_relation
 
