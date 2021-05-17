@@ -10,13 +10,17 @@ from orient.planar import (point_in_multisegment,
 from clipping.planar import (complete_intersect_multisegment_with_polygon,
                              intersect_multisegment_with_polygon)
 from tests.utils import (PolygonWithMultisegment,
+                         are_compounds_similar,
                          compound_to_linear,
                          contour_to_edges,
                          is_non_shaped,
                          pack_non_shaped,
+                         reverse_compound_coordinates,
                          reverse_multisegment,
+                         reverse_multisegment_coordinates,
                          reverse_multisegment_endpoints,
                          reverse_polygon_border,
+                         reverse_polygon_coordinates,
                          reverse_polygon_holes,
                          reverse_polygon_holes_contours,
                          segments_relation,
@@ -108,3 +112,8 @@ def test_reversals(polygon_with_multisegment: PolygonWithMultisegment
             reverse_multisegment(multisegment), polygon)
     assert result == complete_intersect_multisegment_with_polygon(
             reverse_multisegment_endpoints(multisegment), polygon)
+    assert are_compounds_similar(
+            result, reverse_compound_coordinates(
+                    complete_intersect_multisegment_with_polygon(
+                            reverse_multisegment_coordinates(multisegment),
+                            reverse_polygon_coordinates(polygon))))
