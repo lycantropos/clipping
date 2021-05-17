@@ -60,8 +60,9 @@ def test_intersection_minuend(segments_triplet: SegmentsTriplet
     second_third_difference = subtract_segments(second, third)
     assert (not is_segment(first_second_intersection)
             or not is_segment(second_third_difference)
-            or (subtract_segments(first_second_intersection, third)
-                == intersect_segments(first, second_third_difference)))
+            or are_compounds_similar(
+                    subtract_segments(first_second_intersection, third),
+                    intersect_segments(first, second_third_difference)))
 
 
 @given(strategies.segments_triplets)
@@ -87,11 +88,12 @@ def test_union_subtrahend(segments_triplet: SegmentsTriplet) -> None:
 
     first_second_difference = subtract_segments(first, second)
     first_third_difference = subtract_segments(first, third)
+    second_third_union = unite_segments(second, third)
     assert (not is_segment(first_second_difference)
             or not is_segment(first_third_difference)
+            or not is_segment(second_third_union)
             or are_compounds_similar(
-                    subtract_segments(first,
-                                      unite_segments(second, third)),
+                    subtract_segments(first, second_third_union),
                     intersect_segments(first_second_difference,
                                        first_third_difference)))
 
