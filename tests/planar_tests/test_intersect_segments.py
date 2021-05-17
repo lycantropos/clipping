@@ -82,7 +82,7 @@ def test_commutativity(segments_pair: SegmentsPair) -> None:
 
     result = intersect_segments(first, second)
 
-    assert result == intersect_segments(second, first)
+    assert are_compounds_similar(result, intersect_segments(second, first))
 
 
 @given(strategies.segments_pairs)
