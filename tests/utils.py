@@ -44,6 +44,7 @@ PolygonWithMultisegment = Tuple[Polygon, Multisegment]
 RegionsPair = Tuple[Region, Region]
 PolygonsPair = Tuple[Polygon, Polygon]
 PolygonsTriplet = Tuple[Polygon, Polygon, Polygon]
+SegmentsPair = Tuple[Segment, Segment]
 segments_intersection = _context.segments_intersection
 segments_relation = _context.segments_relation
 
@@ -193,9 +194,13 @@ def is_maybe_linear(object_: Any) -> bool:
 
 
 def is_non_shaped(object_: Any) -> bool:
-    return (is_empty(object_)
-            or isinstance(object_, (Multipoint, Multisegment, Segment))
+    return (is_homogeneous_non_shaped(object_)
             or isinstance(object_, Mix) and is_empty(object_.shaped))
+
+
+def is_homogeneous_non_shaped(object_: Any) -> bool:
+    return (is_empty(object_)
+            or isinstance(object_, (Multipoint, Multisegment, Segment)))
 
 
 def is_compound(object_: Any) -> bool:
@@ -221,6 +226,7 @@ is_multipoint = Multipoint.__instancecheck__
 is_multisegment = Multisegment.__instancecheck__
 is_polygon = Polygon.__instancecheck__
 is_region = is_contour
+is_segment = Segment.__instancecheck__
 
 
 def compound_to_linear(object_: Any) -> Any:
