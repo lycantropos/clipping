@@ -1,6 +1,7 @@
 from ground.base import Relation
 from hypothesis import given
-from orient.planar import (segment_in_multisegment, segment_in_polygon,
+from orient.planar import (segment_in_multisegment,
+                           segment_in_polygon,
                            segment_in_segment)
 
 from clipping.planar import subtract_polygon_from_multisegment
@@ -21,8 +22,7 @@ from . import strategies
 
 
 @given(strategies.polygons_with_multisegments)
-def test_basic(polygon_with_multisegment: PolygonWithMultisegment
-               ) -> None:
+def test_basic(polygon_with_multisegment: PolygonWithMultisegment) -> None:
     polygon, multisegment = polygon_with_multisegment
 
     result = subtract_polygon_from_multisegment(multisegment, polygon)
@@ -31,8 +31,8 @@ def test_basic(polygon_with_multisegment: PolygonWithMultisegment
 
 
 @given(strategies.polygons_with_multisegments)
-def test_properties(polygon_with_multisegment
-                    : PolygonWithMultisegment) -> None:
+def test_properties(polygon_with_multisegment: PolygonWithMultisegment
+                    ) -> None:
     polygon, multisegment = polygon_with_multisegment
 
     result = subtract_polygon_from_multisegment(multisegment, polygon)
@@ -57,8 +57,7 @@ def test_properties(polygon_with_multisegment
 
 
 @given(strategies.polygons_with_multisegments)
-def test_reversals(polygon_with_multisegment: PolygonWithMultisegment
-                   ) -> None:
+def test_reversals(polygon_with_multisegment: PolygonWithMultisegment) -> None:
     polygon, multisegment = polygon_with_multisegment
 
     result = subtract_polygon_from_multisegment(multisegment, polygon)
@@ -74,8 +73,7 @@ def test_reversals(polygon_with_multisegment: PolygonWithMultisegment
                     reverse_multisegment(multisegment), polygon))
     assert are_compounds_similar(
             result, subtract_polygon_from_multisegment(
-                    reverse_multisegment_endpoints(multisegment),
-                    polygon))
+                    reverse_multisegment_endpoints(multisegment), polygon))
     assert are_compounds_similar(
             result, reverse_compound_coordinates(
                     subtract_polygon_from_multisegment(
