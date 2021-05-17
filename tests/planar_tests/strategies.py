@@ -45,6 +45,17 @@ multisegments_pairs = multisegments_strategies.flatmap(to_pairs)
 multisegments_triplets = multisegments_strategies.flatmap(to_triplets)
 
 
+def coordinates_to_polygons_with_segments(coordinates: Strategy[Scalar]
+                                          ) -> Strategy[Tuple[Polygon,
+                                                              Segment]]:
+    return strategies.tuples(planar.polygons(coordinates),
+                             planar.segments(coordinates))
+
+
+polygons_with_segments = (coordinates_strategies
+                          .flatmap(coordinates_to_polygons_with_segments))
+
+
 def coordinates_to_polygons_with_multisegments(
         coordinates: Strategy[Scalar]) -> Strategy[Tuple[Polygon,
                                                          Multisegment]]:
