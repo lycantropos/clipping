@@ -74,9 +74,10 @@ def test_difference_operand(segments_triplet: SegmentsTriplet
     assert (not is_segment(first_second_difference)
             or not is_segment(first_third_union)
             or not is_segment(second_third_difference)
-            or (unite_segments(first_second_difference, third)
-                == subtract_segments(first_third_union,
-                                     second_third_difference)))
+            or are_compounds_similar(
+                    unite_segments(first_second_difference, third),
+                    subtract_segments(first_third_union,
+                                      second_third_difference)))
 
 
 @given(strategies.segments_triplets)
@@ -90,8 +91,9 @@ def test_distribution_over_intersection(segments_triplet
     assert (not is_segment(first_second_union)
             or not is_segment(first_third_union)
             or not is_segment(second_third_intersection)
-            or (unite_segments(first, second_third_intersection)
-                == intersect_segments(first_second_union, first_third_union)))
+            or are_compounds_similar(
+                    unite_segments(first, second_third_intersection),
+                    intersect_segments(first_second_union, first_third_union)))
 
 
 @given(strategies.segments_pairs)
@@ -105,9 +107,9 @@ def test_equivalents(segments_pair: SegmentsPair) -> None:
     first_second_intersection = intersect_segments(first, second)
     assert (not is_segment(first_second_symmetric_difference)
             or not is_segment(first_second_intersection)
-            or result == symmetric_subtract_segments(
+            or are_compounds_similar(result, symmetric_subtract_segments(
                     first_second_symmetric_difference,
-                    first_second_intersection))
+                    first_second_intersection)))
 
 
 @given(strategies.segments_pairs)
