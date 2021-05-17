@@ -39,12 +39,12 @@ def test_properties(polygon_with_multisegment: PolygonWithMultisegment
 
     result_points, result_segments = pack_non_shaped(result)
     assert not result_points
-    assert all(segment_in_multisegment(segment, multisegment)
+    assert all(segment_in_multisegment(result_segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
-               for segment in result_segments)
-    assert all(segment_in_polygon(segment, polygon)
+               for result_segment in result_segments)
+    assert all(segment_in_polygon(result_segment, polygon)
                in (Relation.DISJOINT, Relation.TOUCH)
-               for segment in result_segments)
+               for result_segment in result_segments)
     assert all(segment in result_segments
                or reverse_segment(segment) in result_segments
                # in case of cross
@@ -62,12 +62,15 @@ def test_reversals(polygon_with_multisegment: PolygonWithMultisegment) -> None:
 
     result = subtract_polygon_from_multisegment(multisegment, polygon)
 
-    assert result == subtract_polygon_from_multisegment(
-            multisegment, reverse_polygon_border(polygon))
-    assert result == subtract_polygon_from_multisegment(
-            multisegment, reverse_polygon_holes(polygon))
-    assert result == subtract_polygon_from_multisegment(
-            multisegment, reverse_polygon_holes_contours(polygon))
+    assert are_compounds_similar(
+            result, subtract_polygon_from_multisegment(
+                    multisegment, reverse_polygon_border(polygon)))
+    assert are_compounds_similar(
+            result, subtract_polygon_from_multisegment(
+                    multisegment, reverse_polygon_holes(polygon)))
+    assert are_compounds_similar(
+            result, subtract_polygon_from_multisegment(
+                    multisegment, reverse_polygon_holes_contours(polygon)))
     assert are_compounds_similar(
             result, subtract_polygon_from_multisegment(
                     reverse_multisegment(multisegment), polygon))
