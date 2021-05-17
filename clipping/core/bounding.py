@@ -1,4 +1,5 @@
-from typing import Sequence
+from typing import (Sequence,
+                    Tuple)
 
 from ground.base import (Context,
                          Relation)
@@ -349,6 +350,16 @@ def contains_point(box: Box, point: Point) -> bool:
 
 def covers_point(box: Box, point: Point) -> bool:
     return box.min_x < point.x < box.max_x and box.min_y < point.y < box.max_y
+
+
+def split_intersecting_segments(box: Box,
+                                segments: Sequence[Segment],
+                                context: Context) -> Tuple[Sequence[Segment],
+                                                           Sequence[Segment]]:
+    result = [], []
+    for segment in segments:
+        result[intersects_with_segment(box, segment, context)].append(segment)
+    return result
 
 
 def to_vertices(box: Box,

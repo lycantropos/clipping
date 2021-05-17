@@ -114,7 +114,7 @@ def segments_to_endpoints(segments: Sequence[Segment]
 
 
 def endpoints_to_segments(endpoints: Iterable[SegmentEndpoints],
-                          context: Context) -> Sequence[Segment]:
+                          context: Context) -> List[Segment]:
     segment_cls = context.segment_cls
     return [segment_cls(start, end) for start, end in endpoints]
 

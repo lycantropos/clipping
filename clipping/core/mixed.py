@@ -261,19 +261,15 @@ class Union(Operation):
         if bounding.disjoint_with(linear_box, shaped_box):
             return context.mix_cls(context.empty, self.linear.value,
                                    self.shaped.value)
-        self.linear.segments = bounding.to_intersecting_segments(
-                shaped_box, self.linear.segments, context)
-        if not self.linear.segments:
-            return context.mix_cls(context.empty, self.linear.value,
-                                   self.shaped.value)
+        result_segments, self.linear.segments = (
+            bounding.split_intersecting_segments(
+                    shaped_box, self.linear.segments, context))
         self.shaped.polygons = bounding.to_intersecting_polygons(
                 linear_box, self.shaped.polygons, context)
-        if not self.shaped.polygons:
-            return context.mix_cls(context.empty, self.linear.value,
-                                   self.shaped.value)
         segments = endpoints_to_segments([to_endpoints(event)
                                           for event in self.sweep()
                                           if event.in_result], context)
+        segments.extend(result_segments)
         linear = unpack_segments(segments, context)
         return (self.shaped.value
                 if linear is context.empty

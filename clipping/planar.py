@@ -1980,10 +1980,10 @@ def unite_multisegment_with_polygon(
     ...                          Point(0, 1)]), [])))
     True
     """
-    return _mixed.Union(
-            _operands.MultisegmentOperand(multisegment),
-            _operands.PolygonOperand(polygon),
-            _get_context() if context is None else context).compute()
+    return (_mixed.Union(_operands.MultisegmentOperand(multisegment),
+                         _operands.PolygonOperand(polygon),
+                         _get_context() if context is None else context)
+            .compute())
 
 
 def complete_intersect_multisegment_with_multipolygon(
