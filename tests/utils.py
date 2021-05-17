@@ -105,7 +105,7 @@ def _(left: Polygon, right: Polygon) -> bool:
 
 @are_compounds_similar.register(Segment)
 def _(left: Segment, right: Segment) -> bool:
-    return {left.start, left.end} == {right.start, right.end}
+    return left == right
 
 
 def are_multisegments_equivalent(left: Multisegment,
