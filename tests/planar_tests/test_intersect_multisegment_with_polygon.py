@@ -41,12 +41,12 @@ def test_properties(polygon_with_multisegment
 
     result_points, result_segments = pack_non_shaped(result)
     assert not result_points
-    assert all(segment_in_multisegment(segment, multisegment)
+    assert all(segment_in_multisegment(result_segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
-               for segment in result_segments)
-    assert all(segment_in_polygon(segment, polygon)
+               for result_segment in result_segments)
+    assert all(segment_in_polygon(result_segment, polygon)
                in (Relation.COMPONENT, Relation.ENCLOSED, Relation.WITHIN)
-               for segment in result_segments)
+               for result_segment in result_segments)
     assert all(to_sorted_segment(segment) in result_segments
                # in case of cross
                or any(segment_in_segment(result_segment, segment)

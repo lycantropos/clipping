@@ -43,21 +43,23 @@ def test_properties(segments_pair: SegmentsPair) -> None:
     assert (segment_in_segment(first, second) not in (Relation.TOUCH,
                                                       Relation.CROSS)
             or all(point in result_points
-                   or any(point == segment.start or point == segment.end
-                          for segment in result_segments)
+                   or any(point == result_segment.start
+                          or point == result_segment.end
+                          for result_segment in result_segments)
                    for point in segments_intersections(first, second)))
-    assert all(segment_in_segment(segment, first)
+    assert all(segment_in_segment(result_segment, first)
                in (Relation.EQUAL, Relation.COMPONENT)
-               for segment in result_segments)
-    assert all(segment_in_segment(segment, second)
+               for result_segment in result_segments)
+    assert all(segment_in_segment(result_segment, second)
                in (Relation.EQUAL, Relation.COMPONENT)
-               for segment in result_segments)
+               for result_segment in result_segments)
     assert (segments_relation(first, second) in (Relation.CROSS,
                                                  Relation.DISJOINT,
                                                  Relation.TOUCH)
             or to_sorted_segment(first) in result_segments
-            or any(segment_in_segment(segment, first) is Relation.COMPONENT
-                   for segment in result_segments))
+            or any(segment_in_segment(result_segment, first)
+                   is Relation.COMPONENT
+                   for result_segment in result_segments))
 
 
 @given(strategies.segments)

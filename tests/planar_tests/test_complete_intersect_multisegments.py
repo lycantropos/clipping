@@ -46,24 +46,25 @@ def test_properties(multisegments_pair: MultisegmentsPair) -> None:
     assert (multisegment_in_multisegment(first, second) is not Relation.TOUCH
             or bool(result_points))
     assert all(all(point in result_points
-                   or any(point == segment.start or point == segment.end
-                          for segment in result_segments)
+                   or any(point == result_segment.start
+                          or point == result_segment.end
+                          for result_segment in result_segments)
                    for second_segment in second.segments
                    for point in segments_intersections(first_segment,
                                                        second_segment))
                for first_segment in first.segments
                if (segment_in_multisegment(first_segment, second)
                    in (Relation.TOUCH, Relation.CROSS)))
-    assert all(segment_in_multisegment(segment, first)
+    assert all(segment_in_multisegment(result_segment, first)
                in (Relation.EQUAL, Relation.COMPONENT)
-               for segment in result_segments)
-    assert all(segment_in_multisegment(segment, second)
+               for result_segment in result_segments)
+    assert all(segment_in_multisegment(result_segment, second)
                in (Relation.EQUAL, Relation.COMPONENT)
-               for segment in result_segments)
+               for result_segment in result_segments)
     assert all(to_sorted_segment(first_segment) in result_segments
-               or any(segment_in_segment(segment, first_segment)
+               or any(segment_in_segment(result_segment, first_segment)
                       is Relation.COMPONENT
-                      for segment in result_segments)
+                      for result_segment in result_segments)
                for first_segment in first.segments
                if any(segments_relation(first_segment, second_segment)
                       not in (Relation.CROSS, Relation.DISJOINT,
