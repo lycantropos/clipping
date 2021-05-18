@@ -5,6 +5,7 @@ from orient.planar import segment_in_multisegment
 from clipping.planar import unite_segment_with_multisegment
 from tests.utils import (MultisegmentWithSegment,
                          are_compounds_similar,
+                         equivalence,
                          is_linear,
                          is_multisegment,
                          is_multisegment_valid,
@@ -44,11 +45,13 @@ def test_properties(multisegment_with_segment: MultisegmentWithSegment
     result = unite_segment_with_multisegment(segment, multisegment)
 
     relation = segment_in_multisegment(segment, multisegment)
-    assert (not is_multisegment(result)
-            or relation in (Relation.DISJOINT, Relation.TOUCH, Relation.CROSS,
-                            Relation.OVERLAP, Relation.COMPONENT))
-    assert (not is_segment(result) or relation is Relation.EQUAL
-            or relation is Relation.COMPOSITE)
+    assert equivalence(is_multisegment(result),
+                       relation in (Relation.DISJOINT, Relation.TOUCH,
+                                    Relation.CROSS, Relation.OVERLAP,
+                                    Relation.COMPONENT))
+    assert equivalence(is_segment(result),
+                       relation is Relation.EQUAL
+                       or relation is Relation.COMPOSITE)
 
 
 @given(strategies.multisegments_with_segments)
