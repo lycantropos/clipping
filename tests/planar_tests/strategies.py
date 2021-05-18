@@ -1,15 +1,15 @@
 from itertools import combinations
-from typing import (List,
-                    Tuple)
+from typing import List
 
 from ground.hints import Scalar
 from hypothesis import strategies
 from hypothesis_geometry import planar
 
 from tests.strategies import coordinates_strategies
-from tests.utils import (Multisegment,
+from tests.utils import (MultisegmentWithSegment,
                          Point,
-                         Polygon,
+                         PolygonWithMultisegment,
+                         PolygonWithSegment,
                          Segment,
                          Strategy,
                          to_pairs,
@@ -45,9 +45,18 @@ multisegments_pairs = multisegments_strategies.flatmap(to_pairs)
 multisegments_triplets = multisegments_strategies.flatmap(to_triplets)
 
 
+def coordinates_to_multisegments_with_segments(
+        coordinates: Strategy[Scalar]) -> Strategy[MultisegmentWithSegment]:
+    return strategies.tuples(planar.multisegments(coordinates),
+                             planar.segments(coordinates))
+
+
+multisegments_with_segments = coordinates_strategies.flatmap(
+        coordinates_to_multisegments_with_segments)
+
+
 def coordinates_to_polygons_with_segments(coordinates: Strategy[Scalar]
-                                          ) -> Strategy[Tuple[Polygon,
-                                                              Segment]]:
+                                          ) -> Strategy[PolygonWithSegment]:
     return strategies.tuples(planar.polygons(coordinates),
                              planar.segments(coordinates))
 
@@ -57,8 +66,7 @@ polygons_with_segments = (coordinates_strategies
 
 
 def coordinates_to_polygons_with_multisegments(
-        coordinates: Strategy[Scalar]) -> Strategy[Tuple[Polygon,
-                                                         Multisegment]]:
+        coordinates: Strategy[Scalar]) -> Strategy[PolygonWithMultisegment]:
     return strategies.tuples(planar.polygons(coordinates),
                              planar.multisegments(coordinates))
 
