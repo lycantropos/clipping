@@ -476,9 +476,9 @@ def _intersect_segment_with_multisegment(segment: Segment,
 
 def _subtract_segment_from_multisegment(multisegment: Multisegment,
                                         segment: Segment,
-                                        context: Context
-                                        ) -> List[Segment]:
+                                        context: Context) -> List[Segment]:
     result = []
+    segment_cls = context.segment_cls
     for index, sub_segment in enumerate(multisegment.segments):
         relation = context.segments_relation(segment, sub_segment)
         if relation is Relation.EQUAL:
@@ -489,20 +489,24 @@ def _subtract_segment_from_multisegment(multisegment: Multisegment,
                 sub_segment.start, sub_segment.end, segment.start,
                 segment.end])
             result.extend(
-                    [context.segment_cls(right_start, right_end)]
+                    [segment_cls(right_start, right_end)]
                     if left_start == segment.start or left_start == segment.end
                     else
-                    ((([context.segment_cls(left_start, left_end)]
+                    ((([segment_cls(left_start, left_end)]
                        if right_start == right_end
-                       else [context.segment_cls(left_start, left_end),
-                             context.segment_cls(right_start, right_end)])
+                       else [segment_cls(left_start, left_end),
+                             segment_cls(right_start, right_end)])
                       if (right_start == segment.start
                           or right_start == segment.end)
-                      else [context.segment_cls(left_start, left_end)])
+                      else [segment_cls(left_start, left_end)])
                      if left_end == segment.start or left_end == segment.end
-                     else [context.segment_cls(left_start, right_start)]))
+                     else [segment_cls(left_start, right_start)]))
             result.extend(multisegment.segments[index + 1:])
             break
+        elif relation is Relation.CROSS:
+            cross_point = context.segments_intersection(sub_segment, segment)
+            result.append(segment_cls(sub_segment.start, cross_point))
+            result.append(segment_cls(cross_point, sub_segment.end))
         elif relation is Relation.OVERLAP:
             result.append(_subtract_segments_overlap(sub_segment, segment,
                                                      context))
