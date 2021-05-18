@@ -195,15 +195,15 @@ class Intersection(Operation):
             return context.empty
         self.second.segments = bounding.to_coupled_segments(
                 first_box, self.second.segments, context)
-        if not self.second.segments:
-            return context.empty
-        return unpack_segments(endpoints_to_segments(
+        return (unpack_segments(endpoints_to_segments(
                 sorted(endpoints
                        for endpoints, events in groupby(self.sweep(),
                                                         key=to_endpoints)
                        if not all_equal(event.from_first for event in events)),
                 context),
                 context)
+                if self.second.segments
+                else context.empty)
 
     def sweep(self) -> Sequence[LeftEvent]:
         self.fill_queue()
