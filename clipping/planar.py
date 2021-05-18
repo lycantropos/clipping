@@ -303,7 +303,7 @@ def intersect_segment_with_multisegment(
         multisegment: _Multisegment,
         *,
         context: _Optional[_Context] = None
-) -> _Union[_Empty, _Mix, _Multipoint, _Multisegment, _Segment]:
+) -> _Union[_Empty, _Multisegment, _Segment]:
     """
     Returns intersection of segments.
 
