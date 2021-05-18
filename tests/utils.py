@@ -7,6 +7,7 @@ from typing import (Any,
                     TypeVar,
                     Union)
 
+from bentley_ottmann.planar import segments_cross_or_overlap
 from ground.base import (Orientation,
                          Relation,
                          get_context)
@@ -123,6 +124,10 @@ def are_segments_sequences_similar(left: Sequence[Segment],
                                    right: Sequence[Segment]) -> bool:
     return (normalize_segments_sequence(left)
             == normalize_segments_sequence(right))
+
+
+def is_multisegment_valid(multisegment: Multisegment) -> bool:
+    return not segments_cross_or_overlap(multisegment.segments)
 
 
 def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:

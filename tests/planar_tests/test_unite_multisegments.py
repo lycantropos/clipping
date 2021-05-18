@@ -10,6 +10,7 @@ from tests.utils import (MultisegmentsPair,
                          are_compounds_similar,
                          are_multisegments_equivalent,
                          is_multisegment,
+                         is_multisegment_valid,
                          reverse_multisegment,
                          reverse_multisegment_coordinates)
 from . import strategies
@@ -22,6 +23,15 @@ def test_basic(multisegments_pair: MultisegmentsPair) -> None:
     result = unite_multisegments(first, second)
 
     assert is_multisegment(result)
+
+
+@given(strategies.multisegments_pairs)
+def test_validity(multisegments_pair: MultisegmentsPair) -> None:
+    first, second = multisegments_pair
+
+    result = unite_multisegments(first, second)
+
+    assert is_multisegment_valid(result)
 
 
 @given(strategies.multisegments)

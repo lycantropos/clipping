@@ -1,4 +1,3 @@
-from bentley_ottmann.planar import segments_cross_or_overlap
 from ground.base import Relation
 from hypothesis import given
 from orient.planar import segment_in_multisegment
@@ -8,7 +7,9 @@ from tests.utils import (MultisegmentWithSegment,
                          are_compounds_similar,
                          is_linear,
                          is_multisegment,
-                         is_segment, reverse_compound_coordinates,
+                         is_multisegment_valid,
+                         is_segment,
+                         reverse_compound_coordinates,
                          reverse_multisegment,
                          reverse_multisegment_coordinates,
                          reverse_multisegment_endpoints,
@@ -32,8 +33,7 @@ def test_validity(multisegment_with_segment: MultisegmentWithSegment) -> None:
 
     result = unite_segment_with_multisegment(segment, multisegment)
 
-    assert (not is_multisegment(result)
-            or not segments_cross_or_overlap(result.segments))
+    assert not is_multisegment(result) or is_multisegment_valid(result)
 
 
 @given(strategies.multisegments_with_segments)
