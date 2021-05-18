@@ -154,15 +154,15 @@ class Difference(Operation):
             return self.first.value
         self.second.segments = bounding.to_coupled_segments(
                 first_box, self.second.segments, context)
-        if not self.second.segments:
-            return self.first.value
-        return unpack_segments(endpoints_to_segments(
+        return (unpack_segments(endpoints_to_segments(
                 sorted(endpoints
                        for endpoints, events in groupby(self.sweep(),
                                                         key=to_endpoints)
                        if all(event.from_first for event in events)),
                 context),
                 context)
+                if self.second.segments
+                else self.first.value)
 
     def sweep(self) -> Iterable[LeftEvent]:
         self.fill_queue()
