@@ -57,6 +57,10 @@ def equivalence(left_statement: bool, right_statement: bool) -> bool:
     return left_statement is right_statement
 
 
+def implication(antecedent: bool, consequent: bool) -> bool:
+    return not antecedent or consequent
+
+
 def arg_min(values: Sequence[Domain]) -> int:
     return min(range(len(values)),
                key=values.__getitem__)
