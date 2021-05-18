@@ -206,6 +206,14 @@ def is_non_shaped(object_: Any) -> bool:
             or isinstance(object_, Mix) and is_empty(object_.shaped))
 
 
+def is_non_shaped_valid(object_: Any) -> bool:
+    points, segments = pack_non_shaped(object_)
+    return (not any(segment_contains_point(segment, point)
+                    for point in points
+                    for segment in segments)
+            and not segments_cross_or_overlap(segments))
+
+
 def is_homogeneous_non_shaped(object_: Any) -> bool:
     return (is_empty(object_)
             or isinstance(object_, (Multipoint, Multisegment, Segment)))
@@ -389,6 +397,9 @@ def pack_non_shaped(object_: Union[Empty, Mix, Multipoint, Multisegment,
         return [], [object_]
     else:
         raise TypeError('Unsupported object type: {!r}.'.format(type(object_)))
+
+
+segment_contains_point = _context.segment_contains_point
 
 
 def segments_intersections(first: Segment, second: Segment
