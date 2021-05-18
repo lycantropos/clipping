@@ -3,8 +3,9 @@ from hypothesis import given
 from clipping.planar import intersect_segment_with_multisegment
 from tests.utils import (MultisegmentWithSegment,
                          are_compounds_similar,
-                         is_non_shaped,
-                         is_non_shaped_valid,
+                         is_maybe_linear,
+                         is_multisegment,
+                         is_multisegment_valid,
                          reverse_compound_coordinates,
                          reverse_multisegment,
                          reverse_multisegment_coordinates,
@@ -20,7 +21,7 @@ def test_basic(multisegment_with_segment: MultisegmentWithSegment) -> None:
 
     result = intersect_segment_with_multisegment(segment, multisegment)
 
-    assert is_non_shaped(result)
+    assert is_maybe_linear(result)
 
 
 @given(strategies.multisegments_with_segments)
@@ -29,7 +30,7 @@ def test_validity(multisegment_with_segment: MultisegmentWithSegment) -> None:
 
     result = intersect_segment_with_multisegment(segment, multisegment)
 
-    assert is_non_shaped_valid(result)
+    assert not is_multisegment(result) or is_multisegment_valid(result)
 
 
 @given(strategies.multisegments_with_segments)
