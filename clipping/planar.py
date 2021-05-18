@@ -238,12 +238,17 @@ def complete_intersect_segment_with_multisegment(
         context: _Optional[_Context] = None
 ) -> _Union[_Empty, _Mix, _Multipoint, _Multisegment, _Segment]:
     """
-    Returns intersection of segments.
+    Returns intersection of segment with multisegment
+    considering cases with geometries touching each other in points.
 
     Time complexity:
-        ``O(len(multisegment.segments))``
+        ``O(segments_count * log segments_count)``
     Memory complexity:
-        ``O(len(multisegment.segments))``
+        ``O(segments_count)``
+
+    where ``segments_count = segments_count + intersections_count``,
+    ``segments_count = len(subtrahend.segments) + 1``,
+    ``intersections_count`` --- number of intersections between segments.
 
     :param segment: first operand.
     :param multisegment: second operand.
@@ -293,9 +298,10 @@ def complete_intersect_segment_with_multisegment(
     ...                       Segment(Point(3, 0), Point(4, 0))]), EMPTY))
     True
     """
-    return _linear.complete_intersect_segment_with_multisegment(
-            segment, multisegment,
-            _get_context() if context is None else context)
+    return _linear.CompleteIntersection(
+            _operands.SegmentOperand(segment),
+            _operands.MultisegmentOperand(multisegment),
+            _get_context() if context is None else context).compute()
 
 
 def intersect_segment_with_multisegment(

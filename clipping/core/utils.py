@@ -1,8 +1,6 @@
-import sys
 from itertools import (chain,
                        groupby)
-from typing import (AbstractSet,
-                    Any,
+from typing import (Any,
                     Iterable,
                     List,
                     Sequence,
@@ -110,7 +108,7 @@ def shrink_collinear_vertices(vertices: List[Point], context: Context) -> None:
 
 def segments_to_endpoints(segments: Sequence[Segment]
                           ) -> Iterable[SegmentEndpoints]:
-    return ((segment.start, segment.end) for segment in segments)
+    return (to_endpoints(segment) for segment in segments)
 
 
 def endpoints_to_segments(endpoints: Iterable[SegmentEndpoints],
@@ -121,13 +119,3 @@ def endpoints_to_segments(endpoints: Iterable[SegmentEndpoints],
 
 def to_endpoints(segment: Segment) -> SegmentEndpoints:
     return segment.start, segment.end
-
-
-if sys.version_info < (3, 6):
-    from collections import OrderedDict
-else:
-    OrderedDict = dict
-
-
-def to_ordered_set(values: Iterable[_T]) -> AbstractSet[_T]:
-    return OrderedDict.fromkeys(values).keys()
