@@ -35,6 +35,7 @@ from .utils import (all_equal,
                     contour_to_oriented_edges_endpoints,
                     endpoints_to_segments,
                     pairwise,
+                    shrink_collinear_vertices,
                     to_endpoints,
                     to_regions_x_max)
 
@@ -83,7 +84,8 @@ class Operation(ABC):
         processed = [False] * len(events)
         result = []
         connectivity = events_to_connectivity(events)
-        contour_cls = self.context.contour_cls
+        contour_cls, orienteer = (self.context.contour_cls,
+                                  self.context.angle_orientation)
         for index, event in enumerate(events):
             if processed[index]:
                 continue
@@ -103,6 +105,7 @@ class Operation(ABC):
                 contour_events.append(cursor)
                 opposite_position = cursor.opposite.position
                 processed[position] = processed[opposite_position] = True
+            shrink_collinear_vertices(vertices, orienteer)
             result.append(contour_cls(vertices))
         return result
 

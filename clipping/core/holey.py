@@ -90,7 +90,7 @@ class Operation(ABC):
         are_internal, depths, holes, parents = [], [], [], []
         processed = [False] * len(events)
         context = self.context
-        contour_cls = context.contour_cls
+        contour_cls, orienteer = context.contour_cls, context.angle_orientation
         contours = []  # type: List[Contour]
         connectivity = events_to_connectivity(events)
         for index, event in enumerate(events):
@@ -101,7 +101,7 @@ class Operation(ABC):
                                parents)
             vertices = _events_to_contour_vertices(event, events, contour_id,
                                                    connectivity, processed)
-            shrink_collinear_vertices(vertices, context)
+            shrink_collinear_vertices(vertices, orienteer)
             if depths[contour_id] % 2:
                 # holes will be in clockwise order
                 vertices[:] = vertices[:1] + vertices[:0:-1]

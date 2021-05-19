@@ -15,7 +15,8 @@ from ground.hints import (Contour,
                           Scalar,
                           Segment)
 
-from .hints import (Region,
+from .hints import (Orienteer,
+                    Region,
                     SegmentEndpoints)
 
 
@@ -89,9 +90,9 @@ def to_segments_x_max(segments: Sequence[Segment]) -> Scalar:
     return max(max(segment.start.x, segment.end.x) for segment in segments)
 
 
-def shrink_collinear_vertices(vertices: List[Point], context: Context) -> None:
+def shrink_collinear_vertices(vertices: List[Point],
+                              orienteer: Orienteer) -> None:
     index = -len(vertices) + 1
-    orienteer = context.angle_orientation
     while index < 0:
         while (max(2, -index) < len(vertices)
                and orienteer(vertices[index + 1], vertices[index + 2],
