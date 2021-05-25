@@ -226,7 +226,7 @@ def within_of_region(box: Box,
             and all(context.segments_relation(edge, border_edge)
                     is Relation.DISJOINT
                     for edge in to_edges(box, context)
-                    for border_edge in context.contour_edges(border)))
+                    for border_edge in context.contour_segments(border)))
 
 
 def is_subset_of_multiregion(box: Box,
@@ -260,7 +260,7 @@ def intersects_with_polygon(box: Box,
             and all(context.segments_relation(edge, border_edge)
                     is Relation.DISJOINT
                     for edge in to_edges(box, context)
-                    for border_edge in context.contour_edges(border))):
+                    for border_edge in context.contour_segments(border))):
         return not any(within_of(box, context.contour_box(hole))
                        and within_of_region(box, hole, context)
                        for hole in polygon.holes)
@@ -268,7 +268,7 @@ def intersects_with_polygon(box: Box,
         return (any(relation is not Relation.DISJOINT
                     for relation in relations)
                 or any(intersects_with_segment(box, edge, context)
-                       for edge in context.contour_edges(border)))
+                       for edge in context.contour_segments(border)))
 
 
 def intersects_with_region(box: Box,
@@ -286,7 +286,7 @@ def intersects_with_region(box: Box,
                         is not Relation.DISJOINT
                         for vertex in to_vertices(box, context))
                  or any(intersects_with_segment(box, edge, context)
-                        for edge in context.contour_edges(region))))
+                        for edge in context.contour_segments(region))))
 
 
 def coupled_with_polygon(box: Box,
