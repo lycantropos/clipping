@@ -131,7 +131,8 @@ def are_segments_sequences_similar(left: Sequence[Segment],
 
 
 def is_multisegment_valid(multisegment: Multisegment) -> bool:
-    return not segments_cross_or_overlap(multisegment.segments)
+    return not segments_cross_or_overlap(multisegment.segments,
+                                         context=_context)
 
 
 def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
@@ -181,7 +182,7 @@ def to_triplets(strategy: Strategy[Domain]
     return strategies.tuples(strategy, strategy, strategy)
 
 
-contour_to_edges = _context.contour_edges
+to_contour_segments = _context.contour_segments
 is_contour = Contour.__instancecheck__
 
 
@@ -215,7 +216,8 @@ def is_non_shaped_valid(object_: Any) -> bool:
     return (not any(segment_contains_point(segment, point)
                     for point in points
                     for segment in segments)
-            and not segments_cross_or_overlap(segments))
+            and not segments_cross_or_overlap(segments,
+                                              context=_context))
 
 
 def is_homogeneous_non_shaped(object_: Any) -> bool:

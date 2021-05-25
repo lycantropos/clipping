@@ -10,7 +10,6 @@ from clipping.planar import (complete_intersect_segment_with_polygon,
 from tests.utils import (PolygonWithSegment,
                          are_compounds_similar,
                          compound_to_linear,
-                         contour_to_edges,
                          is_non_shaped,
                          pack_non_shaped,
                          reverse_compound_coordinates,
@@ -21,6 +20,7 @@ from tests.utils import (PolygonWithSegment,
                          reverse_segment,
                          reverse_segment_coordinates,
                          segments_relation,
+                         to_contour_segments,
                          to_polygon_contours,
                          to_sorted_segment)
 from . import strategies
@@ -48,10 +48,10 @@ def test_properties(polygon_with_segment: PolygonWithSegment
     assert all(point_in_polygon(point, polygon) is Relation.COMPONENT
                for point in result_points)
     assert (not (segment_in_polygon(segment, polygon) is Relation.TOUCH
-                 and all(segments_relation(segment, edge)
+                 and all(segments_relation(segment, contour_segment)
                          in (Relation.CROSS, Relation.DISJOINT, Relation.TOUCH)
                          for contour in to_polygon_contours(polygon)
-                         for edge in contour_to_edges(contour)))
+                         for contour_segment in to_contour_segments(contour)))
             or any(point_in_segment(point, segment) is Relation.COMPONENT
                    for point in result_points)
             or any(segments_relation(segment, result_segment)

@@ -12,7 +12,6 @@ from clipping.planar import (complete_intersect_multisegment_with_polygon,
 from tests.utils import (PolygonWithMultisegment,
                          are_compounds_similar,
                          compound_to_linear,
-                         contour_to_edges,
                          is_non_shaped,
                          pack_non_shaped,
                          reverse_compound_coordinates,
@@ -24,6 +23,7 @@ from tests.utils import (PolygonWithMultisegment,
                          reverse_polygon_holes,
                          reverse_polygon_holes_contours,
                          segments_relation,
+                         to_contour_segments,
                          to_polygon_contours,
                          to_sorted_segment)
 from . import strategies
@@ -60,11 +60,12 @@ def test_properties(polygon_with_multisegment: PolygonWithMultisegment
                for segment in multisegment.segments
                if (segment_in_polygon(segment, polygon)
                    is Relation.TOUCH
-                   and all(segments_relation(segment, edge)
-                           in (Relation.CROSS, Relation.DISJOINT,
-                               Relation.TOUCH)
-                           for contour in to_polygon_contours(polygon)
-                           for edge in contour_to_edges(contour))))
+                   and all(
+                    segments_relation(segment, contour_segment)
+                    in (Relation.CROSS, Relation.DISJOINT,
+                        Relation.TOUCH)
+                    for contour in to_polygon_contours(polygon)
+                    for contour_segment in to_contour_segments(contour))))
     assert all(segment_in_multisegment(result_segment, multisegment)
                in (Relation.EQUAL, Relation.COMPONENT)
                for result_segment in result_segments)
