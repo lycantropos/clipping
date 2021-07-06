@@ -1,4 +1,5 @@
-from ground.base import Relation
+from ground.base import (Location,
+                         Relation)
 from hypothesis import given
 from orient.planar import (point_in_multisegment,
                            point_in_polygon,
@@ -48,11 +49,11 @@ def test_properties(polygon_with_multisegment: PolygonWithMultisegment
                                                           polygon)
 
     result_points, result_segments = pack_non_shaped(result)
-    assert all(point_in_multisegment(point, multisegment) is Relation.COMPONENT
+    assert all(point_in_multisegment(point, multisegment) is Location.BOUNDARY
                for point in result_points)
-    assert all(point_in_polygon(point, polygon) is Relation.COMPONENT
+    assert all(point_in_polygon(point, polygon) is Location.BOUNDARY
                for point in result_points)
-    assert all(any(point_in_segment(point, segment) is Relation.COMPONENT
+    assert all(any(point_in_segment(point, segment) is Location.BOUNDARY
                    for point in result_points)
                or any(segments_relation(segment, result_segment)
                       is Relation.TOUCH

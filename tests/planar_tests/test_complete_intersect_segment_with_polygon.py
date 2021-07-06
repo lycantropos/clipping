@@ -1,4 +1,5 @@
-from ground.base import Relation
+from ground.base import (Location,
+                         Relation)
 from hypothesis import given
 from orient.planar import (point_in_polygon,
                            point_in_segment,
@@ -43,16 +44,16 @@ def test_properties(polygon_with_segment: PolygonWithSegment
     result = complete_intersect_segment_with_polygon(segment, polygon)
 
     result_points, result_segments = pack_non_shaped(result)
-    assert all(point_in_segment(point, segment) is Relation.COMPONENT
+    assert all(point_in_segment(point, segment) is Location.BOUNDARY
                for point in result_points)
-    assert all(point_in_polygon(point, polygon) is Relation.COMPONENT
+    assert all(point_in_polygon(point, polygon) is Location.BOUNDARY
                for point in result_points)
     assert (not (segment_in_polygon(segment, polygon) is Relation.TOUCH
                  and all(segments_relation(segment, contour_segment)
                          in (Relation.CROSS, Relation.DISJOINT, Relation.TOUCH)
                          for contour in to_polygon_contours(polygon)
                          for contour_segment in to_contour_segments(contour)))
-            or any(point_in_segment(point, segment) is Relation.COMPONENT
+            or any(point_in_segment(point, segment) is Location.BOUNDARY
                    for point in result_points)
             or any(segments_relation(segment, result_segment)
                    is Relation.TOUCH

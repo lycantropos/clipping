@@ -1,4 +1,5 @@
-from ground.base import Relation
+from ground.base import (Location,
+                         Relation)
 from ground.hints import Segment
 from hypothesis import given
 from orient.planar import (point_in_segment,
@@ -36,7 +37,7 @@ def test_properties(segments_pair: SegmentsPair) -> None:
 
     result_points, result_segments = pack_non_shaped(result)
     assert all(point_in_segment(point, first)
-               is point_in_segment(point, second) is Relation.COMPONENT
+               is point_in_segment(point, second) is Location.BOUNDARY
                for point in result_points)
     assert (segment_in_segment(first, second) is not Relation.TOUCH
             or bool(result_points))
