@@ -7,7 +7,7 @@ services:
       args:
         - IMAGE_NAME=${PYPY_IMAGE_NAME}
         - IMAGE_VERSION=${PYPY_IMAGE_VERSION}
-    image: lycantropos/clipping-pypy:3.1.0
+    image: lycantropos/clipping-pypy:4.0.0-alpha
     volumes:
       - ./clipping:/opt/clipping/clipping
       - ./pytest.ini:/opt/clipping/pytest.ini
