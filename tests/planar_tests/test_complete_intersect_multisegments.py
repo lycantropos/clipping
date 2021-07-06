@@ -1,4 +1,4 @@
-from ground.base import Relation
+from ground.base import Location, Relation
 from ground.hints import Multisegment
 from hypothesis import given
 from orient.planar import (multisegment_in_multisegment,
@@ -41,7 +41,7 @@ def test_properties(multisegments_pair: MultisegmentsPair) -> None:
 
     result_points, result_segments = pack_non_shaped(result)
     assert all(point_in_multisegment(point, first)
-               is point_in_multisegment(point, second) is Relation.COMPONENT
+               is point_in_multisegment(point, second) is Location.BOUNDARY
                for point in result_points)
     assert (multisegment_in_multisegment(first, second) is not Relation.TOUCH
             or bool(result_points))
