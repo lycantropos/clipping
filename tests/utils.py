@@ -138,7 +138,7 @@ def is_multisegment_valid(multisegment: Multisegment) -> bool:
 def normalize_multipolygon(multipolygon: Multipolygon) -> Multipolygon:
     polygons = [normalize_polygon(polygon)
                 for polygon in multipolygon.polygons]
-    polygons.sort(key=lambda polygon: polygon.border.vertices[0])
+    polygons.sort(key=lambda polygon: polygon.border.vertices[:2])
     return Multipolygon(polygons)
 
 
