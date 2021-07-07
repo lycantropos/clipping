@@ -393,7 +393,7 @@ class ShapedEventsQueue(Generic[LeftShapedEvent]):
         elif relation is not Relation.DISJOINT:
             # segments overlap
             if below_event.from_first is event.from_first:
-                raise ValueError('Edges of the same multipolygon '
+                raise ValueError('Edges of the same geometry '
                                  'should not overlap.')
             starts_equal = below_event.start == event.start
             if starts_equal:
