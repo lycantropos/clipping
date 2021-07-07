@@ -3,9 +3,7 @@ from itertools import (chain,
 from typing import (Any,
                     Iterable,
                     List,
-                    Sequence,
-                    Tuple,
-                    TypeVar)
+                    Sequence)
 
 from ground.base import (Context,
                          Orientation)
@@ -23,17 +21,6 @@ from .hints import (Orienteer,
 def all_equal(iterable: Iterable[Any]) -> bool:
     groups = groupby(iterable)
     return next(groups, True) and not next(groups, False)
-
-
-_T = TypeVar('_T')
-
-
-def pairwise(iterable: Iterable[_T]) -> Iterable[Tuple[_T, _T]]:
-    iterator = iter(iterable)
-    element = next(iterator, None)
-    for next_element in iterator:
-        yield element, next_element
-        element = next_element
 
 
 def polygon_to_oriented_edges_endpoints(polygon: Polygon,

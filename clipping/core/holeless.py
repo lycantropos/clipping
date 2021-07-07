@@ -23,8 +23,7 @@ from .event import (LeftHolelessEvent as LeftEvent,
                     RightShapedEvent as RightEvent,
                     events_to_connectivity)
 from .events_queue import HolelessEventsQueue as EventsQueue
-from .hints import (Region,
-                    SegmentEndpoints)
+from .hints import Region
 from .operands import HolelessOperand
 from .sweep_line import BinarySweepLine as SweepLine
 from .unpacking import (unpack_mix,
@@ -34,7 +33,6 @@ from .unpacking import (unpack_mix,
 from .utils import (all_equal,
                     contour_to_oriented_edges_endpoints,
                     endpoints_to_segments,
-                    pairwise,
                     shrink_collinear_vertices,
                     to_endpoints,
                     to_regions_x_max)
@@ -177,26 +175,22 @@ class CompleteIntersection(Operation):
         events = sorted(self.sweep(),
                         key=self._events_queue.key)
         points = []  # type: List[Point]
-        endpoints = []  # type: List[SegmentEndpoints]
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
-            if not (any(event.is_left and event.in_result
+            if not (any(event.primary.in_result
+                        or event.primary.is_common_polyline_component
                         for event in same_start_events)
                     or all_equal(event.from_first
                                  for event in same_start_events)):
-                no_segment_found = True
-                for event, next_event in pairwise(same_start_events):
-                    if (event.from_first is not next_event.from_first
-                            and event.start == next_event.start
-                            and event.end == next_event.end):
-                        no_segment_found = False
-                        if event.is_left:
-                            endpoints.append(to_endpoints(next_event))
-                if no_segment_found and all(not event.primary.in_result
-                                            for event in same_start_events):
-                    points.append(start)
-        segments = endpoints_to_segments(endpoints, context)
+                points.append(start)
+        segments = endpoints_to_segments(
+                [to_endpoints(event)
+                 for event in events
+                 if (event.is_left
+                     and event.from_first
+                     and event.is_common_polyline_component)],
+                context)
         regions = self.events_to_regions(events)
         return unpack_mix(unpack_points(points, context),
                           unpack_segments(segments, context),
