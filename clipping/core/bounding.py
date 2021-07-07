@@ -2,6 +2,7 @@ from typing import (Sequence,
                     Tuple)
 
 from ground.base import (Context,
+                         Location,
                          Relation)
 from ground.hints import (Box,
                           Contour,
@@ -221,7 +222,7 @@ def within_of_region(box: Box,
     """
     Checks if the box is contained in an interior of the region.
     """
-    return (all(point_in_region(vertex, border) is Relation.WITHIN
+    return (all(point_in_region(vertex, border) is Location.INTERIOR
                 for vertex in to_vertices(box, context))
             and all(context.segments_relation(edge, border_edge)
                     is Relation.DISJOINT
@@ -253,10 +254,10 @@ def intersects_with_polygon(box: Box,
     elif (is_subset_of(polygon_box, box)
           or any(contains_point(box, vertex) for vertex in border.vertices)):
         return True
-    relations = [point_in_region(vertex, border)
+    locations = [point_in_region(vertex, border)
                  for vertex in to_vertices(box, context)]
     if (within_of(box, polygon_box)
-            and all(relation is Relation.WITHIN for relation in relations)
+            and all(location is Location.INTERIOR for location in locations)
             and all(context.segments_relation(edge, border_edge)
                     is Relation.DISJOINT
                     for edge in to_edges(box, context)
@@ -265,8 +266,8 @@ def intersects_with_polygon(box: Box,
                        and within_of_region(box, hole, context)
                        for hole in polygon.holes)
     else:
-        return (any(relation is not Relation.DISJOINT
-                    for relation in relations)
+        return (any(location is not Location.EXTERIOR
+                    for location in locations)
                 or any(intersects_with_segment(box, edge, context)
                        for edge in context.contour_segments(border)))
 
@@ -283,7 +284,7 @@ def intersects_with_region(box: Box,
                  or any(contains_point(box, vertex)
                         for vertex in region.vertices)
                  or any(point_in_region(vertex, region)
-                        is not Relation.DISJOINT
+                        is not Location.EXTERIOR
                         for vertex in to_vertices(box, context))
                  or any(intersects_with_segment(box, edge, context)
                         for edge in context.contour_segments(region))))
@@ -302,10 +303,11 @@ def coupled_with_polygon(box: Box,
     elif (is_subset_of(polygon_box, box)
           or any(covers_point(box, vertex) for vertex in border.vertices)):
         return True
-    relations = [point_in_region(vertex, border)
+    locations = [point_in_region(vertex, border)
                  for vertex in to_vertices(box, context)]
-    if any(relation is Relation.WITHIN for relation in relations):
-        return (not all(relation is Relation.WITHIN for relation in relations)
+    if any(location is Location.INTERIOR for location in locations):
+        return (not all(location is Location.INTERIOR
+                        for location in locations)
                 or not is_subset_of_multiregion(box, polygon.holes, context))
     else:
         return (not is_subset_of_multiregion(box, polygon.holes, context)
@@ -331,7 +333,7 @@ def coupled_with_region(box: Box,
     elif (is_subset_of(region_box, box)
           or any(covers_point(box, vertex) for vertex in region.vertices)):
         return True
-    return (any(point_in_region(vertex, region) is Relation.WITHIN
+    return (any(point_in_region(vertex, region) is Location.INTERIOR
                 for vertex in to_vertices(box, context))
             or is_subset_of(box, region_box)
             and is_subset_of_region(box, region, context)
