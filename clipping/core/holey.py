@@ -74,14 +74,17 @@ class Operation(ABC):
                                             if (event.from_first
                                                 is below_event.from_first)
                                             else below_event.interior_to_left)
-            event.below_in_result_event = (below_event.below_in_result_event
-                                           if (not self.in_result(below_event)
-                                               or below_event.is_vertical)
-                                           else below_event)
-        event.in_result = self.in_result(event)
+            event.below_event_from_shaped_result = (
+                below_event.below_event_from_shaped_result
+                if (not self.from_shaped_result(below_event)
+                    or below_event.is_vertical)
+                else below_event)
+        event.from_shaped_result = self.from_shaped_result(event)
 
     def events_to_polygons(self, events: Iterable[Event]) -> Sequence[Polygon]:
-        events = [event for event in events if event.primary.in_result]
+        events = [event
+                  for event in events
+                  if event.primary.from_shaped_result]
         events.sort(key=self._events_queue.key)
         for index, event in enumerate(events):
             event.position = index
@@ -132,8 +135,8 @@ class Operation(ABC):
                     False)
 
     @abstractmethod
-    def in_result(self, event: LeftEvent) -> bool:
-        """Detects if event will be presented in result of the operation."""
+    def from_shaped_result(self, event: LeftEvent) -> bool:
+        """Detects if event is a part of resulting shaped geometry."""
 
     def process_event(self,
                       event: Event,
@@ -192,7 +195,7 @@ class Difference(Operation):
                 if self.second.polygons
                 else self.first.value)
 
-    def in_result(self, event: LeftEvent) -> bool:
+    def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.outside
                 if event.from_first
                 else event.inside or event.is_common_polyline_component)
@@ -235,8 +238,7 @@ class CompleteIntersection(Operation):
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
-            if not (any(event.primary.in_result
-                        or event.primary.is_common_polyline_component
+            if not (any(event.primary.wholly_in_complete_intersection
                         for event in same_start_events)
                     or all_equal(event.from_first
                                  for event in same_start_events)):
@@ -254,7 +256,7 @@ class CompleteIntersection(Operation):
                           unpack_polygons(polygons, context),
                           context)
 
-    def in_result(self, event: LeftEvent) -> bool:
+    def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.inside
                 or not event.from_first and event.is_common_region_boundary)
 
@@ -292,7 +294,7 @@ class Intersection(Operation):
                 if self.second.polygons
                 else context.empty)
 
-    def in_result(self, event: LeftEvent) -> bool:
+    def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.inside
                 or not event.from_first and event.is_common_region_boundary)
 
@@ -325,7 +327,7 @@ class SymmetricDifference(Operation):
             return context.multipolygon_cls(polygons)
         return unpack_polygons(self.events_to_polygons(self.sweep()), context)
 
-    def in_result(self, event: LeftEvent) -> bool:
+    def from_shaped_result(self, event: LeftEvent) -> bool:
         return not event.is_overlap
 
 
@@ -343,7 +345,7 @@ class Union(Operation):
             return context.multipolygon_cls(polygons)
         return unpack_polygons(self.events_to_polygons(self.sweep()), context)
 
-    def in_result(self, event: LeftEvent) -> bool:
+    def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.outside
                 or not event.from_first and event.is_common_region_boundary)
 
@@ -357,20 +359,20 @@ def _compute_relations(event: LeftEvent,
     depth = 0
     parent = None
     is_internal = False
-    below_in_result_event = event.below_in_result_event
-    if below_in_result_event is not None:
-        below_in_result_contour_id = below_in_result_event.contour_id
-        if not below_in_result_event.result_in_out:
-            if not are_internal[below_in_result_contour_id]:
-                holes[below_in_result_contour_id].append(contour_id)
-                parent = below_in_result_contour_id
-                depth = depths[below_in_result_contour_id] + 1
+    below_event_from_shaped_result = event.below_event_from_shaped_result
+    if below_event_from_shaped_result is not None:
+        below_contour_id = below_event_from_shaped_result.contour_id
+        if not below_event_from_shaped_result.from_in_to_out:
+            if not are_internal[below_contour_id]:
+                holes[below_contour_id].append(contour_id)
+                parent = below_contour_id
+                depth = depths[below_contour_id] + 1
                 is_internal = True
-        elif are_internal[below_in_result_contour_id]:
-            below_in_result_parent_id = parents[below_in_result_contour_id]
+        elif are_internal[below_contour_id]:
+            below_in_result_parent_id = parents[below_contour_id]
             holes[below_in_result_parent_id].append(contour_id)
             parent = below_in_result_parent_id
-            depth = depths[below_in_result_contour_id]
+            depth = depths[below_contour_id]
             is_internal = True
     holes.append([])
     parents.append(parent)
@@ -407,10 +409,10 @@ def _events_to_contour_vertices(cursor: LeftEvent,
     for event in contour_events:
         processed[event.position] = processed[event.opposite.position] = True
         if event.is_left:
-            event.result_in_out = False
+            event.from_in_to_out = False
             event.contour_id = contour_id
         else:
-            event.opposite.result_in_out = True
+            event.opposite.from_in_to_out = True
             event.opposite.contour_id = contour_id
     return result
 

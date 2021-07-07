@@ -72,10 +72,12 @@ class Operation(ABC):
                                             if (event.from_first
                                                 is below_event.from_first)
                                             else below_event.interior_to_left)
-        event.in_result = self.in_result(event)
+        event.from_shaped_result = self.from_shaped_result(event)
 
     def events_to_regions(self, events: Iterable[Event]) -> Sequence[Region]:
-        events = sorted([event for event in events if event.primary.in_result],
+        events = sorted([event
+                         for event in events
+                         if event.primary.from_shaped_result],
                         key=self._events_queue.key)
         for index, event in enumerate(events):
             event.position = index
@@ -119,8 +121,8 @@ class Operation(ABC):
                     False)
 
     @abstractmethod
-    def in_result(self, event: LeftEvent) -> bool:
-        """Detects if event will be presented in result of the operation."""
+    def from_shaped_result(self, event: LeftEvent) -> bool:
+        """Detects if event is a part of resulting shaped geometry."""
 
     def process_event(self,
                       event: Event,
@@ -178,8 +180,7 @@ class CompleteIntersection(Operation):
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
-            if not (any(event.primary.in_result
-                        or event.primary.is_common_polyline_component
+            if not (any(event.primary.wholly_in_complete_intersection
                         for event in same_start_events)
                     or all_equal(event.from_first
                                  for event in same_start_events)):
@@ -197,7 +198,7 @@ class CompleteIntersection(Operation):
                           unpack_regions(regions, context),
                           context)
 
-    def in_result(self, event: LeftEvent) -> bool:
+    def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.inside
                 or not event.from_first and event.is_common_region_boundary)
 
@@ -247,7 +248,7 @@ class Intersection(Operation):
             self.process_event(event, result, sweep_line)
         return result
 
-    def in_result(self, event: LeftEvent) -> bool:
+    def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.inside
                 or not event.from_first and event.is_common_region_boundary)
 

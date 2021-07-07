@@ -166,7 +166,7 @@ class LeftMixedEvent(LeftEvent):
         result.right = RightMixedEvent(end, result)
         return result
 
-    __slots__ = ('from_first', 'in_result', 'interior_to_left', 'is_overlap',
+    __slots__ = ('from_first', 'from_result', 'interior_to_left', 'is_overlap',
                  'other_interior_to_left', '_start')
 
     def __init__(self,
@@ -176,13 +176,13 @@ class LeftMixedEvent(LeftEvent):
                  interior_to_left: bool,
                  other_interior_to_left: bool = False,
                  is_overlap: bool = False,
-                 in_result: bool = False) -> None:
+                 from_result: bool = False) -> None:
         self.right, self._start = right, start
         self.from_first = from_first
         self.interior_to_left, self.other_interior_to_left = (
             interior_to_left, other_interior_to_left)
         self.is_overlap = is_overlap
-        self.in_result = in_result
+        self.from_result = from_result
 
     __repr__ = recursive_repr()(generate_repr(__init__))
 
@@ -243,7 +243,7 @@ class LeftHolelessEvent(LeftEvent):
         event.right = RightShapedEvent(end, event)
         return event
 
-    __slots__ = ('from_first', 'in_result', 'interior_to_left',
+    __slots__ = ('from_first', 'from_shaped_result', 'interior_to_left',
                  'other_interior_to_left', 'overlap_kind', 'position',
                  '_start')
 
@@ -254,14 +254,14 @@ class LeftHolelessEvent(LeftEvent):
                  interior_to_left: bool,
                  other_interior_to_left: bool = False,
                  overlap_kind: OverlapKind = OverlapKind.NONE,
-                 in_result: bool = False,
+                 from_shaped_result: bool = False,
                  position: int = 0) -> None:
         self.right, self._start = right, start
         self.from_first = from_first
         self.interior_to_left = interior_to_left
         self.other_interior_to_left = other_interior_to_left
         self.overlap_kind = overlap_kind
-        self.in_result = in_result
+        self.from_shaped_result = from_shaped_result
         self.position = position
 
     __repr__ = recursive_repr()(generate_repr(__init__))
@@ -312,6 +312,13 @@ class LeftHolelessEvent(LeftEvent):
     def start(self) -> Point:
         return self._start
 
+    @property
+    def wholly_in_complete_intersection(self) -> bool:
+        """
+        Checks if the segment wholly is a part of the complete intersection.
+        """
+        return self.from_shaped_result or self.is_common_polyline_component
+
     def divide(self, point: Point) -> 'LeftHolelessEvent':
         tail = self.right.left = LeftHolelessEvent(
                 point, self.right, self.from_first, self.interior_to_left)
@@ -333,9 +340,10 @@ class LeftHoleyEvent(LeftEvent):
         event.right = RightShapedEvent(end, event)
         return event
 
-    __slots__ = ('below_in_result_event', 'contour_id', 'from_first',
-                 'in_result', 'interior_to_left', 'other_interior_to_left',
-                 'overlap_kind', 'position', 'result_in_out', '_start')
+    __slots__ = ('below_event_from_shaped_result', 'contour_id', 'from_first',
+                 'from_shaped_result', 'interior_to_left',
+                 'other_interior_to_left', 'overlap_kind', 'position',
+                 'from_in_to_out', '_start')
 
     def __init__(self,
                  start: Point,
@@ -344,22 +352,22 @@ class LeftHoleyEvent(LeftEvent):
                  interior_to_left: bool,
                  other_interior_to_left: bool = False,
                  overlap_kind: OverlapKind = OverlapKind.NONE,
-                 in_result: bool = False,
-                 result_in_out: bool = False,
+                 from_shaped_result: bool = False,
+                 from_in_to_out: bool = False,
                  position: int = 0,
                  contour_id: Optional[int] = None,
-                 below_in_result_event: Optional['LeftHoleyEvent'] = None
-                 ) -> None:
+                 below_event_from_shaped_result: Optional['LeftHoleyEvent']
+                 = None) -> None:
         self.right, self._start = right, start
         self.from_first = from_first
+        self.from_shaped_result = from_shaped_result
         self.interior_to_left = interior_to_left
         self.other_interior_to_left = other_interior_to_left
         self.overlap_kind = overlap_kind
-        self.in_result = in_result
         self.position = position
-        self.result_in_out = result_in_out
+        self.from_in_to_out = from_in_to_out
         self.contour_id = contour_id
-        self.below_in_result_event = below_in_result_event
+        self.below_event_from_shaped_result = below_event_from_shaped_result
 
     __repr__ = recursive_repr()(generate_repr(__init__))
 
@@ -412,6 +420,13 @@ class LeftHoleyEvent(LeftEvent):
     @property
     def start(self) -> Point:
         return self._start
+
+    @property
+    def wholly_in_complete_intersection(self) -> bool:
+        """
+        Checks if the segment wholly is a part of the complete intersection.
+        """
+        return self.from_shaped_result or self.is_common_polyline_component
 
     def divide(self, point: Point) -> 'LeftHoleyEvent':
         tail = self.right.left = LeftHoleyEvent(

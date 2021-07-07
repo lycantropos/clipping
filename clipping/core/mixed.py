@@ -72,7 +72,7 @@ class Operation(ABC):
                                             if (event.from_first
                                                 is below_event.from_first)
                                             else below_event.interior_to_left)
-        event.in_result = self.in_result(event)
+        event.from_result = self.from_result(event)
 
     def fill_queue(self) -> None:
         events_queue = self._events_queue
@@ -84,8 +84,8 @@ class Operation(ABC):
                     False)
 
     @abstractmethod
-    def in_result(self, event: LeftEvent) -> bool:
-        """Detects if event will be presented in result of the operation."""
+    def from_result(self, event: LeftEvent) -> bool:
+        """Detects if event is a part of resulting geometry."""
 
     def process_event(self, event: Event, sweep_line: SweepLine) -> None:
         if not event.is_left:
@@ -130,11 +130,11 @@ class Difference(Operation):
             return self.linear.value
         return unpack_segments(endpoints_to_segments([to_endpoints(event)
                                                       for event in self.sweep()
-                                                      if event.in_result],
+                                                      if event.from_result],
                                                      context),
                                context)
 
-    def in_result(self, event: LeftEvent) -> bool:
+    def from_result(self, event: LeftEvent) -> bool:
         return event.from_first and event.outside
 
     def sweep(self) -> Iterable[LeftEvent]:
@@ -176,20 +176,21 @@ class CompleteIntersection(Operation):
         for start, same_start_events in groupby(events,
                                                 key=attrgetter('start')):
             same_start_events = list(same_start_events)
-            if not (any(event.primary.in_result for event in same_start_events)
+            if not (any(event.primary.from_result
+                        for event in same_start_events)
                     or all_equal(event.from_first
                                  for event in same_start_events)):
                 points.append(start)
-        segments = endpoints_to_segments([to_endpoints(event)
-                                          for event in events
-                                          if event.is_left
-                                          and event.in_result],
-                                         context)
+        segments = endpoints_to_segments(
+                [to_endpoints(event)
+                 for event in events
+                 if event.is_left and event.from_result],
+                context)
         return unpack_linear_mix(unpack_points(points, context),
                                  unpack_segments(segments, context),
                                  context)
 
-    def in_result(self, event: LeftEvent) -> bool:
+    def from_result(self, event: LeftEvent) -> bool:
         return event.from_first and not event.outside
 
     def sweep(self) -> Iterable[LeftEvent]:
@@ -227,10 +228,11 @@ class Intersection(Operation):
             return context.empty
         segments = endpoints_to_segments([to_endpoints(event)
                                           for event in self.sweep()
-                                          if event.in_result], context)
+                                          if event.from_result],
+                                         context)
         return unpack_segments(segments, context)
 
-    def in_result(self, event: LeftEvent) -> bool:
+    def from_result(self, event: LeftEvent) -> bool:
         return event.from_first and not event.outside
 
     def sweep(self) -> Iterable[LeftEvent]:
@@ -268,14 +270,14 @@ class Union(Operation):
                 linear_box, self.shaped.polygons, context)
         segments = endpoints_to_segments([to_endpoints(event)
                                           for event in self.sweep()
-                                          if event.in_result], context)
+                                          if event.from_result], context)
         segments.extend(result_segments)
         linear = unpack_segments(segments, context)
         return (self.shaped.value
                 if linear is context.empty
                 else context.mix_cls(context.empty, linear, self.shaped.value))
 
-    def in_result(self, event: LeftEvent) -> bool:
+    def from_result(self, event: LeftEvent) -> bool:
         return event.from_first and event.outside
 
     def sweep(self) -> Iterable[LeftEvent]:
