@@ -77,7 +77,8 @@ def intersect_segments(first: _Segment,
     True
     """
     return _linear.intersect_segments(
-            first, second, _get_context() if context is None else context)
+            first, second, _get_context() if context is None else context
+    )
 
 
 def subtract_segments(minuend: _Segment,
@@ -127,8 +128,8 @@ def subtract_segments(minuend: _Segment,
     True
     """
     return _linear.subtract_segments(
-            minuend, subtrahend,
-            _get_context() if context is None else context)
+            minuend, subtrahend, _get_context() if context is None else context
+    )
 
 
 def symmetric_subtract_segments(first: _Segment,
@@ -180,7 +181,8 @@ def symmetric_subtract_segments(first: _Segment,
     True
     """
     return _linear.symmetric_subtract_segments(
-            first, second, _get_context() if context is None else context)
+            first, second, _get_context() if context is None else context
+    )
 
 
 def unite_segments(first: _Segment,
@@ -228,7 +230,8 @@ def unite_segments(first: _Segment,
     True
     """
     return _linear.unite_segments(
-            first, second, _get_context() if context is None else context)
+            first, second, _get_context() if context is None else context
+    )
 
 
 def complete_intersect_segment_with_multisegment(
@@ -301,7 +304,8 @@ def complete_intersect_segment_with_multisegment(
     return _linear.CompleteIntersection(
             _operands.SegmentOperand(segment),
             _operands.MultisegmentOperand(multisegment),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def intersect_segment_with_multisegment(
@@ -363,7 +367,8 @@ def intersect_segment_with_multisegment(
     """
     return _linear.intersect_segment_with_multisegment(
             segment, multisegment,
-            _get_context() if context is None else context)
+            _get_context() if context is None else context
+    )
 
 
 def subtract_multisegment_from_segment(
@@ -503,8 +508,8 @@ def subtract_segment_from_multisegment(
     True
     """
     return _linear.subtract_segment_from_multisegment(
-            minuend, subtrahend,
-            _get_context() if context is None else context)
+            minuend, subtrahend, _get_context() if context is None else context
+    )
 
 
 def symmetric_subtract_multisegment_from_segment(
@@ -574,7 +579,8 @@ def symmetric_subtract_multisegment_from_segment(
     return _linear.SymmetricDifference(
             _operands.SegmentOperand(first),
             _operands.MultisegmentOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def unite_segment_with_multisegment(first: _Segment,
@@ -637,7 +643,8 @@ def unite_segment_with_multisegment(first: _Segment,
     True
     """
     return _linear.unite_segment_with_multisegment(
-            first, second, _get_context() if context is None else context)
+            first, second, _get_context() if context is None else context
+    )
 
 
 def complete_intersect_segment_with_polygon(
@@ -711,7 +718,8 @@ def complete_intersect_segment_with_polygon(
     return _mixed.CompleteIntersection(
             _operands.SegmentOperand(segment),
             _operands.PolygonOperand(polygon),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def intersect_segment_with_polygon(segment: _Segment,
@@ -913,7 +921,8 @@ def symmetric_subtract_polygon_from_segment(segment: _Segment,
     return _mixed.SymmetricDifference(
             _operands.SegmentOperand(segment),
             _operands.PolygonOperand(polygon),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def unite_segment_with_polygon(segment: _Segment,
@@ -1066,7 +1075,8 @@ def complete_intersect_segment_with_multipolygon(
     return _mixed.CompleteIntersection(
             _operands.SegmentOperand(segment),
             _operands.MultipolygonOperand(multipolygon),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def intersect_segment_with_multipolygon(segment: _Segment,
@@ -1303,7 +1313,8 @@ def symmetric_subtract_multipolygon_from_segment(
     return _mixed.SymmetricDifference(
             _operands.SegmentOperand(segment),
             _operands.MultipolygonOperand(multipolygon),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def unite_segment_with_multipolygon(segment: _Segment,
@@ -1423,7 +1434,8 @@ def segments_to_multisegment(segments: _Sequence[_Segment],
     True
     """
     return _linear.merge_segments(
-            segments, _get_context() if context is None else context)
+            segments, _get_context() if context is None else context
+    )
 
 
 def complete_intersect_multisegments(first: _Multisegment,
@@ -1478,7 +1490,8 @@ def complete_intersect_multisegments(first: _Multisegment,
     return _linear.CompleteIntersection(
             _operands.MultisegmentOperand(first),
             _operands.MultisegmentOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def intersect_multisegments(first: _Multisegment,
@@ -1527,7 +1540,8 @@ def intersect_multisegments(first: _Multisegment,
     return _linear.Intersection(
             _operands.MultisegmentOperand(first),
             _operands.MultisegmentOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def subtract_multisegments(minuend: _Multisegment,
@@ -1629,7 +1643,8 @@ def symmetric_subtract_multisegments(first: _Multisegment,
     return _linear.SymmetricDifference(
             _operands.MultisegmentOperand(first),
             _operands.MultisegmentOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def unite_multisegments(first: _Multisegment,
@@ -1739,7 +1754,8 @@ def complete_intersect_multisegment_with_polygon(
     return _mixed.CompleteIntersection(
             _operands.MultisegmentOperand(multisegment),
             _operands.PolygonOperand(polygon),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def intersect_multisegment_with_polygon(
@@ -1920,7 +1936,8 @@ def symmetric_subtract_polygon_from_multisegment(
     return _mixed.SymmetricDifference(
             _operands.MultisegmentOperand(multisegment),
             _operands.PolygonOperand(polygon),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def unite_multisegment_with_polygon(
@@ -2093,7 +2110,8 @@ def complete_intersect_multisegment_with_multipolygon(
     return _mixed.CompleteIntersection(
             _operands.MultisegmentOperand(multisegment),
             _operands.MultipolygonOperand(multipolygon),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def intersect_multisegment_with_multipolygon(
@@ -2338,7 +2356,8 @@ def symmetric_subtract_multipolygon_from_multisegment(
     return _mixed.SymmetricDifference(
             _operands.MultisegmentOperand(multisegment),
             _operands.MultipolygonOperand(multipolygon),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def unite_multisegment_with_multipolygon(
@@ -2420,7 +2439,8 @@ def unite_multisegment_with_multipolygon(
     return _mixed.Union(
             _operands.MultisegmentOperand(multisegment),
             _operands.MultipolygonOperand(multipolygon),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def complete_intersect_regions(first: _Region,
@@ -2482,7 +2502,8 @@ def complete_intersect_regions(first: _Region,
     """
     return _holeless.CompleteIntersection(
             _operands.RegionOperand(first), _operands.RegionOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def intersect_regions(first: _Region,
@@ -2533,7 +2554,8 @@ def intersect_regions(first: _Region,
     """
     return _holeless.Intersection(
             _operands.RegionOperand(first), _operands.RegionOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def complete_intersect_region_with_multiregion(
@@ -2615,7 +2637,8 @@ def complete_intersect_region_with_multiregion(
     return _holeless.CompleteIntersection(
             _operands.RegionOperand(region),
             _operands.MultiregionOperand(multiregion),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def intersect_region_with_multiregion(
@@ -2680,7 +2703,8 @@ def intersect_region_with_multiregion(
     return _holeless.Intersection(
             _operands.RegionOperand(region),
             _operands.MultiregionOperand(multiregion),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def complete_intersect_multiregions(first: _Multiregion,
@@ -2790,7 +2814,8 @@ def complete_intersect_multiregions(first: _Multiregion,
     return _holeless.CompleteIntersection(
             _operands.MultiregionOperand(first),
             _operands.MultiregionOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def intersect_multiregions(first: _Multiregion,
@@ -2876,7 +2901,8 @@ def intersect_multiregions(first: _Multiregion,
     return _holeless.Intersection(
             _operands.MultiregionOperand(first),
             _operands.MultiregionOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def complete_intersect_polygons(first: _Polygon,
@@ -2964,7 +2990,8 @@ def complete_intersect_polygons(first: _Polygon,
     """
     return _holey.CompleteIntersection(
             _operands.PolygonOperand(first), _operands.PolygonOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def intersect_polygons(first: _Polygon,
@@ -3029,7 +3056,8 @@ def intersect_polygons(first: _Polygon,
     """
     return _holey.Intersection(
             _operands.PolygonOperand(first), _operands.PolygonOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def subtract_polygons(minuend: _Polygon,
@@ -3100,7 +3128,8 @@ def subtract_polygons(minuend: _Polygon,
     return _holey.Difference(
             _operands.PolygonOperand(minuend),
             _operands.PolygonOperand(subtrahend),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def symmetric_subtract_polygons(first: _Polygon,
@@ -3184,7 +3213,8 @@ def symmetric_subtract_polygons(first: _Polygon,
     """
     return _holey.SymmetricDifference(
             _operands.PolygonOperand(first), _operands.PolygonOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def unite_polygons(first: _Polygon,
@@ -3271,7 +3301,8 @@ def unite_polygons(first: _Polygon,
     """
     return _holey.Union(
             _operands.PolygonOperand(first), _operands.PolygonOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def complete_intersect_polygon_with_multipolygon(
@@ -3416,7 +3447,8 @@ def complete_intersect_polygon_with_multipolygon(
     return _holey.CompleteIntersection(
             _operands.PolygonOperand(polygon),
             _operands.MultipolygonOperand(multipolygon),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def intersect_polygon_with_multipolygon(polygon: _Polygon,
@@ -3537,7 +3569,8 @@ def intersect_polygon_with_multipolygon(polygon: _Polygon,
     return _holey.Intersection(
             _operands.PolygonOperand(polygon),
             _operands.MultipolygonOperand(multipolygon),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def subtract_multipolygon_from_polygon(minuend: _Polygon,
@@ -3669,7 +3702,8 @@ def subtract_multipolygon_from_polygon(minuend: _Polygon,
     return _holey.Difference(
             _operands.PolygonOperand(minuend),
             _operands.MultipolygonOperand(subtrahend),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def subtract_polygon_from_multipolygon(minuend: _Multipolygon,
@@ -3786,7 +3820,8 @@ def subtract_polygon_from_multipolygon(minuend: _Multipolygon,
     return _holey.Difference(
             _operands.MultipolygonOperand(minuend),
             _operands.PolygonOperand(subtrahend),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def symmetric_subtract_multipolygon_from_polygon(
@@ -4054,7 +4089,8 @@ def unite_polygon_with_multipolygon(polygon: _Polygon,
     return _holey.Union(
             _operands.PolygonOperand(polygon),
             _operands.MultipolygonOperand(multipolygon),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def complete_intersect_multipolygons(
@@ -4255,7 +4291,8 @@ def complete_intersect_multipolygons(
     return _holey.CompleteIntersection(
             _operands.MultipolygonOperand(first),
             _operands.MultipolygonOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def intersect_multipolygons(first: _Multipolygon,
@@ -4392,7 +4429,8 @@ def intersect_multipolygons(first: _Multipolygon,
     return _holey.Intersection(
             _operands.MultipolygonOperand(first),
             _operands.MultipolygonOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def subtract_multipolygons(minuend: _Multipolygon,
@@ -4535,7 +4573,8 @@ def subtract_multipolygons(minuend: _Multipolygon,
     return _holey.Difference(
             _operands.MultipolygonOperand(minuend),
             _operands.MultipolygonOperand(subtrahend),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def symmetric_subtract_multipolygons(first: _Multipolygon,
@@ -4690,7 +4729,8 @@ def symmetric_subtract_multipolygons(first: _Multipolygon,
     return _holey.SymmetricDifference(
             _operands.MultipolygonOperand(first),
             _operands.MultipolygonOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
 
 
 def unite_multipolygons(first: _Multipolygon,
@@ -4831,4 +4871,5 @@ def unite_multipolygons(first: _Multipolygon,
     return _holey.Union(
             _operands.MultipolygonOperand(first),
             _operands.MultipolygonOperand(second),
-            _get_context() if context is None else context).compute()
+            _get_context() if context is None else context
+    ).compute()
