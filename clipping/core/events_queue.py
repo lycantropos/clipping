@@ -414,7 +414,8 @@ class ShapedEventsQueue(Generic[LeftShapedEvent]):
                 below_event.overlap_kind = event.overlap_kind = (
                     OverlapKind.SAME_ORIENTATION
                     if event.interior_to_left is below_event.interior_to_left
-                    else OverlapKind.DIFFERENT_ORIENTATION)
+                    else OverlapKind.DIFFERENT_ORIENTATION
+                )
                 if not ends_equal:
                     self._divide_segment(end_max.opposite, end_min.start)
                 return True

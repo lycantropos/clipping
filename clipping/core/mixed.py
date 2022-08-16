@@ -81,7 +81,8 @@ class Operation(ABC):
         for polygon in self.shaped.polygons:
             events_queue.register(
                     polygon_to_oriented_edges_endpoints(polygon, self.context),
-                    False)
+                    False
+            )
 
     @abstractmethod
     def from_result(self, event: LeftEvent) -> bool:

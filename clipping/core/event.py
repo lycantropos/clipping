@@ -321,7 +321,8 @@ class LeftHolelessEvent(LeftEvent):
 
     def divide(self, point: Point) -> 'LeftHolelessEvent':
         tail = self.right.left = LeftHolelessEvent(
-                point, self.right, self.from_first, self.interior_to_left)
+                point, self.right, self.from_first, self.interior_to_left
+        )
         self.right = RightShapedEvent(point, self)
         return tail
 
@@ -332,18 +333,18 @@ class LeftHoleyEvent(LeftEvent):
                        segment_endpoints: SegmentEndpoints,
                        from_first: bool) -> 'LeftHoleyEvent':
         start, end = segment_endpoints
-        inside_on_left = True
+        interior_to_left = True
         if start > end:
             start, end = end, start
-            inside_on_left = False
-        event = cls(start, None, from_first, inside_on_left)
+            interior_to_left = False
+        event = cls(start, None, from_first, interior_to_left)
         event.right = RightShapedEvent(end, event)
         return event
 
     __slots__ = ('below_event_from_shaped_result', 'contour_id', 'from_first',
-                 'from_shaped_result', 'interior_to_left',
+                 'from_in_to_out', 'from_shaped_result', 'interior_to_left',
                  'other_interior_to_left', 'overlap_kind', 'position',
-                 'from_in_to_out', '_start')
+                 '_start')
 
     def __init__(self,
                  start: Point,
@@ -430,7 +431,8 @@ class LeftHoleyEvent(LeftEvent):
 
     def divide(self, point: Point) -> 'LeftHoleyEvent':
         tail = self.right.left = LeftHoleyEvent(
-                point, self.right, self.from_first, self.interior_to_left)
+                point, self.right, self.from_first, self.interior_to_left
+        )
         self.right = RightShapedEvent(point, self)
         return tail
 

@@ -116,7 +116,8 @@ class Operation(ABC):
                         polygon_cls(contours[hole_index],
                                     [contours[hole_hole_index]
                                      for hole_hole_index in holes[hole_index]])
-                        for hole_index in holes[index])
+                        for hole_index in holes[index]
+                )
             else:
                 result.append(polygon_cls(contour,
                                           [contours[hole_index]
@@ -128,11 +129,13 @@ class Operation(ABC):
         for polygon in self.first.polygons:
             events_queue.register(
                     polygon_to_oriented_edges_endpoints(polygon, self.context),
-                    True)
+                    True
+            )
         for polygon in self.second.polygons:
             events_queue.register(
                     polygon_to_oriented_edges_endpoints(polygon, self.context),
-                    False)
+                    False
+            )
 
     @abstractmethod
     def from_shaped_result(self, event: LeftEvent) -> bool:
@@ -180,6 +183,68 @@ class Operation(ABC):
         return result
 
 
+class CompleteIntersection(Operation):
+    __slots__ = ()
+
+    def compute(self) -> Union_[Empty, Mix, Multipoint, Multipolygon,
+                                Multisegment, Polygon, Segment]:
+        context = self.context
+        first_box, second_box = (context.polygons_box(self.first.polygons),
+                                 context.polygons_box(self.second.polygons))
+        if bounding.disjoint_with(first_box, second_box):
+            return context.empty
+        self.first.polygons = bounding.to_intersecting_polygons(
+                second_box, self.first.polygons, context)
+        if not self.first.polygons:
+            return context.empty
+        self.second.polygons = bounding.to_intersecting_polygons(
+                first_box, self.second.polygons, context
+        )
+        if not self.second.polygons:
+            return context.empty
+        events = sorted(self.sweep(),
+                        key=self._events_queue.key)
+        points = []  # type: List[Point]
+        for start, same_start_events in groupby(events,
+                                                key=attrgetter('start')):
+            same_start_events = list(same_start_events)
+            if not (any(event.primary.wholly_in_complete_intersection
+                        for event in same_start_events)
+                    or all_equal(event.from_first
+                                 for event in same_start_events)):
+                points.append(start)
+        segments = endpoints_to_segments(
+                [to_endpoints(event)
+                 for event in events
+                 if (event.is_left
+                     and event.from_first
+                     and event.is_common_polyline_component)],
+                context
+        )
+        polygons = self.events_to_polygons(events)
+        return unpack_mix(unpack_points(points, context),
+                          unpack_segments(segments, context),
+                          unpack_polygons(polygons, context), context)
+
+    def from_shaped_result(self, event: LeftEvent) -> bool:
+        return (event.inside
+                or not event.from_first and event.is_common_region_boundary)
+
+    def sweep(self) -> Iterable[Event]:
+        self.fill_queue()
+        result = []
+        events_queue = self._events_queue
+        sweep_line = SweepLine(self.context)
+        min_max_x = min(to_polygons_x_max(self.first.polygons),
+                        to_polygons_x_max(self.second.polygons))
+        while events_queue:
+            event = events_queue.pop()
+            if min_max_x < event.start.x:
+                break
+            self.process_event(event, result, sweep_line)
+        return result
+
+
 class Difference(Operation):
     __slots__ = ()
 
@@ -190,7 +255,8 @@ class Difference(Operation):
                                   context.polygons_box(self.second.polygons)):
             return self.first.value
         self.second.polygons = bounding.to_coupled_polygons(
-                first_box, self.second.polygons, context)
+                first_box, self.second.polygons, context
+        )
         return (unpack_polygons(self.events_to_polygons(self.sweep()), context)
                 if self.second.polygons
                 else self.first.value)
@@ -214,67 +280,6 @@ class Difference(Operation):
         return result
 
 
-class CompleteIntersection(Operation):
-    __slots__ = ()
-
-    def compute(self) -> Union_[Empty, Mix, Multipoint, Multipolygon,
-                                Multisegment, Polygon, Segment]:
-        context = self.context
-        first_box, second_box = (context.polygons_box(self.first.polygons),
-                                 context.polygons_box(self.second.polygons))
-        if bounding.disjoint_with(first_box, second_box):
-            return context.empty
-        self.first.polygons = bounding.to_intersecting_polygons(
-                second_box, self.first.polygons, context)
-        if not self.first.polygons:
-            return context.empty
-        self.second.polygons = bounding.to_intersecting_polygons(
-                first_box, self.second.polygons, context)
-        if not self.second.polygons:
-            return context.empty
-        events = sorted(self.sweep(),
-                        key=self._events_queue.key)
-        points = []  # type: List[Point]
-        for start, same_start_events in groupby(events,
-                                                key=attrgetter('start')):
-            same_start_events = list(same_start_events)
-            if not (any(event.primary.wholly_in_complete_intersection
-                        for event in same_start_events)
-                    or all_equal(event.from_first
-                                 for event in same_start_events)):
-                points.append(start)
-        segments = endpoints_to_segments(
-                [to_endpoints(event)
-                 for event in events
-                 if (event.is_left
-                     and event.from_first
-                     and event.is_common_polyline_component)],
-                context)
-        polygons = self.events_to_polygons(events)
-        return unpack_mix(unpack_points(points, context),
-                          unpack_segments(segments, context),
-                          unpack_polygons(polygons, context),
-                          context)
-
-    def from_shaped_result(self, event: LeftEvent) -> bool:
-        return (event.inside
-                or not event.from_first and event.is_common_region_boundary)
-
-    def sweep(self) -> Iterable[Event]:
-        self.fill_queue()
-        result = []
-        events_queue = self._events_queue
-        sweep_line = SweepLine(self.context)
-        min_max_x = min(to_polygons_x_max(self.first.polygons),
-                        to_polygons_x_max(self.second.polygons))
-        while events_queue:
-            event = events_queue.pop()
-            if min_max_x < event.start.x:
-                break
-            self.process_event(event, result, sweep_line)
-        return result
-
-
 class Intersection(Operation):
     __slots__ = ()
 
@@ -285,11 +290,13 @@ class Intersection(Operation):
         if bounding.disjoint_with(first_box, second_box):
             return context.empty
         self.first.polygons = bounding.to_coupled_polygons(
-                second_box, self.first.polygons, context)
+                second_box, self.first.polygons, context
+        )
         if not self.first.polygons:
             return context.empty
         self.second.polygons = bounding.to_coupled_polygons(
-                first_box, self.second.polygons, context)
+                first_box, self.second.polygons, context
+        )
         return (unpack_polygons(self.events_to_polygons(self.sweep()), context)
                 if self.second.polygons
                 else context.empty)

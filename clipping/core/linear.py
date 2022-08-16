@@ -102,9 +102,11 @@ class Operation(ABC):
 
     def fill_queue(self) -> None:
         self._events_queue.register(
-                segments_to_endpoints(self.first.segments), True)
+                segments_to_endpoints(self.first.segments), True
+        )
         self._events_queue.register(
-                segments_to_endpoints(self.second.segments), False)
+                segments_to_endpoints(self.second.segments), False
+        )
 
     def process_event(self,
                       event: Event,
@@ -145,22 +147,29 @@ class Difference(Operation):
 
     def compute(self) -> Union_[Empty, Segment, Multisegment]:
         context = self.context
-        first_box, second_box = (
-            context.segments_box(self.first.segments),
-            context.segments_box(self.second.segments))
+        first_box, second_box = (context.segments_box(self.first.segments),
+                                 context.segments_box(self.second.segments))
         if bounding.disjoint_with(first_box, second_box):
             return self.first.value
         self.second.segments = bounding.to_coupled_segments(
-                first_box, self.second.segments, context)
-        return (unpack_segments(endpoints_to_segments(
-                sorted(endpoints
-                       for endpoints, events in groupby(self.sweep(),
-                                                        key=to_endpoints)
-                       if all(event.from_first for event in events)),
-                context),
-                context)
-                if self.second.segments
-                else self.first.value)
+                first_box, self.second.segments, context
+        )
+        return (
+            unpack_segments(
+                    endpoints_to_segments(
+                            sorted(endpoints
+                                   for endpoints, events
+                                   in groupby(self.sweep(),
+                                              key=to_endpoints)
+                                   if all(event.from_first
+                                          for event in events)),
+                            context
+                    ),
+                    context
+            )
+            if self.second.segments
+            else self.first.value
+        )
 
     def sweep(self) -> Iterable[LeftEvent]:
         self.fill_queue()
@@ -239,10 +248,10 @@ class CompleteIntersection(Operation):
             return context.empty
         points = []  # type: List[Point]
         endpoints = []  # type: List[SegmentEndpoints]
-        for start, same_start_events in groupby(sorted(self.sweep(),
-                                                       key=to_endpoints),
-                                                key=attrgetter('start')):
-            same_start_events = list(same_start_events)
+        for start, same_start_events_group in groupby(sorted(self.sweep(),
+                                                             key=to_endpoints),
+                                                      key=attrgetter('start')):
+            same_start_events = list(same_start_events_group)
             if not all_equal(event.from_first for event in same_start_events):
                 no_segment_found = True
                 for event, next_event in zip(same_start_events,
