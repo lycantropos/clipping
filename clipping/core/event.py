@@ -1,3 +1,4 @@
+import sys
 from abc import (ABC,
                  abstractmethod)
 from reprlib import recursive_repr
@@ -11,7 +12,7 @@ from reprit.base import generate_repr
 from .enums import OverlapKind
 from .hints import SegmentEndpoints
 
-UNDEFINED_INDEX = -1
+UNDEFINED_INDEX = sys.maxsize
 
 
 class Event(ABC):
