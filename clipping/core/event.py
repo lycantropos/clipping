@@ -320,7 +320,7 @@ class LeftHoleyEvent(LeftEvent):
     __slots__ = ('below_event_from_shaped_result', 'contour_id', 'from_first',
                  'from_in_to_out', 'from_shaped_result', 'interior_to_left',
                  'other_interior_to_left', 'overlap_kind', 'position',
-                 'start')
+                 'start', 'start_index')
 
     def __init__(self,
                  start: Point,
