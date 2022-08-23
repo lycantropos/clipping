@@ -21,10 +21,12 @@ from ground.hints import (Contour,
 from reprit.base import generate_repr
 
 from . import bounding
-from .event import (LeftHoleyEvent as LeftEvent,
+from .event import (UNDEFINED_INDEX,
+                    LeftHoleyEvent as LeftEvent,
                     RightShapedEvent as RightEvent,
                     events_to_connectivity)
 from .events_queue import HoleyEventsQueue as EventsQueue
+from .hints import Orienteer
 from .operands import HoleyOperand
 from .sweep_line import BinarySweepLine as SweepLine
 from .unpacking import (unpack_mix,
@@ -81,7 +83,11 @@ class Operation(ABC):
                 else below_event)
         event.from_shaped_result = self.from_shaped_result(event)
 
-    def events_to_polygons(self, events: Iterable[Event]) -> Sequence[Polygon]:
+    def events_to_polygons(self, events: Sequence[Event]) -> Sequence[Polygon]:
+        if not events:
+            return []
+        max_start_index = events[-1].start_index
+        assert all(event.start_index <= max_start_index for event in events)
         events = [event
                   for event in events
                   if event.primary.from_shaped_result]
@@ -94,15 +100,17 @@ class Operation(ABC):
         contour_cls, orienteer = context.contour_cls, context.angle_orientation
         contours = []  # type: List[Contour]
         connectivity = events_to_connectivity(events)
+        visited_positions = [UNDEFINED_INDEX] * (max_start_index + 1)
         for index, event in enumerate(events):
             if processed[index]:
                 continue
             contour_id = len(contours)
             _compute_relations(event, contour_id, are_internal, depths, holes,
                                parents)
-            vertices = _events_to_contour_vertices(event, events, contour_id,
-                                                   connectivity, processed)
-            shrink_collinear_vertices(vertices, orienteer)
+            contour_events = _to_contour_events(event, events, connectivity,
+                                                processed, visited_positions)
+            _process_contour_events(contour_events, contour_id, processed)
+            vertices = _contour_events_to_vertices(contour_events, orienteer)
             if depths[contour_id] % 2:
                 # holes will be in clockwise order
                 vertices[:] = vertices[:1] + vertices[:0:-1]
@@ -173,14 +181,29 @@ class Operation(ABC):
                 self.compute_fields(below_event, below_below_event)
                 self.compute_fields(event, below_event)
 
-    def sweep(self) -> Iterable[Event]:
+    def sweep(self) -> List[Event]:
         self.fill_queue()
         result = []
         sweep_line = SweepLine(self.context)
         events_queue = self._events_queue
+        event = events_queue.pop()
+        start = event.start
+        start_index = event.start_index = 0
+        self.process_event(event, result, sweep_line)
         while events_queue:
+            if event.start != start:
+                start = event.start
+                start_index += 1
+            event.start_index = start_index
             self.process_event(events_queue.pop(), result, sweep_line)
         return result
+
+
+def _contour_events_to_vertices(events: Sequence[Event],
+                                orienteer: Orienteer) -> List[Point]:
+    result = [events[0].start] + [event.end for event in events[:-1]]
+    shrink_collinear_vertices(result, orienteer)
+    return result
 
 
 class CompleteIntersection(Operation):
@@ -230,17 +253,25 @@ class CompleteIntersection(Operation):
         return (event.inside
                 or not event.from_first and event.is_common_region_boundary)
 
-    def sweep(self) -> Iterable[Event]:
+    def sweep(self) -> List[Event]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
         sweep_line = SweepLine(self.context)
         min_max_x = min(to_polygons_x_max(self.first.polygons),
                         to_polygons_x_max(self.second.polygons))
+        event = events_queue.pop()
+        start = event.start
+        start_index = event.start_index = 0
+        self.process_event(event, result, sweep_line)
         while events_queue:
             event = events_queue.pop()
             if min_max_x < event.start.x:
                 break
+            if event.start != start:
+                start = event.start
+                start_index += 1
+            event.start_index = start_index
             self.process_event(event, result, sweep_line)
         return result
 
@@ -266,16 +297,24 @@ class Difference(Operation):
                 if event.from_first
                 else event.inside or event.is_common_polyline_component)
 
-    def sweep(self) -> Iterable[Event]:
+    def sweep(self) -> List[Event]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
         sweep_line = SweepLine(self.context)
         first_x_max = to_polygons_x_max(self.first.polygons)
+        event = events_queue.pop()
+        start = event.start
+        start_index = event.start_index = 0
+        self.process_event(event, result, sweep_line)
         while events_queue:
             event = events_queue.pop()
             if first_x_max < event.start.x:
                 break
+            if event.start != start:
+                start = event.start
+                start_index += 1
+            event.start_index = start_index
             self.process_event(event, result, sweep_line)
         return result
 
@@ -305,17 +344,25 @@ class Intersection(Operation):
         return (event.inside
                 or not event.from_first and event.is_common_region_boundary)
 
-    def sweep(self) -> Iterable[Event]:
+    def sweep(self) -> List[Event]:
         self.fill_queue()
         result = []
         events_queue = self._events_queue
         sweep_line = SweepLine(self.context)
         min_max_x = min(to_polygons_x_max(self.first.polygons),
                         to_polygons_x_max(self.second.polygons))
+        event = events_queue.pop()
+        start = event.start
+        start_index = event.start_index = 0
+        self.process_event(event, result, sweep_line)
         while events_queue:
             event = events_queue.pop()
             if min_max_x < event.start.x:
                 break
+            if event.start != start:
+                start = event.start
+                start_index += 1
+            event.start_index = start_index
             self.process_event(event, result, sweep_line)
         return result
 
@@ -387,32 +434,43 @@ def _compute_relations(event: LeftEvent,
     are_internal.append(is_internal)
 
 
-def _events_to_contour_vertices(cursor: LeftEvent,
-                                events: Sequence[LeftEvent],
-                                contour_id: int,
-                                connectivity: Sequence[int],
-                                processed: List[bool]) -> List[Point]:
-    contour_start = cursor.start
-    result, contour_events = [contour_start], [cursor]
-    opposite_position = cursor.right.position
-    vertices_positions = {contour_start: 0}
+def _to_contour_events(event: LeftEvent,
+                       events: Sequence[LeftEvent],
+                       connectivity: Sequence[int],
+                       processed: Sequence[bool],
+                       visited_positions: List[int]) -> List[Event]:
+    result = [event]
+    visited_positions[event.start_index] = 0
+    opposite_position = event.right.position
+    contour_start = event.start
+    cursor = event
     while cursor.end != contour_start:
-        vertex = cursor.end
-        if vertex in vertices_positions:
-            # vertices loop found, i.e. contour has self-intersection
-            previous_vertex_position = vertices_positions[vertex]
-            del result[previous_vertex_position:]
-            del contour_events[previous_vertex_position:]
+        if visited_positions[cursor.end_index] == UNDEFINED_INDEX:
+            visited_positions[cursor.end_index] = len(result)
         else:
-            vertices_positions[vertex] = len(result)
-        result.append(vertex)
+            # vertices loop found, i.e. contour has self-intersection
+            previous_vertex_position = visited_positions[cursor.end_index]
+            assert previous_vertex_position != 0
+            for event in result[previous_vertex_position:]:
+                visited_positions[event.end_index] = UNDEFINED_INDEX
+            del result[previous_vertex_position:]
         position = _to_next_position(opposite_position, processed,
                                      connectivity)
         if position is None:
             break
         cursor = events[position]
-        contour_events.append(cursor)
         opposite_position = cursor.opposite.position
+        result.append(cursor)
+    visited_positions[result[0].start_index] = UNDEFINED_INDEX
+    for event in result:
+        visited_positions[event.end_index] = UNDEFINED_INDEX
+    assert all(position == UNDEFINED_INDEX for position in visited_positions)
+    return result
+
+
+def _process_contour_events(contour_events: Iterable[Event],
+                            contour_id: int,
+                            processed: List[bool]) -> None:
     for event in contour_events:
         processed[event.position] = processed[event.opposite.position] = True
         if event.is_left:
@@ -421,7 +479,6 @@ def _events_to_contour_vertices(cursor: LeftEvent,
         else:
             event.opposite.from_in_to_out = True
             event.opposite.contour_id = contour_id
-    return result
 
 
 def _to_next_position(position: int,

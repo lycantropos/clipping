@@ -11,8 +11,12 @@ from reprit.base import generate_repr
 from .enums import OverlapKind
 from .hints import SegmentEndpoints
 
+UNDEFINED_INDEX = -1
+
 
 class Event(ABC):
+    start: Point
+
     __slots__ = ()
 
     @property
@@ -28,11 +32,6 @@ class Event(ABC):
     @abstractmethod
     def opposite(self) -> 'Event':
         """Returns opposite of the event."""
-
-    @property
-    @abstractmethod
-    def start(self) -> Point:
-        """Returns start of the event."""
 
 
 class LeftEvent(Event):
@@ -90,16 +89,12 @@ class LeftNaryEvent(LeftEvent):
 
 
 class RightNaryEvent(RightEvent):
-    __slots__ = '_start',
+    __slots__ = 'start',
 
     def __init__(self, start: Point, left: LeftNaryEvent) -> None:
-        self.left, self._start = left, start
+        self.left, self.start = left, start
 
     __repr__ = recursive_repr()(generate_repr(__init__))
-
-    @property
-    def start(self) -> Point:
-        return self._start
 
 
 class LeftBinaryEvent(LeftEvent):
@@ -114,19 +109,15 @@ class LeftBinaryEvent(LeftEvent):
         event.right = RightBinaryEvent(end, event)
         return event
 
-    __slots__ = 'from_first', '_start'
+    __slots__ = 'from_first', 'start'
 
     def __init__(self,
                  start: Point,
                  right: Optional['RightBinaryEvent'],
                  from_first: bool) -> None:
-        self.from_first, self.right, self._start = from_first, right, start
+        self.from_first, self.right, self.start = from_first, right, start
 
     __repr__ = recursive_repr()(generate_repr(__init__))
-
-    @property
-    def start(self) -> Point:
-        return self._start
 
     def divide(self, point: Point) -> 'LeftBinaryEvent':
         tail = self.right.left = LeftBinaryEvent(point, self.right,
@@ -136,20 +127,16 @@ class LeftBinaryEvent(LeftEvent):
 
 
 class RightBinaryEvent(RightEvent):
-    __slots__ = '_start',
+    __slots__ = 'start',
 
     def __init__(self, start: Point, left: LeftBinaryEvent) -> None:
-        self.left, self._start = left, start
+        self.left, self.start = left, start
 
     __repr__ = recursive_repr()(generate_repr(__init__))
 
     @property
     def from_first(self) -> bool:
         return self.left.from_first
-
-    @property
-    def start(self) -> Point:
-        return self._start
 
 
 class LeftMixedEvent(LeftEvent):
@@ -167,7 +154,7 @@ class LeftMixedEvent(LeftEvent):
         return result
 
     __slots__ = ('from_first', 'from_result', 'interior_to_left', 'is_overlap',
-                 'other_interior_to_left', '_start')
+                 'other_interior_to_left', 'start')
 
     def __init__(self,
                  start: Point,
@@ -177,7 +164,7 @@ class LeftMixedEvent(LeftEvent):
                  other_interior_to_left: bool = False,
                  is_overlap: bool = False,
                  from_result: bool = False) -> None:
-        self.right, self._start = right, start
+        self.right, self.start = right, start
         self.from_first = from_first
         self.interior_to_left, self.other_interior_to_left = (
             interior_to_left, other_interior_to_left)
@@ -197,10 +184,6 @@ class LeftMixedEvent(LeftEvent):
     def primary(self) -> 'LeftMixedEvent':
         return self
 
-    @property
-    def start(self) -> Point:
-        return self._start
-
     def divide(self, point: Point) -> 'LeftMixedEvent':
         tail = self.right.left = LeftMixedEvent(
                 point, self.right, self.from_first, self.interior_to_left)
@@ -209,10 +192,10 @@ class LeftMixedEvent(LeftEvent):
 
 
 class RightMixedEvent(RightEvent):
-    __slots__ = '_start',
+    __slots__ = 'start',
 
     def __init__(self, start: Point, left: LeftMixedEvent) -> None:
-        self.left, self._start = left, start
+        self.left, self.start = left, start
 
     __repr__ = recursive_repr()(generate_repr(__init__))
 
@@ -223,10 +206,6 @@ class RightMixedEvent(RightEvent):
     @property
     def primary(self) -> LeftMixedEvent:
         return self.left
-
-    @property
-    def start(self) -> Point:
-        return self._start
 
 
 class LeftHolelessEvent(LeftEvent):
@@ -245,7 +224,7 @@ class LeftHolelessEvent(LeftEvent):
 
     __slots__ = ('from_first', 'from_shaped_result', 'interior_to_left',
                  'other_interior_to_left', 'overlap_kind', 'position',
-                 '_start')
+                 'start')
 
     def __init__(self,
                  start: Point,
@@ -256,7 +235,7 @@ class LeftHolelessEvent(LeftEvent):
                  overlap_kind: OverlapKind = OverlapKind.NONE,
                  from_shaped_result: bool = False,
                  position: int = 0) -> None:
-        self.right, self._start = right, start
+        self.right, self.start = right, start
         self.from_first = from_first
         self.interior_to_left = interior_to_left
         self.other_interior_to_left = other_interior_to_left
@@ -309,10 +288,6 @@ class LeftHolelessEvent(LeftEvent):
         return self
 
     @property
-    def start(self) -> Point:
-        return self._start
-
-    @property
     def wholly_in_complete_intersection(self) -> bool:
         """
         Checks if the segment wholly is a part of the complete intersection.
@@ -344,7 +319,7 @@ class LeftHoleyEvent(LeftEvent):
     __slots__ = ('below_event_from_shaped_result', 'contour_id', 'from_first',
                  'from_in_to_out', 'from_shaped_result', 'interior_to_left',
                  'other_interior_to_left', 'overlap_kind', 'position',
-                 '_start')
+                 'start')
 
     def __init__(self,
                  start: Point,
@@ -355,22 +330,28 @@ class LeftHoleyEvent(LeftEvent):
                  overlap_kind: OverlapKind = OverlapKind.NONE,
                  from_shaped_result: bool = False,
                  from_in_to_out: bool = False,
-                 position: int = 0,
+                 position: int = UNDEFINED_INDEX,
+                 start_index: int = UNDEFINED_INDEX,
                  contour_id: Optional[int] = None,
                  below_event_from_shaped_result: Optional['LeftHoleyEvent']
                  = None) -> None:
-        self.right, self._start = right, start
+        self.right, self.start = right, start
         self.from_first = from_first
         self.from_shaped_result = from_shaped_result
         self.interior_to_left = interior_to_left
         self.other_interior_to_left = other_interior_to_left
         self.overlap_kind = overlap_kind
         self.position = position
+        self.start_index = start_index
         self.from_in_to_out = from_in_to_out
         self.contour_id = contour_id
         self.below_event_from_shaped_result = below_event_from_shaped_result
 
     __repr__ = recursive_repr()(generate_repr(__init__))
+
+    @property
+    def end_index(self) -> int:
+        return self.opposite.start_index
 
     @property
     def inside(self) -> bool:
@@ -419,10 +400,6 @@ class LeftHoleyEvent(LeftEvent):
                 and self.overlap_kind is OverlapKind.NONE)
 
     @property
-    def start(self) -> Point:
-        return self._start
-
-    @property
     def wholly_in_complete_intersection(self) -> bool:
         """
         Checks if the segment wholly is a part of the complete intersection.
@@ -441,15 +418,22 @@ LeftShapedEvent = TypeVar('LeftShapedEvent', LeftHolelessEvent, LeftHoleyEvent)
 
 
 class RightShapedEvent(RightEvent):
-    __slots__ = 'position', '_start'
+    __slots__ = 'position', 'start', 'start_index'
 
     def __init__(self,
                  start: Point,
                  left: LeftShapedEvent,
-                 position: int = 0) -> None:
-        self.left, self.position, self._start = left, position, start
+                 position: int = UNDEFINED_INDEX,
+                 start_index: int = UNDEFINED_INDEX) -> None:
+        self.left, self.position, self.start, self.start_index = (
+            left, position, start, start_index
+        )
 
     __repr__ = recursive_repr()(generate_repr(__init__))
+
+    @property
+    def end_index(self) -> int:
+        return self.opposite.start_index
 
     @property
     def from_first(self) -> bool:
@@ -458,10 +442,6 @@ class RightShapedEvent(RightEvent):
     @property
     def primary(self) -> LeftShapedEvent:
         return self.left
-
-    @property
-    def start(self) -> Point:
-        return self._start
 
 
 def events_to_connectivity(events: Sequence[Event]) -> Sequence[int]:
@@ -484,7 +464,8 @@ def events_to_connectivity(events: Sequence[Event]) -> Sequence[int]:
         has_left_events = left_stop_index >= left_start_index
         if has_right_events:
             result[right_start_index:right_stop_index] = range(
-                    right_start_index + 1, right_stop_index + 1)
+                    right_start_index + 1, right_stop_index + 1
+            )
             result[right_stop_index] = (left_stop_index
                                         if has_left_events
                                         else right_start_index)
@@ -493,5 +474,6 @@ def events_to_connectivity(events: Sequence[Event]) -> Sequence[int]:
                                         if has_right_events
                                         else left_stop_index)
             result[left_start_index + 1:left_stop_index + 1] = range(
-                    left_start_index, left_stop_index)
+                    left_start_index, left_stop_index
+            )
     return result
