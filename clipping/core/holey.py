@@ -87,6 +87,7 @@ class Operation(ABC):
         if not events:
             return []
         max_start_index = events[-1].start_index
+        assert max_start_index != UNDEFINED_INDEX
         assert all(event.start_index <= max_start_index for event in events)
         events = [event
                   for event in events
@@ -191,11 +192,12 @@ class Operation(ABC):
         start_index = event.start_index = 0
         self.process_event(event, result, sweep_line)
         while events_queue:
+            event = events_queue.pop()
             if event.start != start:
                 start = event.start
                 start_index += 1
             event.start_index = start_index
-            self.process_event(events_queue.pop(), result, sweep_line)
+            self.process_event(event, result, sweep_line)
         return result
 
 
