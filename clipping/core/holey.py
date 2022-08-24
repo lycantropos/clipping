@@ -86,24 +86,24 @@ class Operation(ABC):
     def events_to_polygons(self, events: Sequence[Event]) -> Sequence[Polygon]:
         if not events:
             return []
-        max_start_index = events[-1].start_index
-        assert max_start_index != UNDEFINED_INDEX
-        assert all(event.start_index <= max_start_index for event in events)
+        max_endpoint_id = events[-1].start_id
+        assert max_endpoint_id != UNDEFINED_INDEX
+        assert all(event.start_id <= max_endpoint_id for event in events)
         events = [event
                   for event in events
                   if event.primary.from_shaped_result]
         events.sort(key=self._events_queue.key)
-        for index, event in enumerate(events):
-            event.position = index
+        for event_id, event in enumerate(events):
+            event.id = event_id
         are_internal, depths, holes, parents = [], [], [], []
         are_events_processed = [False] * len(events)
         context = self.context
         contour_cls, orienteer = context.contour_cls, context.angle_orientation
         contours = []  # type: List[Contour]
         connectivity = events_to_connectivity(events)
-        visited_endpoints_positions = [UNDEFINED_INDEX] * (max_start_index + 1)
-        for index, event in enumerate(events):
-            if are_events_processed[index]:
+        visited_endpoints_positions = [UNDEFINED_INDEX] * (max_endpoint_id + 1)
+        for event_id, event in enumerate(events):
+            if are_events_processed[event_id]:
                 continue
             contour_id = len(contours)
             _compute_relations(event, contour_id, are_internal, depths, holes,
@@ -120,19 +120,19 @@ class Operation(ABC):
             contours.append(contour_cls(vertices))
         result = []
         polygon_cls = context.polygon_cls
-        for index, contour in enumerate(contours):
-            if are_internal[index]:
+        for event_id, contour in enumerate(contours):
+            if are_internal[event_id]:
                 # hole of a hole is an external polygon
                 result.extend(
                         polygon_cls(contours[hole_index],
                                     [contours[hole_hole_index]
                                      for hole_hole_index in holes[hole_index]])
-                        for hole_index in holes[index]
+                        for hole_index in holes[event_id]
                 )
             else:
                 result.append(polygon_cls(contour,
                                           [contours[hole_index]
-                                           for hole_index in holes[index]]))
+                                           for hole_index in holes[event_id]]))
         return result
 
     def fill_queue(self) -> None:
@@ -190,15 +190,15 @@ class Operation(ABC):
         sweep_line = SweepLine(self.context)
         events_queue = self._events_queue
         event = events_queue.pop()
-        start = event.start
-        start_index = event.start_index = 0
+        current_endpoint = event.start
+        current_endpoint_id = event.start_id = 0
         self.process_event(event, result, sweep_line)
         while events_queue:
             event = events_queue.pop()
-            if event.start != start:
-                start = event.start
-                start_index += 1
-            event.start_index = start_index
+            if event.start != current_endpoint:
+                current_endpoint = event.start
+                current_endpoint_id += 1
+            event.start_id = current_endpoint_id
             self.process_event(event, result, sweep_line)
         return result
 
@@ -265,17 +265,17 @@ class CompleteIntersection(Operation):
         min_max_x = min(to_polygons_x_max(self.first.polygons),
                         to_polygons_x_max(self.second.polygons))
         event = events_queue.pop()
-        start = event.start
-        start_index = event.start_index = 0
+        current_endpoint = event.start
+        current_endpoint_id = event.start_id = 0
         self.process_event(event, result, sweep_line)
         while events_queue:
             event = events_queue.pop()
             if min_max_x < event.start.x:
                 break
-            if event.start != start:
-                start = event.start
-                start_index += 1
-            event.start_index = start_index
+            if event.start != current_endpoint:
+                current_endpoint = event.start
+                current_endpoint_id += 1
+            event.start_id = current_endpoint_id
             self.process_event(event, result, sweep_line)
         return result
 
@@ -308,17 +308,17 @@ class Difference(Operation):
         sweep_line = SweepLine(self.context)
         first_x_max = to_polygons_x_max(self.first.polygons)
         event = events_queue.pop()
-        start = event.start
-        start_index = event.start_index = 0
+        current_endpoint = event.start
+        current_endpoint_id = event.start_id = 0
         self.process_event(event, result, sweep_line)
         while events_queue:
             event = events_queue.pop()
             if first_x_max < event.start.x:
                 break
-            if event.start != start:
-                start = event.start
-                start_index += 1
-            event.start_index = start_index
+            if event.start != current_endpoint:
+                current_endpoint = event.start
+                current_endpoint_id += 1
+            event.start_id = current_endpoint_id
             self.process_event(event, result, sweep_line)
         return result
 
@@ -356,17 +356,17 @@ class Intersection(Operation):
         min_max_x = min(to_polygons_x_max(self.first.polygons),
                         to_polygons_x_max(self.second.polygons))
         event = events_queue.pop()
-        start = event.start
-        start_index = event.start_index = 0
+        current_endpoint = event.start
+        current_endpoint_id = event.start_id = 0
         self.process_event(event, result, sweep_line)
         while events_queue:
             event = events_queue.pop()
             if min_max_x < event.start.x:
                 break
-            if event.start != start:
-                start = event.start
-                start_index += 1
-            event.start_index = start_index
+            if event.start != current_endpoint:
+                current_endpoint = event.start
+                current_endpoint_id += 1
+            event.start_id = current_endpoint_id
             self.process_event(event, result, sweep_line)
         return result
 
@@ -439,39 +439,38 @@ def _compute_relations(event: LeftEvent,
 
 
 def _to_contour_events(event: LeftEvent,
-                       events: Sequence[LeftEvent],
+                       events: Sequence[Event],
                        connectivity: Sequence[int],
                        are_events_processed: Sequence[bool],
                        visited_endpoints_positions: List[int]) -> List[Event]:
+    assert event.is_left
     result = [event]
-    visited_endpoints_positions[event.start_index] = 0
-    opposite_position = event.right.position
+    visited_endpoints_positions[event.start_id] = 0
+    opposite_event_id = event.right.id
     contour_start = event.start
     cursor = event
     while cursor.end != contour_start:
-        previous_endpoint_position = visited_endpoints_positions[
-            cursor.end_index
-        ]
+        previous_endpoint_position = visited_endpoints_positions[cursor.end_id]
         if previous_endpoint_position == UNDEFINED_INDEX:
-            visited_endpoints_positions[cursor.end_index] = len(result)
+            visited_endpoints_positions[cursor.end_id] = len(result)
         else:
             # vertices loop found, i.e. contour has self-intersection
             assert previous_endpoint_position != 0
             for event in result[previous_endpoint_position:]:
-                visited_endpoints_positions[event.end_index] = UNDEFINED_INDEX
+                visited_endpoints_positions[event.end_id] = UNDEFINED_INDEX
             del result[previous_endpoint_position:]
-        position = _to_next_position(opposite_position, are_events_processed,
+        event_id = _to_next_event_id(opposite_event_id, are_events_processed,
                                      connectivity)
-        if position is None:
+        if event_id == UNDEFINED_INDEX:
             break
-        cursor = events[position]
-        opposite_position = cursor.opposite.position
+        cursor = events[event_id]
+        opposite_event_id = cursor.opposite.id
         result.append(cursor)
-    visited_endpoints_positions[result[0].start_index] = UNDEFINED_INDEX
+    visited_endpoints_positions[result[0].start_id] = UNDEFINED_INDEX
     for event in result:
-        visited_endpoints_positions[event.end_index] = UNDEFINED_INDEX
-    assert all(position == UNDEFINED_INDEX for position in
-               visited_endpoints_positions)
+        visited_endpoints_positions[event.end_id] = UNDEFINED_INDEX
+    assert all(position == UNDEFINED_INDEX
+               for position in visited_endpoints_positions)
     return result
 
 
@@ -479,8 +478,8 @@ def _process_contour_events(contour_events: Iterable[Event],
                             contour_id: int,
                             are_events_processed: List[bool]) -> None:
     for event in contour_events:
-        are_events_processed[event.position] = True
-        are_events_processed[event.opposite.position] = True
+        are_events_processed[event.id] = True
+        are_events_processed[event.opposite.id] = True
         if event.is_left:
             event.from_in_to_out = False
             event.contour_id = contour_id
@@ -489,13 +488,13 @@ def _process_contour_events(contour_events: Iterable[Event],
             event.opposite.contour_id = contour_id
 
 
-def _to_next_position(position: int,
+def _to_next_event_id(event_id: int,
                       are_events_processed: Sequence[bool],
-                      connectivity: Sequence[int]) -> Optional[int]:
-    candidate = position
+                      connectivity: Sequence[int]) -> int:
+    candidate = event_id
     while True:
         candidate = connectivity[candidate]
         if not are_events_processed[candidate]:
             return candidate
-        elif candidate == position:
-            return None
+        elif candidate == event_id:
+            return UNDEFINED_INDEX

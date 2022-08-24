@@ -7,6 +7,7 @@ from typing import (Optional,
                     TypeVar)
 
 from ground.hints import Point
+from reprit import seekers
 from reprit.base import generate_repr
 
 from .enums import OverlapKind
@@ -223,28 +224,30 @@ class LeftHolelessEvent(LeftEvent):
         event.right = RightShapedEvent(end, event)
         return event
 
-    __slots__ = ('from_first', 'from_shaped_result', 'interior_to_left',
-                 'other_interior_to_left', 'overlap_kind', 'position',
-                 'start')
+    __slots__ = ('from_first', 'from_shaped_result', 'id', 'interior_to_left',
+                 'other_interior_to_left', 'overlap_kind', 'start')
 
     def __init__(self,
                  start: Point,
                  right: Optional['RightShapedEvent'],
                  from_first: bool,
                  interior_to_left: bool,
-                 other_interior_to_left: bool = False,
-                 overlap_kind: OverlapKind = OverlapKind.NONE,
+                 *,
                  from_shaped_result: bool = False,
-                 position: int = 0) -> None:
-        self.right, self.start = right, start
-        self.from_first = from_first
-        self.interior_to_left = interior_to_left
-        self.other_interior_to_left = other_interior_to_left
-        self.overlap_kind = overlap_kind
-        self.from_shaped_result = from_shaped_result
-        self.position = position
+                 id_: int = 0,
+                 other_interior_to_left: bool = False,
+                 overlap_kind: OverlapKind = OverlapKind.NONE) -> None:
+        (
+            self.from_first, self.from_shaped_result, self.id,
+            self.interior_to_left, self.other_interior_to_left,
+            self.overlap_kind, self.right, self.start
+        ) = (
+            from_first, from_shaped_result, id_, interior_to_left,
+            other_interior_to_left, overlap_kind, right, start
+        )
 
-    __repr__ = recursive_repr()(generate_repr(__init__))
+    __repr__ = recursive_repr()(generate_repr(__init__,
+                                              field_seeker=seekers.complex_))
 
     @property
     def inside(self) -> bool:
@@ -319,40 +322,42 @@ class LeftHoleyEvent(LeftEvent):
 
     __slots__ = ('below_event_from_shaped_result', 'contour_id', 'from_first',
                  'from_in_to_out', 'from_shaped_result', 'interior_to_left',
-                 'other_interior_to_left', 'overlap_kind', 'position',
-                 'start', 'start_index')
+                 'other_interior_to_left', 'overlap_kind', 'id', 'start',
+                 'start_id')
 
-    def __init__(self,
-                 start: Point,
-                 right: Optional['RightShapedEvent'],
-                 from_first: bool,
-                 interior_to_left: bool,
-                 other_interior_to_left: bool = False,
-                 overlap_kind: OverlapKind = OverlapKind.NONE,
-                 from_shaped_result: bool = False,
-                 from_in_to_out: bool = False,
-                 position: int = UNDEFINED_INDEX,
-                 start_index: int = UNDEFINED_INDEX,
-                 contour_id: Optional[int] = None,
-                 below_event_from_shaped_result: Optional['LeftHoleyEvent']
-                 = None) -> None:
-        self.right, self.start = right, start
-        self.from_first = from_first
-        self.from_shaped_result = from_shaped_result
-        self.interior_to_left = interior_to_left
-        self.other_interior_to_left = other_interior_to_left
-        self.overlap_kind = overlap_kind
-        self.position = position
-        self.start_index = start_index
-        self.from_in_to_out = from_in_to_out
-        self.contour_id = contour_id
-        self.below_event_from_shaped_result = below_event_from_shaped_result
+    def __init__(
+            self,
+            start: Point,
+            right: Optional['RightShapedEvent'],
+            from_first: bool,
+            interior_to_left: bool,
+            *,
+            below_event_from_shaped_result: Optional['LeftHoleyEvent'] = None,
+            contour_id: Optional[int] = None,
+            from_in_to_out: bool = False,
+            from_shaped_result: bool = False,
+            id_: int = UNDEFINED_INDEX,
+            other_interior_to_left: bool = False,
+            overlap_kind: OverlapKind = OverlapKind.NONE,
+            start_id: int = UNDEFINED_INDEX
+    ) -> None:
+        (
+            self.below_event_from_shaped_result, self.contour_id,
+            self.from_first, self.from_in_to_out, self.from_shaped_result,
+            self.id, self.interior_to_left, self.other_interior_to_left,
+            self.overlap_kind, self.right, self.start, self.start_id
+        ) = (
+            below_event_from_shaped_result, contour_id, from_first,
+            from_in_to_out, from_shaped_result, id_, interior_to_left,
+            other_interior_to_left, overlap_kind, right, start, start_id
+        )
 
-    __repr__ = recursive_repr()(generate_repr(__init__))
+    __repr__ = recursive_repr()(generate_repr(__init__,
+                                              field_seeker=seekers.complex_))
 
     @property
-    def end_index(self) -> int:
-        return self.opposite.start_index
+    def end_id(self) -> int:
+        return self.opposite.start_id
 
     @property
     def inside(self) -> bool:
@@ -419,22 +424,24 @@ LeftShapedEvent = TypeVar('LeftShapedEvent', LeftHolelessEvent, LeftHoleyEvent)
 
 
 class RightShapedEvent(RightEvent):
-    __slots__ = 'position', 'start', 'start_index'
+    __slots__ = 'id', 'start', 'start_id'
 
     def __init__(self,
                  start: Point,
                  left: LeftShapedEvent,
-                 position: int = UNDEFINED_INDEX,
-                 start_index: int = UNDEFINED_INDEX) -> None:
-        self.left, self.position, self.start, self.start_index = (
-            left, position, start, start_index
+                 *,
+                 id_: int = UNDEFINED_INDEX,
+                 start_id: int = UNDEFINED_INDEX) -> None:
+        self.id, self.left, self.start, self.start_id = (
+            id_, left, start, start_id
         )
 
-    __repr__ = recursive_repr()(generate_repr(__init__))
+    __repr__ = recursive_repr()(generate_repr(__init__,
+                                              field_seeker=seekers.complex_))
 
     @property
-    def end_index(self) -> int:
-        return self.opposite.start_index
+    def end_id(self) -> int:
+        return self.opposite.start_id
 
     @property
     def from_first(self) -> bool:

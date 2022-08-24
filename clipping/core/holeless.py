@@ -19,7 +19,8 @@ from ground.hints import (Empty,
 from reprit.base import generate_repr
 
 from . import bounding
-from .event import (LeftHolelessEvent as LeftEvent,
+from .event import (UNDEFINED_INDEX,
+                    LeftHolelessEvent as LeftEvent,
                     RightShapedEvent as RightEvent,
                     events_to_connectivity)
 from .events_queue import HolelessEventsQueue as EventsQueue
@@ -79,32 +80,32 @@ class Operation(ABC):
                          for event in events
                          if event.primary.from_shaped_result],
                         key=self._events_queue.key)
-        for index, event in enumerate(events):
-            event.position = index
+        for event_id, event in enumerate(events):
+            event.id = event_id
         processed = [False] * len(events)
         result = []
         connectivity = events_to_connectivity(events)
         contour_cls, orienteer = (self.context.contour_cls,
                                   self.context.angle_orientation)
-        for index, event in enumerate(events):
-            if processed[index]:
+        for event_id, event in enumerate(events):
+            if processed[event_id]:
                 continue
             contour_start = event.start
             vertices = [contour_start]
             contour_events = [event]
             cursor = event
-            opposite_position = event.opposite.position
-            processed[index] = processed[opposite_position] = True
+            opposite_event_id = event.opposite.id
+            processed[event_id] = processed[opposite_event_id] = True
             while cursor.end != contour_start:
                 vertices.append(cursor.end)
-                position = _to_next_position(opposite_position, processed,
+                event_id = _to_next_event_id(opposite_event_id, processed,
                                              connectivity)
-                if position is None:
+                if event_id == UNDEFINED_INDEX:
                     break
-                cursor = events[position]
+                cursor = events[event_id]
                 contour_events.append(cursor)
-                opposite_position = cursor.opposite.position
-                processed[position] = processed[opposite_position] = True
+                opposite_event_id = cursor.opposite.id
+                processed[event_id] = processed[opposite_event_id] = True
             shrink_collinear_vertices(vertices, orienteer)
             result.append(contour_cls(vertices))
         return result
@@ -253,13 +254,13 @@ class Intersection(Operation):
                 or not event.from_first and event.is_common_region_boundary)
 
 
-def _to_next_position(position: int,
+def _to_next_event_id(event_id: int,
                       processed: List[bool],
-                      connectivity: Sequence[int]) -> Optional[int]:
-    candidate = position
+                      connectivity: Sequence[int]) -> int:
+    candidate = event_id
     while True:
         candidate = connectivity[candidate]
         if not processed[candidate]:
             return candidate
-        elif candidate == position:
-            return None
+        elif candidate == event_id:
+            return UNDEFINED_INDEX
