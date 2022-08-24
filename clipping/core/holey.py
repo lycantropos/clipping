@@ -96,21 +96,23 @@ class Operation(ABC):
         for index, event in enumerate(events):
             event.position = index
         are_internal, depths, holes, parents = [], [], [], []
-        processed = [False] * len(events)
+        are_events_processed = [False] * len(events)
         context = self.context
         contour_cls, orienteer = context.contour_cls, context.angle_orientation
         contours = []  # type: List[Contour]
         connectivity = events_to_connectivity(events)
-        visited_positions = [UNDEFINED_INDEX] * (max_start_index + 1)
+        visited_endpoints_positions = [UNDEFINED_INDEX] * (max_start_index + 1)
         for index, event in enumerate(events):
-            if processed[index]:
+            if are_events_processed[index]:
                 continue
             contour_id = len(contours)
             _compute_relations(event, contour_id, are_internal, depths, holes,
                                parents)
             contour_events = _to_contour_events(event, events, connectivity,
-                                                processed, visited_positions)
-            _process_contour_events(contour_events, contour_id, processed)
+                                                are_events_processed,
+                                                visited_endpoints_positions)
+            _process_contour_events(contour_events, contour_id,
+                                    are_events_processed)
             vertices = _contour_events_to_vertices(contour_events, orienteer)
             if depths[contour_id] % 2:
                 # holes will be in clockwise order
@@ -439,42 +441,46 @@ def _compute_relations(event: LeftEvent,
 def _to_contour_events(event: LeftEvent,
                        events: Sequence[LeftEvent],
                        connectivity: Sequence[int],
-                       processed: Sequence[bool],
-                       visited_positions: List[int]) -> List[Event]:
+                       are_events_processed: Sequence[bool],
+                       visited_endpoints_positions: List[int]) -> List[Event]:
     result = [event]
-    visited_positions[event.start_index] = 0
+    visited_endpoints_positions[event.start_index] = 0
     opposite_position = event.right.position
     contour_start = event.start
     cursor = event
     while cursor.end != contour_start:
-        if visited_positions[cursor.end_index] == UNDEFINED_INDEX:
-            visited_positions[cursor.end_index] = len(result)
+        previous_endpoint_position = visited_endpoints_positions[
+            cursor.end_index
+        ]
+        if previous_endpoint_position == UNDEFINED_INDEX:
+            visited_endpoints_positions[cursor.end_index] = len(result)
         else:
             # vertices loop found, i.e. contour has self-intersection
-            previous_vertex_position = visited_positions[cursor.end_index]
-            assert previous_vertex_position != 0
-            for event in result[previous_vertex_position:]:
-                visited_positions[event.end_index] = UNDEFINED_INDEX
-            del result[previous_vertex_position:]
-        position = _to_next_position(opposite_position, processed,
+            assert previous_endpoint_position != 0
+            for event in result[previous_endpoint_position:]:
+                visited_endpoints_positions[event.end_index] = UNDEFINED_INDEX
+            del result[previous_endpoint_position:]
+        position = _to_next_position(opposite_position, are_events_processed,
                                      connectivity)
         if position is None:
             break
         cursor = events[position]
         opposite_position = cursor.opposite.position
         result.append(cursor)
-    visited_positions[result[0].start_index] = UNDEFINED_INDEX
+    visited_endpoints_positions[result[0].start_index] = UNDEFINED_INDEX
     for event in result:
-        visited_positions[event.end_index] = UNDEFINED_INDEX
-    assert all(position == UNDEFINED_INDEX for position in visited_positions)
+        visited_endpoints_positions[event.end_index] = UNDEFINED_INDEX
+    assert all(position == UNDEFINED_INDEX for position in
+               visited_endpoints_positions)
     return result
 
 
 def _process_contour_events(contour_events: Iterable[Event],
                             contour_id: int,
-                            processed: List[bool]) -> None:
+                            are_events_processed: List[bool]) -> None:
     for event in contour_events:
-        processed[event.position] = processed[event.opposite.position] = True
+        are_events_processed[event.position] = True
+        are_events_processed[event.opposite.position] = True
         if event.is_left:
             event.from_in_to_out = False
             event.contour_id = contour_id
@@ -484,12 +490,12 @@ def _process_contour_events(contour_events: Iterable[Event],
 
 
 def _to_next_position(position: int,
-                      processed: Sequence[bool],
+                      are_events_processed: Sequence[bool],
                       connectivity: Sequence[int]) -> Optional[int]:
     candidate = position
     while True:
         candidate = connectivity[candidate]
-        if not processed[candidate]:
+        if not are_events_processed[candidate]:
             return candidate
         elif candidate == position:
             return None
