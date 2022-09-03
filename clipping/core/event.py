@@ -463,20 +463,19 @@ def events_to_connectivity(events: Sequence[Event]) -> Sequence[int]:
                and events[index].start == current_start
                and not events[index].is_left):
             index += 1
-        right_stop_index = index - 1
         left_start_index = index
         while index < events_count and events[index].start == current_start:
             index += 1
         left_stop_index = index - 1
-        has_right_events = right_stop_index >= right_start_index
+        has_right_events = left_start_index >= right_start_index + 1
         has_left_events = left_stop_index >= left_start_index
         if has_right_events:
-            result[right_start_index:right_stop_index] = range(
-                    right_start_index + 1, right_stop_index + 1
+            result[right_start_index:left_start_index - 1] = range(
+                    right_start_index + 1, left_start_index - 1 + 1
             )
-            result[right_stop_index] = (left_stop_index
-                                        if has_left_events
-                                        else right_start_index)
+            result[left_start_index - 1] = (left_stop_index
+                                            if has_left_events
+                                            else right_start_index)
         if has_left_events:
             result[left_start_index] = (right_start_index
                                         if has_right_events
