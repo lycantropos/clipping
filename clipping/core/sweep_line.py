@@ -126,8 +126,9 @@ class BinarySweepLineKey:
                 # other segment fully lies on one side
                 return other_start_orientation is Orientation.COUNTERCLOCKWISE
             # segments are collinear
-            elif event.from_first is not other_event.from_first:
-                return event.from_first
+            elif (event.from_first_operand
+                  is not other_event.from_first_operand):
+                return event.from_first_operand
             elif start.x == other_start.x:
                 if start.y != other_start.y:
                     # segments are vertical

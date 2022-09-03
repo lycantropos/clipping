@@ -68,10 +68,11 @@ class Operation(ABC):
                        event: LeftEvent,
                        below_event: Optional[LeftEvent]) -> None:
         if below_event is not None:
-            event.other_interior_to_left = (below_event.other_interior_to_left
-                                            if (event.from_first
-                                                is below_event.from_first)
-                                            else below_event.interior_to_left)
+            event.other_interior_to_left = (
+                below_event.other_interior_to_left
+                if event.from_first_operand is below_event.from_first_operand
+                else below_event.interior_to_left
+            )
         event.from_result = self.from_result(event)
 
     def fill_queue(self) -> None:
@@ -136,7 +137,7 @@ class Difference(Operation):
                                context)
 
     def from_result(self, event: LeftEvent) -> bool:
-        return event.from_first and event.outside
+        return event.from_first_operand and event.outside
 
     def sweep(self) -> Iterable[LeftEvent]:
         self.fill_queue()
@@ -179,7 +180,7 @@ class CompleteIntersection(Operation):
             same_start_events = list(same_start_events)
             if not (any(event.primary.from_result
                         for event in same_start_events)
-                    or all_equal(event.from_first
+                    or all_equal(event.from_first_operand
                                  for event in same_start_events)):
                 points.append(start)
         segments = endpoints_to_segments(
@@ -192,7 +193,7 @@ class CompleteIntersection(Operation):
                                  context)
 
     def from_result(self, event: LeftEvent) -> bool:
-        return event.from_first and not event.outside
+        return event.from_first_operand and not event.outside
 
     def sweep(self) -> Iterable[LeftEvent]:
         self.fill_queue()
@@ -234,7 +235,7 @@ class Intersection(Operation):
         return unpack_segments(segments, context)
 
     def from_result(self, event: LeftEvent) -> bool:
-        return event.from_first and not event.outside
+        return event.from_first_operand and not event.outside
 
     def sweep(self) -> Iterable[LeftEvent]:
         self.fill_queue()
@@ -279,7 +280,7 @@ class Union(Operation):
                 else context.mix_cls(context.empty, linear, self.shaped.value))
 
     def from_result(self, event: LeftEvent) -> bool:
-        return event.from_first and event.outside
+        return event.from_first_operand and event.outside
 
     def sweep(self) -> Iterable[LeftEvent]:
         self.fill_queue()

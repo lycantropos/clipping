@@ -70,8 +70,8 @@ class Operation(ABC):
                        ) -> None:
         if below_event is not None:
             event.other_interior_to_left = (below_event.other_interior_to_left
-                                            if (event.from_first
-                                                is below_event.from_first)
+                                            if (event.from_first_operand
+                                                is below_event.from_first_operand)
                                             else below_event.interior_to_left)
         event.from_shaped_result = self.from_shaped_result(event)
 
@@ -183,14 +183,14 @@ class CompleteIntersection(Operation):
             same_start_events = list(same_start_events)
             if not (any(event.primary.wholly_in_complete_intersection
                         for event in same_start_events)
-                    or all_equal(event.from_first
+                    or all_equal(event.from_first_operand
                                  for event in same_start_events)):
                 points.append(start)
         segments = endpoints_to_segments(
                 [to_endpoints(event)
                  for event in events
                  if (event.is_left
-                     and event.from_first
+                     and event.from_first_operand
                      and event.is_common_polyline_component)],
                 context)
         regions = self.events_to_regions(events)
@@ -201,7 +201,7 @@ class CompleteIntersection(Operation):
 
     def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.inside
-                or not event.from_first and event.is_common_region_boundary)
+                or not event.from_first_operand and event.is_common_region_boundary)
 
     def sweep(self) -> Iterable[Event]:
         self.fill_queue()
@@ -251,7 +251,7 @@ class Intersection(Operation):
 
     def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.inside
-                or not event.from_first and event.is_common_region_boundary)
+                or not event.from_first_operand and event.is_common_region_boundary)
 
 
 def _to_next_event_id(event_id: int,

@@ -72,15 +72,17 @@ class Operation(ABC):
     def compute_fields(self, event: LeftEvent, below_event: Optional[LeftEvent]
                        ) -> None:
         if below_event is not None:
-            event.other_interior_to_left = (below_event.other_interior_to_left
-                                            if (event.from_first
-                                                is below_event.from_first)
-                                            else below_event.interior_to_left)
+            event.other_interior_to_left = (
+                below_event.other_interior_to_left
+                if event.from_first_operand is below_event.from_first_operand
+                else below_event.interior_to_left
+            )
             event.below_event_from_shaped_result = (
                 below_event.below_event_from_shaped_result
                 if (not self.from_shaped_result(below_event)
                     or below_event.is_vertical)
-                else below_event)
+                else below_event
+            )
         event.from_shaped_result = self.from_shaped_result(event)
 
     def events_to_polygons(self, events: Sequence[Event]) -> Sequence[Polygon]:
@@ -235,14 +237,14 @@ class CompleteIntersection(Operation):
             same_start_events = list(same_start_events)
             if not (any(event.primary.wholly_in_complete_intersection
                         for event in same_start_events)
-                    or all_equal(event.from_first
+                    or all_equal(event.from_first_operand
                                  for event in same_start_events)):
                 points.append(start)
         segments = endpoints_to_segments(
                 [to_endpoints(event)
                  for event in events
                  if (event.is_left
-                     and event.from_first
+                     and event.from_first_operand
                      and event.is_common_polyline_component)],
                 context
         )
@@ -253,7 +255,7 @@ class CompleteIntersection(Operation):
 
     def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.inside
-                or not event.from_first and event.is_common_region_boundary)
+                or not event.from_first_operand and event.is_common_region_boundary)
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -296,7 +298,7 @@ class Difference(Operation):
 
     def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.outside
-                if event.from_first
+                if event.from_first_operand
                 else event.inside or event.is_common_polyline_component)
 
     def sweep(self) -> List[Event]:
@@ -344,7 +346,7 @@ class Intersection(Operation):
 
     def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.inside
-                or not event.from_first and event.is_common_region_boundary)
+                or not event.from_first_operand and event.is_common_region_boundary)
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -403,7 +405,7 @@ class Union(Operation):
 
     def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.outside
-                or not event.from_first and event.is_common_region_boundary)
+                or not event.from_first_operand and event.is_common_region_boundary)
 
 
 def _compute_relations(event: LeftEvent,

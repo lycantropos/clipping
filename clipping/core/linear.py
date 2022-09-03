@@ -161,7 +161,7 @@ class Difference(Operation):
                                    for endpoints, events
                                    in groupby(self.sweep(),
                                               key=to_endpoints)
-                                   if all(event.from_first
+                                   if all(event.from_first_operand
                                           for event in events)),
                             context
                     ),
@@ -206,7 +206,8 @@ class Intersection(Operation):
                 sorted(endpoints
                        for endpoints, events in groupby(self.sweep(),
                                                         key=to_endpoints)
-                       if not all_equal(event.from_first for event in events)),
+                       if not all_equal(event.from_first_operand
+                                        for event in events)),
                 context),
                 context)
                 if self.second.segments
@@ -252,11 +253,13 @@ class CompleteIntersection(Operation):
                                                              key=to_endpoints),
                                                       key=attrgetter('start')):
             same_start_events = list(same_start_events_group)
-            if not all_equal(event.from_first for event in same_start_events):
+            if not all_equal(event.from_first_operand
+                             for event in same_start_events):
                 no_segment_found = True
                 for event, next_event in zip(same_start_events,
                                              same_start_events[1:]):
-                    if (event.from_first is not next_event.from_first
+                    if ((event.from_first_operand
+                         is not next_event.from_first_operand)
                             and event.start == next_event.start
                             and event.end == next_event.end):
                         no_segment_found = False
@@ -301,7 +304,8 @@ class SymmetricDifference(Operation):
                 sorted(endpoints
                        for endpoints, events in groupby(self.sweep(),
                                                         key=to_endpoints)
-                       if all_equal(event.from_first for event in events)),
+                       if all_equal(event.from_first_operand
+                                    for event in events)),
                 context),
                 context)
 

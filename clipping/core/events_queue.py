@@ -63,7 +63,7 @@ class BinaryEventsQueueKey:
             other_end_orientation = self.orienteer(event.start, event.end,
                                                    other_event.end)
             # the lowest segment is processed first
-            return (other_event.from_first
+            return (other_event.from_first_operand
                     if other_end_orientation is Orientation.COLLINEAR
                     else (other_end_orientation
                           # the lowest segment is processed first
@@ -130,7 +130,7 @@ class LinearEventsQueue:
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
-                # segments do not intersect_multipolygons at endpoints
+                # segments do not intersect at endpoints
                 point = self.context.segments_intersection(below_event, event)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
@@ -138,7 +138,7 @@ class LinearEventsQueue:
                     self._divide_segment(event, point)
         elif relation is not Relation.DISJOINT:
             # segments overlap
-            if below_event.from_first is event.from_first:
+            if below_event.from_first_operand is event.from_first_operand:
                 raise ValueError('Segments of the same multisegment '
                                  'should not overlap.')
             starts_equal = below_event.start == event.start
@@ -176,11 +176,11 @@ class LinearEventsQueue:
 
     def register(self,
                  segments_endpoints: Iterable[SegmentEndpoints],
-                 from_first: bool) -> None:
+                 from_first_operand: bool) -> None:
         events_queue = self._queue
         for segment_endpoints in segments_endpoints:
             event = LeftBinaryEvent.from_segment_endpoints(segment_endpoints,
-                                                           from_first)
+                                                           from_first_operand)
             events_queue.push(event)
             events_queue.push(event.opposite)
 
@@ -214,7 +214,7 @@ class MixedEventsQueue:
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
-                # segments do not intersect_multipolygons at endpoints
+                # segments do not intersect at endpoints
                 point = self.context.segments_intersection(below_event, event)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
@@ -222,11 +222,11 @@ class MixedEventsQueue:
                     self._divide_segment(event, point)
         elif relation is not Relation.DISJOINT:
             # segments overlap
-            if below_event.from_first is event.from_first:
+            if below_event.from_first_operand is event.from_first_operand:
                 raise ValueError('Edges of the {geometry} '
                                  'should not overlap.'
                                  .format(geometry=('multisegment'
-                                                   if event.from_first
+                                                   if event.from_first_operand
                                                    else 'multipolygon')))
             event.is_overlap = below_event.is_overlap = True
             starts_equal = below_event.start == event.start
@@ -266,11 +266,11 @@ class MixedEventsQueue:
 
     def register(self,
                  segments_endpoints: Iterable[SegmentEndpoints],
-                 from_first: bool) -> None:
+                 from_first_operand: bool) -> None:
         push = self._queue.push
         for segment_endpoints in segments_endpoints:
             event = LeftMixedEvent.from_endpoints(segment_endpoints,
-                                                  from_first)
+                                                  from_first_operand)
             push(event)
             push(event.opposite)
 
@@ -304,7 +304,7 @@ class NaryEventsQueue:
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
-                # segments do not intersect_multipolygons at endpoints
+                # segments do not intersect at endpoints
                 point = self.context.segments_intersection(below_event, event)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
@@ -384,7 +384,7 @@ class ShapedEventsQueue(Generic[LeftShapedEvent]):
         if relation is Relation.CROSS or relation is Relation.TOUCH:
             if (event.start != below_event.start
                     and event.end != below_event.end):
-                # segments do not intersect_multipolygons at endpoints
+                # segments do not intersect at endpoints
                 point = self.context.segments_intersection(below_event, event)
                 if point != below_event.start and point != below_event.end:
                     self._divide_segment(below_event, point)
@@ -392,7 +392,7 @@ class ShapedEventsQueue(Generic[LeftShapedEvent]):
                     self._divide_segment(event, point)
         elif relation is not Relation.DISJOINT:
             # segments overlap
-            if below_event.from_first is event.from_first:
+            if below_event.from_first_operand is event.from_first_operand:
                 raise ValueError('Edges of the same geometry '
                                  'should not overlap.')
             starts_equal = below_event.start == event.start
@@ -437,10 +437,10 @@ class ShapedEventsQueue(Generic[LeftShapedEvent]):
 
     def register(self,
                  segments_endpoints: Iterable[SegmentEndpoints],
-                 from_first: bool) -> None:
+                 from_first_operand: bool) -> None:
         event_cls, push = self.event_cls, self._queue.push
         for segment_endpoints in segments_endpoints:
-            event = event_cls.from_endpoints(segment_endpoints, from_first)
+            event = event_cls.from_endpoints(segment_endpoints, from_first_operand)
             push(event)
             push(event.opposite)
 

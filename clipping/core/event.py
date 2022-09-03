@@ -62,8 +62,9 @@ class RightEvent(Event):
 
 class LeftNaryEvent(LeftEvent):
     @classmethod
-    def from_segment_endpoints(cls, segment_endpoints: SegmentEndpoints
-                               ) -> 'LeftNaryEvent':
+    def from_segment_endpoints(
+            cls, segment_endpoints: SegmentEndpoints
+    ) -> 'LeftNaryEvent':
         start, end = segment_endpoints
         if start > end:
             start, end = end, start
@@ -103,27 +104,29 @@ class LeftBinaryEvent(LeftEvent):
     @classmethod
     def from_segment_endpoints(cls,
                                segment_endpoints: SegmentEndpoints,
-                               from_first: bool) -> 'LeftBinaryEvent':
+                               from_first_operand: bool) -> 'LeftBinaryEvent':
         start, end = segment_endpoints
         if start > end:
             start, end = end, start
-        event = cls(start, None, from_first)
+        event = cls(start, None, from_first_operand)
         event.right = RightBinaryEvent(end, event)
         return event
 
-    __slots__ = 'from_first', 'start'
+    __slots__ = 'from_first_operand', 'start'
 
     def __init__(self,
                  start: Point,
                  right: Optional['RightBinaryEvent'],
-                 from_first: bool) -> None:
-        self.from_first, self.right, self.start = from_first, right, start
+                 from_first_operand: bool) -> None:
+        self.from_first_operand, self.right, self.start = (
+            from_first_operand, right, start
+        )
 
     __repr__ = recursive_repr()(generate_repr(__init__))
 
     def divide(self, point: Point) -> 'LeftBinaryEvent':
         tail = self.right.left = LeftBinaryEvent(point, self.right,
-                                                 self.from_first)
+                                                 self.from_first_operand)
         self.right = RightBinaryEvent(point, self)
         return tail
 
@@ -137,39 +140,40 @@ class RightBinaryEvent(RightEvent):
     __repr__ = recursive_repr()(generate_repr(__init__))
 
     @property
-    def from_first(self) -> bool:
-        return self.left.from_first
+    def from_first_operand(self) -> bool:
+        return self.left.from_first_operand
 
 
 class LeftMixedEvent(LeftEvent):
     @classmethod
     def from_endpoints(cls,
                        segment_endpoints: SegmentEndpoints,
-                       from_first: bool) -> 'LeftMixedEvent':
+                       from_first_operand: bool) -> 'LeftMixedEvent':
         start, end = segment_endpoints
         inside_on_left = True
         if start > end:
             start, end = end, start
             inside_on_left = False
-        result = cls(start, None, from_first, inside_on_left)
+        result = cls(start, None, from_first_operand, inside_on_left)
         result.right = RightMixedEvent(end, result)
         return result
 
-    __slots__ = ('from_first', 'from_result', 'interior_to_left', 'is_overlap',
-                 'other_interior_to_left', 'start')
+    __slots__ = ('from_first_operand', 'from_result', 'interior_to_left',
+                 'is_overlap', 'other_interior_to_left', 'start')
 
     def __init__(self,
                  start: Point,
                  right: Optional['RightMixedEvent'],
-                 from_first: bool,
+                 from_first_operand: bool,
                  interior_to_left: bool,
                  other_interior_to_left: bool = False,
                  is_overlap: bool = False,
                  from_result: bool = False) -> None:
         self.right, self.start = right, start
-        self.from_first = from_first
+        self.from_first_operand = from_first_operand
         self.interior_to_left, self.other_interior_to_left = (
-            interior_to_left, other_interior_to_left)
+            interior_to_left, other_interior_to_left
+        )
         self.is_overlap = is_overlap
         self.from_result = from_result
 
@@ -188,7 +192,9 @@ class LeftMixedEvent(LeftEvent):
 
     def divide(self, point: Point) -> 'LeftMixedEvent':
         tail = self.right.left = LeftMixedEvent(
-                point, self.right, self.from_first, self.interior_to_left)
+                point, self.right, self.from_first_operand,
+                self.interior_to_left
+        )
         self.right = RightMixedEvent(point, self)
         return tail
 
@@ -202,8 +208,8 @@ class RightMixedEvent(RightEvent):
     __repr__ = recursive_repr()(generate_repr(__init__))
 
     @property
-    def from_first(self) -> bool:
-        return self.left.from_first
+    def from_first_operand(self) -> bool:
+        return self.left.from_first_operand
 
     @property
     def primary(self) -> LeftMixedEvent:
@@ -214,23 +220,24 @@ class LeftHolelessEvent(LeftEvent):
     @classmethod
     def from_endpoints(cls,
                        segment_endpoints: SegmentEndpoints,
-                       from_first: bool) -> 'LeftHolelessEvent':
+                       from_first_operand: bool) -> 'LeftHolelessEvent':
         start, end = segment_endpoints
         inside_on_left = True
         if start > end:
             start, end = end, start
             inside_on_left = False
-        event = cls(start, None, from_first, inside_on_left)
+        event = cls(start, None, from_first_operand, inside_on_left)
         event.right = RightShapedEvent(end, event)
         return event
 
-    __slots__ = ('from_first', 'from_shaped_result', 'id', 'interior_to_left',
-                 'other_interior_to_left', 'overlap_kind', 'start')
+    __slots__ = ('from_first_operand', 'from_shaped_result', 'id',
+                 'interior_to_left', 'other_interior_to_left', 'overlap_kind',
+                 'start')
 
     def __init__(self,
                  start: Point,
                  right: Optional['RightShapedEvent'],
-                 from_first: bool,
+                 from_first_operand: bool,
                  interior_to_left: bool,
                  *,
                  from_shaped_result: bool = False,
@@ -238,11 +245,11 @@ class LeftHolelessEvent(LeftEvent):
                  other_interior_to_left: bool = False,
                  overlap_kind: OverlapKind = OverlapKind.NONE) -> None:
         (
-            self.from_first, self.from_shaped_result, self.id,
+            self.from_first_operand, self.from_shaped_result, self.id,
             self.interior_to_left, self.other_interior_to_left,
             self.overlap_kind, self.right, self.start
         ) = (
-            from_first, from_shaped_result, id_, interior_to_left,
+            from_first_operand, from_shaped_result, id_, interior_to_left,
             other_interior_to_left, overlap_kind, right, start
         )
 
@@ -300,7 +307,8 @@ class LeftHolelessEvent(LeftEvent):
 
     def divide(self, point: Point) -> 'LeftHolelessEvent':
         tail = self.right.left = LeftHolelessEvent(
-                point, self.right, self.from_first, self.interior_to_left
+                point, self.right, self.from_first_operand,
+                self.interior_to_left
         )
         self.right = RightShapedEvent(point, self)
         return tail
@@ -310,26 +318,26 @@ class LeftHoleyEvent(LeftEvent):
     @classmethod
     def from_endpoints(cls,
                        segment_endpoints: SegmentEndpoints,
-                       from_first: bool) -> 'LeftHoleyEvent':
+                       from_first_operand: bool) -> 'LeftHoleyEvent':
         start, end = segment_endpoints
         interior_to_left = True
         if start > end:
             start, end = end, start
             interior_to_left = False
-        event = cls(start, None, from_first, interior_to_left)
+        event = cls(start, None, from_first_operand, interior_to_left)
         event.right = RightShapedEvent(end, event)
         return event
 
-    __slots__ = ('below_event_from_shaped_result', 'contour_id', 'from_first',
-                 'from_in_to_out', 'from_shaped_result', 'interior_to_left',
-                 'other_interior_to_left', 'overlap_kind', 'id', 'start',
-                 'start_id')
+    __slots__ = ('below_event_from_shaped_result', 'contour_id',
+                 'from_first_operand', 'from_in_to_out', 'from_shaped_result',
+                 'interior_to_left', 'other_interior_to_left', 'overlap_kind',
+                 'id', 'start', 'start_id')
 
     def __init__(
             self,
             start: Point,
             right: Optional['RightShapedEvent'],
-            from_first: bool,
+            from_first_operand: bool,
             interior_to_left: bool,
             *,
             below_event_from_shaped_result: Optional['LeftHoleyEvent'] = None,
@@ -343,11 +351,12 @@ class LeftHoleyEvent(LeftEvent):
     ) -> None:
         (
             self.below_event_from_shaped_result, self.contour_id,
-            self.from_first, self.from_in_to_out, self.from_shaped_result,
-            self.id, self.interior_to_left, self.other_interior_to_left,
-            self.overlap_kind, self.right, self.start, self.start_id
+            self.from_first_operand, self.from_in_to_out,
+            self.from_shaped_result, self.id, self.interior_to_left,
+            self.other_interior_to_left, self.overlap_kind, self.right,
+            self.start, self.start_id
         ) = (
-            below_event_from_shaped_result, contour_id, from_first,
+            below_event_from_shaped_result, contour_id, from_first_operand,
             from_in_to_out, from_shaped_result, id_, interior_to_left,
             other_interior_to_left, overlap_kind, right, start, start_id
         )
@@ -414,7 +423,8 @@ class LeftHoleyEvent(LeftEvent):
 
     def divide(self, point: Point) -> 'LeftHoleyEvent':
         tail = self.right.left = LeftHoleyEvent(
-                point, self.right, self.from_first, self.interior_to_left
+                point, self.right, self.from_first_operand,
+                self.interior_to_left
         )
         self.right = RightShapedEvent(point, self)
         return tail
@@ -444,8 +454,8 @@ class RightShapedEvent(RightEvent):
         return self.opposite.start_id
 
     @property
-    def from_first(self) -> bool:
-        return self.left.from_first
+    def from_first_operand(self) -> bool:
+        return self.left.from_first_operand
 
     @property
     def primary(self) -> LeftShapedEvent:
