@@ -157,17 +157,16 @@ class Operation(ABC):
                       processed_events: List[Event],
                       sweep_line: SweepLine) -> None:
         if not event.is_left:
-            processed_events.append(event)
-            event = event.left
-            if event in sweep_line:
-                above_event, below_event = (sweep_line.above(event),
-                                            sweep_line.below(event))
-                sweep_line.remove(event)
+            opposite_event = event.left
+            if opposite_event in sweep_line:
+                above_event, below_event = (sweep_line.above(opposite_event),
+                                            sweep_line.below(opposite_event))
+                sweep_line.remove(opposite_event)
                 if above_event is not None and below_event is not None:
                     self._events_queue.detect_intersection(below_event,
                                                            above_event)
-        elif event not in sweep_line:
             processed_events.append(event)
+        elif event not in sweep_line:
             sweep_line.add(event)
             above_event, below_event = (sweep_line.above(event),
                                         sweep_line.below(event))
@@ -183,6 +182,7 @@ class Operation(ABC):
                 below_below_event = sweep_line.below(below_event)
                 self.compute_fields(below_event, below_below_event)
                 self.compute_fields(event, below_event)
+            processed_events.append(event)
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -456,8 +456,10 @@ def _to_contour_events(event: LeftEvent,
         else:
             # vertices loop found, i.e. contour has self-intersection
             assert previous_endpoint_position != 0
-            for event in result[previous_endpoint_position:]:
-                visited_endpoints_positions[event.end_id] = UNDEFINED_INDEX
+            for loop_event in result[previous_endpoint_position:]:
+                visited_endpoints_positions[
+                    loop_event.end_id
+                ] = UNDEFINED_INDEX
             del result[previous_endpoint_position:]
         event_id = _to_next_event_id(opposite_event_id, are_events_processed,
                                      connectivity)
@@ -466,7 +468,7 @@ def _to_contour_events(event: LeftEvent,
         cursor = events[event_id]
         opposite_event_id = cursor.opposite.id
         result.append(cursor)
-    visited_endpoints_positions[result[0].start_id] = UNDEFINED_INDEX
+    visited_endpoints_positions[event.start_id] = UNDEFINED_INDEX
     for event in result:
         visited_endpoints_positions[event.end_id] = UNDEFINED_INDEX
     assert all(position == UNDEFINED_INDEX
