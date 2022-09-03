@@ -84,14 +84,14 @@ class Operation(ABC):
         event.from_shaped_result = self.from_shaped_result(event)
 
     def events_to_polygons(self, events: Sequence[Event]) -> Sequence[Polygon]:
+        events = [event
+                  for event in events
+                  if event.primary.from_shaped_result]
         if not events:
             return []
         max_endpoint_id = events[-1].start_id
         assert max_endpoint_id != UNDEFINED_INDEX
         assert all(event.start_id <= max_endpoint_id for event in events)
-        events = [event
-                  for event in events
-                  if event.primary.from_shaped_result]
         events.sort(key=self._events_queue.key)
         for event_id, event in enumerate(events):
             event.id = event_id
@@ -120,19 +120,17 @@ class Operation(ABC):
             contours.append(contour_cls(vertices))
         result = []
         polygon_cls = context.polygon_cls
-        for event_id, contour in enumerate(contours):
-            if are_internal[event_id]:
+        for contour_id, contour in enumerate(contours):
+            if are_internal[contour_id]:
                 # hole of a hole is an external polygon
-                result.extend(
-                        polygon_cls(contours[hole_index],
-                                    [contours[hole_hole_index]
-                                     for hole_hole_index in holes[hole_index]])
-                        for hole_index in holes[event_id]
-                )
+                result.extend(polygon_cls(contours[hole_id],
+                                          [contours[hole_hole_id]
+                                           for hole_hole_id in holes[hole_id]])
+                              for hole_id in holes[contour_id])
             else:
                 result.append(polygon_cls(contour,
-                                          [contours[hole_index]
-                                           for hole_index in holes[event_id]]))
+                                          [contours[hole_id]
+                                           for hole_id in holes[contour_id]]))
         return result
 
     def fill_queue(self) -> None:
