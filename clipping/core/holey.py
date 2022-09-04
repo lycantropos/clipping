@@ -255,7 +255,8 @@ class CompleteIntersection(Operation):
 
     def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.inside
-                or not event.from_first_operand and event.is_common_region_boundary)
+                or (not event.from_first_operand
+                    and event.is_common_region_boundary))
 
     def sweep(self) -> List[Event]:
         self.fill_queue()
@@ -346,7 +347,8 @@ class Intersection(Operation):
 
     def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.inside
-                or not event.from_first_operand and event.is_common_region_boundary)
+                or (not event.from_first_operand
+                    and event.is_common_region_boundary))
 
     def sweep(self) -> List[Event]:
         self.fill_queue()

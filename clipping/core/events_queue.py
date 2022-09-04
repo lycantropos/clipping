@@ -440,7 +440,8 @@ class ShapedEventsQueue(Generic[LeftShapedEvent]):
                  from_first_operand: bool) -> None:
         event_cls, push = self.event_cls, self._queue.push
         for segment_endpoints in segments_endpoints:
-            event = event_cls.from_endpoints(segment_endpoints, from_first_operand)
+            event = event_cls.from_endpoints(segment_endpoints,
+                                             from_first_operand)
             push(event)
             push(event.opposite)
 
