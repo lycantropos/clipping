@@ -459,10 +459,6 @@ def _to_contour_events(event: LeftEvent,
         else:
             # vertices loop found, i.e. contour has self-intersection
             assert previous_endpoint_position != 0
-            for loop_event in result[previous_endpoint_position:]:
-                visited_endpoints_positions[
-                    loop_event.end_id
-                ] = UNDEFINED_INDEX
             del result[previous_endpoint_position:]
         visited_endpoints_ids.append(cursor.end_id)
         event_id = _to_next_event_id(opposite_event_id, are_events_processed,
