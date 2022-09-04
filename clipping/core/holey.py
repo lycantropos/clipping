@@ -451,6 +451,7 @@ def _to_contour_events(event: LeftEvent,
     opposite_event_id = event.right.id
     contour_start = event.start
     cursor = event
+    visited_endpoints_ids = [event.start_id]
     while cursor.end != contour_start:
         previous_endpoint_position = visited_endpoints_positions[cursor.end_id]
         if previous_endpoint_position == UNDEFINED_INDEX:
@@ -463,6 +464,7 @@ def _to_contour_events(event: LeftEvent,
                     loop_event.end_id
                 ] = UNDEFINED_INDEX
             del result[previous_endpoint_position:]
+        visited_endpoints_ids.append(cursor.end_id)
         event_id = _to_next_event_id(opposite_event_id, are_events_processed,
                                      connectivity)
         if event_id == UNDEFINED_INDEX:
@@ -470,9 +472,8 @@ def _to_contour_events(event: LeftEvent,
         cursor = events[event_id]
         opposite_event_id = cursor.opposite.id
         result.append(cursor)
-    visited_endpoints_positions[event.start_id] = UNDEFINED_INDEX
-    for event in result:
-        visited_endpoints_positions[event.end_id] = UNDEFINED_INDEX
+    for event_id in visited_endpoints_ids:
+        visited_endpoints_positions[event_id] = UNDEFINED_INDEX
     assert all(position == UNDEFINED_INDEX
                for position in visited_endpoints_positions)
     return result
