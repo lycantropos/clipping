@@ -274,8 +274,8 @@ def reverse_contour(contour: Contour) -> Contour:
 
 
 def reverse_contour_coordinates(contour: Contour) -> Contour:
-    return Contour([reverse_point_coordinates(vertex)
-                    for vertex in contour.vertices])
+    return reverse_contour(Contour([reverse_point_coordinates(vertex)
+                                    for vertex in contour.vertices]))
 
 
 @singledispatch
