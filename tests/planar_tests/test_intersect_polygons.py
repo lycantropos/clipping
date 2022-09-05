@@ -40,7 +40,8 @@ def test_absorption_identity(polygons_pair: PolygonsPair) -> None:
     first_second_union = unite_polygons(first, second)
     assert (not is_polygon(first_second_union)
             or are_compounds_similar(
-                    intersect_polygons(first_second_union, first), first))
+                    intersect_polygons(first_second_union, first), first
+            ))
 
 
 @given(strategies.polygons_pairs)

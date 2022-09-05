@@ -50,7 +50,8 @@ def test_difference_subtrahend(polygons_triplet: PolygonsTriplet
             or are_compounds_similar(
                     subtract_polygons(first, second_third_difference),
                     unite_polygons(first_second_difference,
-                                        first_third_intersection)))
+                                   first_third_intersection)
+            ))
 
 
 @given(strategies.polygons_triplets)
@@ -80,7 +81,7 @@ def test_intersection_subtrahend(polygons_triplet: PolygonsTriplet
             or are_compounds_similar(
                     subtract_polygons(first, second_third_intersection),
                     unite_polygons(first_second_difference,
-                                        first_third_difference)))
+                                   first_third_difference)))
 
 
 @given(strategies.polygons_triplets)
@@ -96,7 +97,8 @@ def test_union_subtrahend(polygons_triplet: PolygonsTriplet) -> None:
             or are_compounds_similar(
                     subtract_polygons(first, second_third_union),
                     intersect_polygons(first_second_difference,
-                                            first_third_difference)))
+                                       first_third_difference)
+            ))
 
 
 @given(strategies.polygons_pairs)
@@ -109,7 +111,8 @@ def test_reversals(polygons_pair: PolygonsPair) -> None:
             result, subtract_polygons(reverse_polygon_border(first), second))
     assert result == subtract_polygons(first, reverse_polygon_border(second))
     assert are_compounds_similar(
-            result, subtract_polygons(reverse_polygon_holes(first), second))
+            result, subtract_polygons(reverse_polygon_holes(first), second)
+    )
     assert result == subtract_polygons(first, reverse_polygon_holes(second))
     assert are_compounds_similar(
             result,

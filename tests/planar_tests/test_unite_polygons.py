@@ -41,8 +41,8 @@ def test_absorption_identity(polygons_pair: PolygonsPair) -> None:
     first_second_intersection = intersect_polygons(first, second)
     assert (not is_polygon(first_second_intersection)
             or are_compounds_similar(
-                    unite_polygons(first, first_second_intersection),
-                    first))
+                    unite_polygons(first, first_second_intersection), first
+            ))
 
 
 @given(strategies.polygons_pairs)
@@ -64,12 +64,12 @@ def test_associativity(polygons_triplet: PolygonsTriplet) -> None:
             or not is_polygon(second_third_union)
             or are_compounds_similar(
                     unite_polygons(first_second_union, third),
-                    unite_polygons(first, second_third_union)))
+                    unite_polygons(first, second_third_union)
+            ))
 
 
 @given(strategies.polygons_triplets)
-def test_difference_operand(polygons_triplet: PolygonsTriplet
-                            ) -> None:
+def test_difference_operand(polygons_triplet: PolygonsTriplet) -> None:
     first, second, third = polygons_triplet
 
     first_second_difference = subtract_polygons(first, second)
@@ -81,12 +81,14 @@ def test_difference_operand(polygons_triplet: PolygonsTriplet
             or are_compounds_similar(
                     unite_polygons(first_second_difference, third),
                     subtract_polygons(first_third_union,
-                                           second_third_difference)))
+                                      second_third_difference)
+            ))
 
 
 @given(strategies.polygons_triplets)
-def test_distribution_over_intersection(polygons_triplet
-                                        : PolygonsTriplet) -> None:
+def test_distribution_over_intersection(
+        polygons_triplet: PolygonsTriplet
+) -> None:
     first, second, third = polygons_triplet
 
     second_third_intersection = intersect_polygons(second, third)
@@ -98,7 +100,8 @@ def test_distribution_over_intersection(polygons_triplet
             or are_compounds_similar(
                     unite_polygons(first, second_third_intersection),
                     intersect_polygons(first_second_union,
-                                            first_third_union)))
+                                       first_third_union)
+            ))
 
 
 @given(strategies.polygons_pairs)
@@ -107,14 +110,15 @@ def test_equivalents(polygons_pair: PolygonsPair) -> None:
 
     result = unite_polygons(first, second)
 
-    first_second_symmetric_difference = symmetric_subtract_polygons(
-            first, second)
+    first_second_symmetric_difference = symmetric_subtract_polygons(first,
+                                                                    second)
     first_second_intersection = intersect_polygons(first, second)
     assert (not is_polygon(first_second_symmetric_difference)
             or not is_polygon(first_second_intersection)
             or result == symmetric_subtract_polygons(
                     first_second_symmetric_difference,
-                    first_second_intersection))
+                    first_second_intersection
+            ))
 
 
 @given(strategies.polygons_pairs)
@@ -124,13 +128,18 @@ def test_reversals(polygons_pair: PolygonsPair) -> None:
     result = unite_polygons(first, second)
 
     assert are_compounds_similar(
-            result, unite_polygons(first, reverse_polygon_border(second)))
+            result, unite_polygons(first, reverse_polygon_border(second))
+    )
     assert are_compounds_similar(
-            result, unite_polygons(first, reverse_polygon_holes(second)))
+            result, unite_polygons(first, reverse_polygon_holes(second))
+    )
     assert are_compounds_similar(
             result, unite_polygons(first,
-                                   reverse_polygon_holes_contours(second)))
+                                   reverse_polygon_holes_contours(second))
+    )
     assert are_compounds_similar(
-            result, reverse_compound_coordinates(unite_polygons(
-                    reverse_polygon_coordinates(first),
-                    reverse_polygon_coordinates(second))))
+            result, reverse_compound_coordinates(
+                    unite_polygons(reverse_polygon_coordinates(first),
+                                   reverse_polygon_coordinates(second))
+            )
+    )

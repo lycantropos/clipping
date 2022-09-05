@@ -48,36 +48,37 @@ def test_commutativity(polygons_pair: PolygonsPair) -> None:
 def test_associativity(polygons_triplet: PolygonsTriplet) -> None:
     first, second, third = polygons_triplet
 
-    first_second_symmetric_difference = symmetric_subtract_polygons(
-            first, second)
-    second_third_symmetric_difference = symmetric_subtract_polygons(
-            second, third)
+    first_second_symmetric_difference = symmetric_subtract_polygons(first,
+                                                                    second)
+    second_third_symmetric_difference = symmetric_subtract_polygons(second,
+                                                                    third)
     assert (not is_polygon(first_second_symmetric_difference)
             or not is_polygon(second_third_symmetric_difference)
             or are_compounds_similar(
                     symmetric_subtract_polygons(
                             first_second_symmetric_difference, third),
                     symmetric_subtract_polygons(
-                            first,
-                            second_third_symmetric_difference)))
+                            first, second_third_symmetric_difference
+                    )
+            ))
 
 
 @given(strategies.polygons_triplets)
 def test_repeated(polygons_triplet: PolygonsTriplet) -> None:
     first, second, third = polygons_triplet
 
-    first_second_symmetric_difference = symmetric_subtract_polygons(
-            first, second)
-    second_third_symmetric_difference = symmetric_subtract_polygons(
-            second, third)
+    first_second_symmetric_difference = symmetric_subtract_polygons(first,
+                                                                    second)
+    second_third_symmetric_difference = symmetric_subtract_polygons(second,
+                                                                    third)
     assert (not is_polygon(first_second_symmetric_difference)
             or not is_polygon(second_third_symmetric_difference)
             or are_compounds_similar(
                     symmetric_subtract_polygons(
                             first_second_symmetric_difference,
                             second_third_symmetric_difference),
-                    symmetric_subtract_polygons(first,
-                                                     third)))
+                    symmetric_subtract_polygons(first, third)
+            ))
 
 
 @given(strategies.polygons_pairs)
@@ -93,11 +94,11 @@ def test_equivalents(polygons_pair: PolygonsPair) -> None:
     assert (not is_polygon(first_second_difference)
             or not is_polygon(second_first_difference)
             or result == unite_polygons(first_second_difference,
-                                             second_first_difference))
+                                        second_first_difference))
     assert (not is_polygon(first_second_union)
             or not is_polygon(second_first_intersection)
             or result == subtract_polygons(first_second_union,
-                                                second_first_intersection))
+                                           second_first_intersection))
 
 
 @given(strategies.polygons_pairs)
@@ -107,16 +108,24 @@ def test_reversals(polygons_pair: PolygonsPair) -> None:
     result = symmetric_subtract_polygons(first, second)
 
     assert are_compounds_similar(
-            result, symmetric_subtract_polygons(
-                    first, reverse_polygon_border(second)))
+            result, symmetric_subtract_polygons(first,
+                                                reverse_polygon_border(second))
+    )
+    assert are_compounds_similar(
+            result, symmetric_subtract_polygons(first,
+                                                reverse_polygon_holes(second))
+    )
     assert are_compounds_similar(
             result, symmetric_subtract_polygons(
-                    first, reverse_polygon_holes(second)))
-    assert are_compounds_similar(
-            result, symmetric_subtract_polygons(
-                    first, reverse_polygon_holes_contours(second)))
+                    first, reverse_polygon_holes_contours(second)
+            )
+    )
     assert are_compounds_similar(
             result,
-            reverse_compound_coordinates(symmetric_subtract_polygons(
-                    reverse_polygon_coordinates(first),
-                    reverse_polygon_coordinates(second))))
+            reverse_compound_coordinates(
+                    symmetric_subtract_polygons(
+                            reverse_polygon_coordinates(first),
+                            reverse_polygon_coordinates(second)
+                    )
+            )
+    )
