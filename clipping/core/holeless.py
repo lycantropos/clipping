@@ -115,11 +115,13 @@ class Operation(ABC):
         for region in self.first.regions:
             events_queue.register(
                     contour_to_oriented_edges_endpoints(region, self.context),
-                    True)
+                    True
+            )
         for region in self.second.regions:
             events_queue.register(
                     contour_to_oriented_edges_endpoints(region, self.context),
-                    False)
+                    False
+            )
 
     @abstractmethod
     def from_shaped_result(self, event: LeftEvent) -> bool:
