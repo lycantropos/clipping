@@ -1,3 +1,3 @@
-"""Multisegments, polygons & multipolygons clipping."""
+"""Geometries clipping."""
 
 __version__ = '5.1.2'
