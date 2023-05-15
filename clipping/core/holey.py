@@ -407,7 +407,8 @@ class Union(Operation):
 
     def from_shaped_result(self, event: LeftEvent) -> bool:
         return (event.outside
-                or not event.from_first_operand and event.is_common_region_boundary)
+                or (not event.from_first_operand
+                    and event.is_common_region_boundary))
 
 
 def _compute_relations(event: LeftEvent,
