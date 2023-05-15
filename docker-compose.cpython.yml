@@ -10,10 +10,8 @@ services:
     image: lycantropos/clipping-cpython:5.1.2
     volumes:
       - ./clipping:/opt/clipping/clipping
-      - ./pytest.ini:/opt/clipping/pytest.ini
+      - ./pyproject.toml:/opt/clipping/pyproject.toml
       - ./README.md:/opt/clipping/README.md
-      - ./requirements-tests.txt:/opt/clipping/requirements-tests.txt
-      - ./requirements.txt:/opt/clipping/requirements.txt
       - ./setup.py:/opt/clipping/setup.py
       - ./tests:/opt/clipping/tests
     entrypoint: pytest
