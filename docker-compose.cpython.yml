@@ -7,7 +7,7 @@ services:
       args:
         - IMAGE_NAME=${CPYTHON_IMAGE_NAME}
         - IMAGE_VERSION=${CPYTHON_IMAGE_VERSION}
-    image: lycantropos/clipping-cpython:5.1.2
+    image: lycantropos/clipping-cpython:6.0.0-alpha
     volumes:
       - ./clipping:/opt/clipping/clipping
       - ./pyproject.toml:/opt/clipping/pyproject.toml
